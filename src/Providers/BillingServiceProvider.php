@@ -26,7 +26,7 @@ class BillingServiceProvider extends ServiceProvider
         ], 'config');
 
         // Load migrations
-        $this->loadMigrationsFrom(__DIR__.'/path/to/migrations');
+        $this->loadMigrationsFrom(__DIR__.'/../../migrations');
 
         $this->addDefaultCurrency();
     }
