@@ -51,4 +51,14 @@ to be able to override the default configuration
 
 ### Usage
 
-Coming soon...
+To get the plan details, with trial days calculation and summary (all coupons and available balance discounts applied) for current user on current host, just call:
+
+```php
+$plan->prepare($hostable); // Will return plan with all calculations applied for logged in user
+```
+
+To purchase the plan, just call:
+
+```php
+$plan->purchase($hostable); // It will do the rest automagically
+```

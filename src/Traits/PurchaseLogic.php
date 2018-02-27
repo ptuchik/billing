@@ -11,6 +11,7 @@ use Ptuchik\Billing\Models\Coupon;
 use Ptuchik\Billing\Models\Invoice;
 use Ptuchik\Billing\Models\Transaction;
 use Request;
+use Throwable;
 
 /**
  * Trait PurchaseLogic - to add purchase logic to plan model
@@ -164,8 +165,32 @@ trait PurchaseLogic
             return $this->useExistingPurchase();
         }
 
-        // Purchase plan and return invoice
-        return $this->makePurchase();
+        // Purchase plan, purchase additional plans and get invoice
+        return $this->purchaseAdditionalPlans($this->makePurchase());
+    }
+
+    /**
+     * Purchase additional plans if any
+     *
+     * @param \Ptuchik\Billing\Models\Invoice $invoice
+     *
+     * @return \Ptuchik\Billing\Models\Invoice
+     */
+    protected function purchaseAdditionalPlans(Invoice $invoice)
+    {
+        // Check if plan has additional plans, loop through them, and purchase them also
+        if ($this->additionalPlans->isNotEmpty()) {
+            foreach ($this->additionalPlans as $additionalPlan) {
+                try {
+                    $invoice->additionalInvoices[] = $additionalPlan->purchase($this->host);
+                } catch (Throwable $exception) {
+                    // Do nothing, as they are secondary plans
+                }
+            }
+        }
+
+        // Finaly return invoice
+        return $invoice;
     }
 
     /**
