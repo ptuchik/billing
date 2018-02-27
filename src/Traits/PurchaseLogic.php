@@ -88,17 +88,19 @@ trait PurchaseLogic
      */
     public function prepare(Hostable $host, $forPurchase = false)
     {
-        // Validate host against required package and set to plan
-        $this->host = $this->package->validate($host, $this->user, $forPurchase);
+        // Validate host against required package and if it exists, set to plan
+        if (($host = $this->package->validate($host, $this->user, $forPurchase))->exists) {
+            $this->host = $host;
+        }
 
         // Prepare package to process
-        $this->package->prepare($host, $this);
+        $this->package->prepare($this->host, $this);
 
         // Calculate the current plan's trial
         $this->calculateTrial();
 
         // Set purchase for current package on current host and try to get latest subscription
-        $subscription = $this->package->setPurchase($host, $forPurchase)->subscription;
+        $subscription = $this->package->setPurchase($this->host, $forPurchase)->subscription;
 
         // Get previous subscription
         $this->getPreviousSubscription();
@@ -138,7 +140,7 @@ trait PurchaseLogic
             if ($this->isRecurring) {
 
                 // If package is in use
-                if ($this->package->isInUse($host)) {
+                if ($this->package->isInUse($this->host)) {
 
                     // If subscription's billing frequency is the same as plan's billing frequnecy
                     if ($subscription->billingFrequency == $this->billingFrequency) {
