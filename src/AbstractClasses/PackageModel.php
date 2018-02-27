@@ -226,8 +226,8 @@ abstract class PackageModel extends Model
 
             // If there is an active subscription for current package and it is activated with current plan,
             // set it as current
-            if (!empty($this->purchases[0]->subscriptions[0])) {
-                $subscription = $this->purchases[0]->subscriptions[0];
+            if (!empty($this->purchases[0]->subscription)) {
+                $subscription = $this->purchases[0]->subscription;
                 if ($subscription->alias == $plan->alias) {
 
                     // If current plan's subscription is in trial, set left trial days,

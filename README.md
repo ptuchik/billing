@@ -5,7 +5,7 @@ Billing package for Laravel 5.5+ supporting packages, plans, coupons, addons, pa
 
 ---
 
-## Structure:
+### Structure:
 The structure is the following:
 - *Billable* - Model that will pay for everything
 - *Hostable* - Model for which can be purchased everything
@@ -16,12 +16,38 @@ The structure is the following:
 
 ---
 
-## Concept
+### Concept
 The concept is the following:
 To be able to use this package, firstly you need to add `Billable` trait to your billable model (usually it is *User* model).
 Hostable models have to implement `Hostable` interface and use `Hostable` trait, which will add *Purchases* relation to model.
+All packages have to be extended from *PackageModel* abstract class.
+That's it!
 
 P. S. Everything is overridable from configuration, provided by package
+
+---
+
+### Installation
+```
+composer require ptuchik/billing
+```
+
+After composer installation, just run `php artisan migrate` as usual, to have the additional tables added to your database
+
+Optionally you can publish configurations by executing: 
+```
+php artisan vendor:publish --provider="Ptuchik\Billing\Providers\BillingServiceProvider" --tag=config
+```
+
+and
+
+```
+php artisan vendor:publish --provider="Ptuchik\CoreUtilities\Providers\CoreUtilitiesServiceProvider" --tag=config
+```
+
+to be able to override the default configuration
+
+---
 
 ### Usage
 
