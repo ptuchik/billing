@@ -9,13 +9,13 @@ use Ptuchik\Billing\Models\Plan;
 use Ptuchik\Billing\Models\Subscription;
 use Ptuchik\Billing\Models\Transaction;
 use Braintree\CreditCard;
-use Braintree\Exception\NotFound as BraintreeNotFound;
 use Braintree\PayPalAccount;
 use Exception;
 use Illuminate\Support\Collection;
 use Omnipay;
 use Request;
 use Ptuchik\Billing\Contracts\Hostable as HostableContract;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Trait Billable - Adds billing related methods
@@ -175,8 +175,8 @@ trait Billable
             return $this->getPaymentGateway()->findCustomer($this->paymentProfile)->send()->getData();
         } catch (Exception $e) {
 
-            // If it was Braintree's not found exception, recreate payment profile
-            if ($e instanceof BraintreeNotFound) {
+            // If there was a not found exception, try to recreate payment profile
+            if ($e instanceof NotFoundHttpException) {
                 $this->removePaymentProfile();
 
                 return $this->getPaymentGateway()->findCustomer($this->paymentProfile)->send()->getData();
