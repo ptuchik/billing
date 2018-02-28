@@ -82,17 +82,14 @@ class CurrencyHelper
     /**
      * Update currency in storage.
      *
-     * @param $currency
+     * @param       $currency
+     * @param array $data
      *
      * @return bool
      * @throws \Exception
      */
-    public function update($currency)
+    public function update($currency, array $data)
     {
-        if (($data = $this->getCurrency($currency)) === null) {
-            throw new Exception(trans(config('ptuchik-billing.translation_prefixes.general').'.currency_not_found'));
-        }
-
         if (is_string($result = $this->storage->update($currency, $data))) {
             throw new Exception(trans(config('ptuchik-billing.translation_prefixes.general').'.could_not_update_currency'));
         } else {
