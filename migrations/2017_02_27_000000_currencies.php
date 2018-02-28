@@ -31,7 +31,7 @@ class Currencies extends Migration
                 $table->string('code', 10)->index();
                 $table->string('symbol', 25);
                 $table->string('format', 50);
-                $table->string('exchange_rate', 1);
+                $table->string('exchange_rate', 100);
                 $table->boolean('active')->default(true);
                 $table->timestamps();
             });
