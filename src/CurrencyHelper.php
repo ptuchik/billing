@@ -146,23 +146,6 @@ class CurrencyHelper
     }
 
     /**
-     * Convert amount to credits
-     *
-     * @param $amount
-     * @param $currency
-     *
-     * @return float|int|null
-     */
-    public function convertToCredits($amount, $currency)
-    {
-        if (!$rate = $this->storage->find($currency)['exchange_rate'] ?? null) {
-            return null;
-        }
-
-        return $amount / $rate;
-    }
-
-    /**
      * Delete currency from storage.
      *
      * @param $currency
