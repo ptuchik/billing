@@ -62,3 +62,18 @@ To purchase the plan, just call:
 ```php
 $plan->purchase($hostable); // It will do the rest automagically
 ```
+
+---
+
+### Documentation
+
+Coming soon...
+
+---
+
+### Special thanks to
+
+- [Taylor Otwell](mailto:taylor@laravel.com) for the best framework -  [Laravel](https://laravel.com/)
+- [Daniel Stainback aka Torann](mailto:torann@gmail.com) for [Currencies](http://lyften.com/projects/laravel-currency/)
+- [Spatie](mailto:info@spatie.be) for [Translatable package](https://github.com/spatie/laravel-translatable)
+- [The League of Extraordinary Packages](http://thephpleague.com) for [Omnipay - multi-gateway payment processing library](https://omnipay.thephpleague.com/) (waiting for v3.0 ) ;)
