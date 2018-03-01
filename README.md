@@ -32,20 +32,29 @@ P. S. Everything is overridable from configuration, provided by package
 composer require ptuchik/billing
 ```
 
-After composer installation, just run `php artisan migrate` as usual, to have the additional tables added to your database
+After composer installation, just run `php artisan migrate` as usual, to have the additional tables added to your database and publish configurations by executing:
 
-Optionally you can publish configurations by executing: 
 ```
+php artisan vendor:publish --provider="Torann\Currency\CurrencyServiceProvider" --tag=config
 php artisan vendor:publish --provider="Ptuchik\Billing\Providers\BillingServiceProvider" --tag=config
-```
-
-and
-
-```
 php artisan vendor:publish --provider="Ptuchik\CoreUtilities\Providers\CoreUtilitiesServiceProvider" --tag=config
 ```
 
-to be able to override the default configuration
+**IMPORTANT!**
+Your billable model has to have the following attributes:
+- `balance` - cast: _numeric_
+- `paymentGateway` - cast: _string_
+- `paymentProfiles` - cast: _array_
+- `currency` - cast: _string_
+- `params` - cast: _array_ (you can use `HasParams` trait for easy management of `params` column)
+
+and `isTester()` method, which will indicate if your billable model is tester or customer, to set the correct mode of payment gateway environment. If you don't need testers, you can just create the following method in your billable model:
+
+```php
+public function isTester() {
+    return false;
+}
+```
 
 ---
 
