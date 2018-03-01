@@ -13,6 +13,7 @@ use Braintree\PayPalAccount;
 use Exception;
 use Illuminate\Support\Collection;
 use Omnipay;
+use Ptuchik\CoreUtilities\Traits\HasParams;
 use Request;
 use Ptuchik\Billing\Contracts\Hostable as HostableContract;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -23,6 +24,8 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 trait Billable
 {
+    use HasParams;
+
     /**
      * Balance attribute getter
      *
