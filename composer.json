@@ -1,6 +1,17 @@
 {
   "name": "ptuchik/billing",
   "description": "Billing package for Laravel 5.5 supporting packages, plans, coupons, addons, payments and subscriptions",
+  "keywords": [
+    "ptuchik",
+    "laravel",
+    "billing",
+    "purchase",
+    "subscriptions",
+    "currencies",
+    "coupons",
+    "discounts",
+    "plans"
+  ],
   "license": "MIT",
   "type": "library",
   "require": {
