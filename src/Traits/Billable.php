@@ -62,7 +62,7 @@ trait Billable
      */
     public function getHasPaymentMethodAttribute()
     {
-        return !empty($this->params['hasPaymentMethod']);
+        return !empty($this->getParam('hasPaymentMethod'));
     }
 
     /**
@@ -84,7 +84,7 @@ trait Billable
     public function checkPaymentMethod()
     {
         // If payment methods never checked yet, check and save result
-        if (isset($this->attributes['params']) && !isset($this->params['hasPaymentMethod'])) {
+        if (isset($this->attributes['params']) && is_null($this->getParam('hasPaymentMethod'))) {
             $this->getPaymentMethods();
         }
 
@@ -235,8 +235,8 @@ trait Billable
      */
     public function getCoupons()
     {
-        if (!empty($this->params['coupons']) && is_array($this->params['coupons'])) {
-            return $this->params['coupons'];
+        if (is_array($coupons = $this->getParam('coupons'))) {
+            return $coupons;
         }
 
         return [];
