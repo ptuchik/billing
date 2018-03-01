@@ -46,7 +46,7 @@ Your billable model has to have the following attributes:
 - `paymentGateway` - cast: _string_
 - `paymentProfiles` - cast: _array_
 - `currency` - cast: _string_
-- `params` - cast: _array_ (you can use `HasParams` trait for easy management of `params` column)
+- `params` - cast: _array_
 
 and `isTester()` method, which will indicate if your billable model is tester or customer, to set the correct mode of payment gateway environment. If you don't need testers, you can just create the following method in your billable model:
 
