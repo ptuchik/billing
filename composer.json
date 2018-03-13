@@ -17,8 +17,8 @@
   "require": {
     "ptuchik/core-utilities": "^1.0",
     "ptuchik/braintree": "^1.1",
-    "symfony/event-dispatcher": "2.*",
-    "omnipay/omnipay": "~2.0",
+    "symfony/event-dispatcher": "^2.8",
+    "barryvdh/laravel-omnipay": "0.2.*@dev",
     "torann/currency": "^1.0"
   },
   "autoload": {
