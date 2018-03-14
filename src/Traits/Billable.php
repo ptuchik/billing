@@ -4,17 +4,14 @@ namespace Ptuchik\Billing\Traits;
 
 use Currency;
 use Ptuchik\Billing\Constants\CouponRedeemType;
+use Ptuchik\Billing\Contracts\PaymentGateway;
 use Ptuchik\Billing\Factory;
 use Ptuchik\Billing\Models\Plan;
 use Ptuchik\Billing\Models\Subscription;
 use Ptuchik\Billing\Models\Transaction;
-use Braintree\CreditCard;
-use Braintree\PayPalAccount;
 use Exception;
 use Illuminate\Support\Collection;
-use Omnipay;
 use Ptuchik\CoreUtilities\Traits\HasParams;
-use Request;
 use Ptuchik\Billing\Contracts\Hostable as HostableContract;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -25,6 +22,12 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 trait Billable
 {
     use HasParams;
+
+    /**
+     * Payment gateway
+     * @var \Ptuchik\Billing\Contracts\PaymentGateway
+     */
+    protected $gateway;
 
     /**
      * Balance attribute getter
@@ -49,14 +52,44 @@ trait Billable
     }
 
     /**
-     * Get user's default payment gateway
-     * @return Omnipay\Common\AbstractGateway
+     * Get user's payment gateway
+     *
+     * @param null $gateway
+     *
+     * @return \Ptuchik\Billing\Contracts\PaymentGateway
+     * @throws \Exception
      */
-    public function getPaymentGateway()
+    public function getPaymentGateway($gateway = null)
     {
-        $this->setPaymentGatewayConfig();
+        // If gateway is not set yet, get it from user and instantiate
+        if (is_null($this->gateway)) {
 
-        return Omnipay::gateway($this->paymentGateway);
+            // If gateway is not provided, get user's payment gateway
+            $paymentGateway = $gateway ?: $this->paymentGateway;
+
+            // Get trimmed class name from config
+            $gatewayClass = config('ptuchik-billing.gateways.'.$paymentGateway.'.class');
+            $gatewayClass = $gatewayClass ? '\\'.ltrim($gatewayClass, '\\') : null;
+
+            // Get Omnipay driver
+            $gatewayDriver = config('ptuchik-billing.gateways.'.$paymentGateway.'.driver');
+
+            // If class from config exists initialize and set as current gateway
+            if (class_exists($gatewayClass)) {
+                $this->gateway = new $gatewayClass($gatewayDriver, $this->isTester());
+
+                // If does not exist and gateway was not provided call this method by passing default gateway
+            } elseif (!$gateway) {
+                return $this->getPaymentGateway(config('ptuchik-billing.default_gateway'));
+
+                // In all other cases, throw an exception
+            } else {
+                throw new Exception(trans(config('ptuchik-billing.translation_prefixes.general').'.invalid_gateway'));
+            }
+        }
+
+        // Return gateway instance
+        return $this->gateway;
     }
 
     /**
@@ -103,7 +136,7 @@ trait Billable
      */
     public function getPaymentGatewayAttribute($value)
     {
-        return empty($value) ? config('laravel-omnipay.default') : $value;
+        return empty($value) ? config('ptuchik-billing.default_gateway') : $value;
     }
 
     /**
@@ -115,7 +148,7 @@ trait Billable
      */
     public function getCurrencyAttribute($value)
     {
-        return empty($value) ? config('laravel-omnipay.currency') : $value;
+        return empty($value) ? config('currency.default') : $value;
     }
 
     /**
@@ -175,14 +208,17 @@ trait Billable
     public function getPaymentCustomer()
     {
         try {
-            return $this->getPaymentGateway()->findCustomer($this->paymentProfile)->send()->getData();
+
+            // Try to get payment customer from gateway
+            return $this->getPaymentGateway()->findCustomer($this->paymentProfile);
+
         } catch (Exception $e) {
 
             // If there was a not found exception, try to recreate payment profile
             if ($e instanceof NotFoundHttpException) {
                 $this->removePaymentProfile();
 
-                return $this->getPaymentGateway()->findCustomer($this->paymentProfile)->send()->getData();
+                return $this->getPaymentGateway()->findCustomer($this->paymentProfile);
             } else {
                 throw $e;
             }
@@ -196,20 +232,7 @@ trait Billable
     public function getPaymentToken()
     {
         // Get and return payment token for user's payment profile
-        return $this->getPaymentGateway()->clientToken()->setCustomerId($this->paymentProfile)->send()->getToken();
-    }
-
-    /**
-     * Set payment gateway config based on user's account status
-     */
-    public function setPaymentGatewayConfig()
-    {
-        if ($this->isTester()) {
-            Omnipay::gateway($this->paymentGateway)->setTestMode(true);
-        } else {
-            Omnipay::gateway($this->paymentGateway)
-                ->setTestMode(config('laravel-omnipay.gateways.'.$this->paymentGateway.'.options.testMode'));
-        }
+        return $this->getPaymentGateway()->getPaymentToken($this->paymentProfile);
     }
 
     /**
@@ -218,13 +241,8 @@ trait Billable
      */
     protected function createPaymentProfile()
     {
-        $profile = $this->getPaymentGateway()->createCustomer()->setCustomerData([
-            'firstName' => $this->firstName,
-            'lastName'  => $this->lastName,
-            'email'     => $this->email
-        ])->send()->getData();
-
-        $paymentProfile = $profile->customer->id;
+        // Create payment profile on gateway
+        $paymentProfile = $this->getPaymentGateway()->createPaymentProfile($this);
 
         $this->paymentProfile = $paymentProfile;
         $this->save();
@@ -307,92 +325,28 @@ trait Billable
     }
 
     /**
-     * Prepare purchase data
-     * @return \Omnipay\Common\Message\RequestInterface
-     */
-    protected function preparePurchaseData() : Omnipay\Common\Message\RequestInterface
-    {
-        // If nonce is provided, create payment method and unset nonce
-        if (Request::filled('nonce')) {
-            $this->createPaymentMethod(Request::input('nonce'));
-            Request::offsetUnset('nonce');
-        }
-
-        // Get payment gateway and set up purchase request with customer ID
-        $purchaseData = $this->getPaymentGateway()->purchase()->setCustomerId($this->paymentProfile);
-
-        // If existing payment method's token is provided, add paymentMethodToken attribute
-        // to request
-        if (Request::filled('token')) {
-            $purchaseData->setPaymentMethodToken(Request::input('token'));
-        }
-
-        // Return purchase data
-        return $purchaseData;
-    }
-
-    /**
-     * Generate transaction descriptor for payment gateway
-     *
-     * @param $descriptor
-     *
-     * @return array
-     */
-    protected function generateDescriptor($descriptor)
-    {
-        return [
-            'name'  => env('TRANSACTION_DESCRIPTOR_PREFIX').'*'.strtoupper(substr($descriptor, 0,
-                    21 - strlen(env('TRANSACTION_DESCRIPTOR_PREFIX')))),
-            'phone' => env('TRANSACTION_DESCRIPTOR_PHONE'),
-            'url'   => env('TRANSACTION_DESCRIPTOR_URL')
-        ];
-    }
-
-    /**
      * Purchase - Generic user's purchase method
      *
      * @param      $amount
-     * @param null $descriptor
+     * @param null $description
      *
      * @return null|\Omnipay\Common\Message\ResponseInterface
      */
-    public function purchase($amount, $descriptor = null)
+    public function purchase($amount, $description = null)
     {
-        // Prepare purchase date
-        $purchaseData = $this->preparePurchaseData();
-
         // If amount is empty, interrupt payment
         if (empty((float) $amount)) {
             return null;
         }
 
+        // Prepare purchase data
+        $purchaseData = $this->getPaymentGateway()->preparePurchaseData($this->paymentProfile, $description);
+
         // Format the given amount
         $purchaseData->setAmount(number_format($amount, 2, '.', ''));
 
-        // Set purchase descriptor
-        $purchaseData->setDescriptor($this->generateDescriptor($descriptor));
-
         // Finally charge user and return the gateway purchase response
         return $purchaseData->send();
-    }
-
-    /**
-     * Refund transaction
-     *
-     * @param $reference
-     *
-     * @return mixed
-     * @throws \Exception
-     */
-    public function refund($reference)
-    {
-        $refund = $this->getPaymentGateway()->refund()->setTransactionReference($reference)->send();
-
-        if (!$refund->isSuccessful()) {
-            throw new Exception($refund->getMessage());
-        }
-
-        return $reference;
     }
 
     /**
@@ -405,13 +359,20 @@ trait Billable
      */
     public function void($reference)
     {
-        $void = $this->getPaymentGateway()->void()->setTransactionReference($reference)->send();
+        return $this->getPaymentGateway()->void($reference);
+    }
 
-        if (!$void->isSuccessful()) {
-            throw new Exception($void->getMessage());
-        }
-
-        return $reference;
+    /**
+     * Refund transaction
+     *
+     * @param $reference
+     *
+     * @return mixed
+     * @throws \Exception
+     */
+    public function refund($reference)
+    {
+        return $this->getPaymentGateway()->refund($reference);
     }
 
     /**
@@ -420,13 +381,10 @@ trait Billable
      */
     public function getPaymentMethods()
     {
-        $paymentMethods = [];
+        // Get payment methods from gateway
+        $paymentMethods = $this->getPaymentGateway()->getPaymentMethods($this->paymentProfile);
 
-        // Get user's all payment methods from gateway and parse the needed data to return
-        foreach ($this->getPaymentCustomer()->paymentMethods as $gatewayPaymentMethod) {
-            $paymentMethods[] = $this->parsePaymentMethod($gatewayPaymentMethod);
-        }
-
+        // If array is not empty, set user's hasPaymentMethod = true
         $this->hasPaymentMethod = !empty($paymentMethods);
         $this->save();
 
@@ -460,14 +418,7 @@ trait Billable
      */
     public function setDefaultPaymentMethod($token)
     {
-        $setDefault = $this->getPaymentGateway()->updatePaymentMethod()->setToken($token)->setMakeDefault(true)->send();
-
-        if (!$setDefault->isSuccessful()) {
-            throw new Exception($setDefault->getMessage());
-        }
-
-        // Parse the result and return the payment method instance
-        return $this->parsePaymentMethod($setDefault->getData()->paymentMethod);
+        return $this->getPaymentGateway()->setDefaultPaymentMethod($token);
     }
 
     /**
@@ -480,20 +431,15 @@ trait Billable
      */
     public function createPaymentMethod($token)
     {
-        // Create a payment method on remote gateway
-        $createPaymentMethod = $this->getPaymentGateway()->createPaymentMethod()->setToken($token)
-            ->setMakeDefault(true)->setCustomerId($this->paymentProfile)->send();
+        // Create payment method
+        $paymentMethod = $this->getPaymentGateway()->createPaymentMethod($this->paymentProfile, $token);
 
-        if (!$createPaymentMethod->isSuccessful()) {
-            throw new Exception($createPaymentMethod->getMessage());
-        }
-
-        // Set if user has any payment methods
+        // Set user's hasPaymentMethod = true
         $this->hasPaymentMethod = true;
         $this->save();
 
-        // Parse the result and return the payment method instance
-        return $this->parsePaymentMethod($createPaymentMethod->getData()->paymentMethod);
+        // Return payment method
+        return $paymentMethod;
     }
 
     /**
@@ -506,101 +452,12 @@ trait Billable
     public function deletePaymentMethod($token)
     {
         // Delete payment method from remote gateway
-        if ($this->getPaymentGateway()->deletePaymentMethod()->setToken($token)->send()->getData()->success) {
+        if ($this->getPaymentGateway()->deletePaymentMethod($token)) {
 
             return $this->getPaymentMethods();
         } else {
             return false;
         }
-    }
-
-    /**
-     * Parse payment method from gateways
-     *
-     * @param $paymentMethod
-     *
-     * @return mixed
-     */
-    public function parsePaymentMethod($paymentMethod)
-    {
-        // Define payment method parser
-        switch (get_class($paymentMethod)) {
-            case CreditCard::class:
-                $parser = 'parseBraintreeCreditCard';
-                break;
-            case PayPalAccount::class:
-                $parser = 'parseBraintreePayPalAccount';
-                break;
-            default:
-                break;
-        }
-
-        // Return parsed result
-        return $this->{$parser}($paymentMethod);
-    }
-
-    /**
-     * Parse Credit Card from Braintree response
-     *
-     * @param $creditCard
-     *
-     * @return object
-     */
-    protected function parseBraintreeCreditCard($creditCard)
-    {
-        return (object) [
-            'token'                  => $creditCard->token,
-            'type'                   => 'credit_card',
-            'default'                => $creditCard->default,
-            'imageUrl'               => $creditCard->imageUrl,
-            'createdAt'              => $creditCard->createdAt,
-            'updatedAt'              => $creditCard->updatedAt,
-            'bin'                    => $creditCard->bin,
-            'last4'                  => $creditCard->last4,
-            'cardType'               => $creditCard->cardType,
-            'expirationMonth'        => $creditCard->expirationMonth,
-            'expirationYear'         => $creditCard->expirationYear,
-            'expired'                => $creditCard->expired,
-            'customerLocation'       => $creditCard->customerLocation,
-            'cardholderName'         => $creditCard->cardholderName,
-            'uniqueNumberIdentifier' => $creditCard->uniqueNumberIdentifier,
-            'prepaid'                => $creditCard->prepaid,
-            'healthcare'             => $creditCard->healthcare,
-            'debit'                  => $creditCard->debit,
-            'durbinRegulated'        => $creditCard->durbinRegulated,
-            'commercial'             => $creditCard->commercial,
-            'payroll'                => $creditCard->payroll,
-            'issuingBank'            => $creditCard->issuingBank,
-            'countryOfIssuance'      => $creditCard->countryOfIssuance,
-            'productId'              => $creditCard->productId,
-            'description'            => $creditCard->cardType.' '.trans('general.ending_in').' '.$creditCard->last4
-        ];
-    }
-
-    /**
-     * Parse PayPal Account from Braintree response
-     *
-     * @param $payPalAccount
-     *
-     * @return object
-     */
-    protected function parseBraintreePayPalAccount($payPalAccount)
-    {
-        return (object) [
-            'token'              => $payPalAccount->token,
-            'type'               => 'paypal_account',
-            'default'            => $payPalAccount->default,
-            'imageUrl'           => $payPalAccount->imageUrl,
-            'createdAt'          => $payPalAccount->createdAt,
-            'updatedAtAt'        => $payPalAccount->updatedAt,
-            'customerId'         => $payPalAccount->customerId,
-            'email'              => $payPalAccount->email,
-            'billingAgreementId' => $payPalAccount->billingAgreementId,
-            'isChannelInitiated' => $payPalAccount->isChannelInitiated,
-            'payerInfo'          => $payPalAccount->payerInfo,
-            'limitedUseOrderId'  => $payPalAccount->limitedUseOrderId,
-            'description'        => $payPalAccount->email
-        ];
     }
 
     /**

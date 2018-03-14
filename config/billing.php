@@ -85,4 +85,20 @@ return [
         // Will receive Subscription instance
         'subscription_expiration_reminder' => null,
     ],
+
+    // Default gateway if user's gateway is empty or invalid
+    'default_gateway'      => 'braintree',
+
+    /**
+     * Add here gateway mappings to Omnipay gateways
+     * @class  -   Payment Gateway class fully qualified name,
+     *             which has to implement \Ptuchik\Billing\Contracts\PaymentGateway interface
+     * @driver -   Omnipay driver class fully qualified name
+     */
+    'gateways'             => [
+        'braintree' => [
+            'class'  => \Ptuchik\Billing\Gateways\Braintree::class,
+            'driver' => 'Braintree'
+        ],
+    ]
 ];

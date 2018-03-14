@@ -36,10 +36,12 @@
     "laravel": {
       "providers": [
         "Ptuchik\\Billing\\Providers\\BillingServiceProvider",
+        "Barryvdh\\Omnipay\\ServiceProvider",
         "Torann\\Currency\\CurrencyServiceProvider"
       ],
       "aliases": {
-        "Currency": "Torann\\Currency\\Facades\\Currency"
+        "Currency": "Torann\\Currency\\Facades\\Currency",
+        "Omnipay": "Barryvdh\\Omnipay\\Facade"
       }
     }
   },
