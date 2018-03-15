@@ -2,6 +2,7 @@
 
 namespace Ptuchik\Billing\Traits;
 
+use Omnipay\Common\Message\ResponseInterface;
 use Ptuchik\Billing\Constants\CouponRedeemType;
 use Ptuchik\Billing\Constants\TransactionStatus;
 use Ptuchik\Billing\Contracts\Hostable;
@@ -123,15 +124,16 @@ trait PurchaseLogic
     /**
      * Prepare plan and purchase
      *
-     * @param \Ptuchik\Billing\Contracts\Hostable $host
+     * @param \Ptuchik\Billing\Contracts\Hostable            $host
+     * @param \Omnipay\Common\Message\ResponseInterface|null $payment
      *
      * @return bool|mixed|\Ptuchik\Billing\Models\Invoice|\Ptuchik\Billing\Traits\Invoice
      */
-    public function purchase(Hostable $host)
+    public function purchase(Hostable $host, ResponseInterface $payment = null)
     {
         // If plan is in renew mode, jump to make purchase
         if ($this->inRenewMode) {
-            return $this->makePurchase();
+            return $this->makePurchase($payment);
         }
 
         // If there is an active subscription
@@ -166,23 +168,24 @@ trait PurchaseLogic
         }
 
         // Purchase plan, purchase additional plans and get invoice
-        return $this->purchaseAdditionalPlans($this->makePurchase());
+        return $this->purchaseAdditionalPlans($this->makePurchase($payment));
     }
 
     /**
      * Purchase additional plans if any
      *
-     * @param \Ptuchik\Billing\Models\Invoice $invoice
+     * @param \Ptuchik\Billing\Models\Invoice                $invoice
+     * @param \Omnipay\Common\Message\ResponseInterface|null $payment
      *
      * @return \Ptuchik\Billing\Models\Invoice
      */
-    protected function purchaseAdditionalPlans(Invoice $invoice)
+    protected function purchaseAdditionalPlans(Invoice $invoice, ResponseInterface $payment = null)
     {
         // Check if plan has additional plans, loop through them, and purchase them also
         if ($this->additionalPlans->isNotEmpty()) {
             foreach ($this->additionalPlans as $additionalPlan) {
                 try {
-                    $invoice->additionalInvoices[] = $additionalPlan->purchase($this->host);
+                    $invoice->additionalInvoices[] = $additionalPlan->purchase($this->host, $payment);
                 } catch (Throwable $exception) {
                     // Do nothing, as they are secondary plans
                 }
@@ -195,23 +198,41 @@ trait PurchaseLogic
 
     /**
      * Make a purchase
-     * @return bool|mixed|\Ptuchik\Billing\Traits\Invoice
+     *
+     * @param \Omnipay\Common\Message\ResponseInterface|null $payment
+     *
+     * @return bool|mixed|\Ptuchik\Billing\Models\Invoice
      */
-    protected function makePurchase()
+    protected function makePurchase(ResponseInterface $payment = null)
     {
-        // If there is no current user, just return
-        if (!$this->user) {
-            return false;
+        // If no payment provided, charge user
+        if (!$payment) {
+
+            // If there is no current user, just return
+            if (!$this->user) {
+                return false;
+            }
+
+            // If plan has trial, no charge required
+            $price = $this->hasTrial ? 0 : $this->summary;
+
+            // Make payment and set the result as plan's payment
+            $this->payment = $this->user->purchase($price, $this->package->descriptor);
+        } else {
+            $this->payment = $payment;
         }
 
-        // If plan has trial, no charge required
-        $price = $this->hasTrial ? 0 : $this->summary;
+        // If response is redirect, interrupt the process
+        if ($this->payment->isRedirect()) {
 
-        // Make payment and set the result as plan's payment
-        $this->payment = $this->user->purchase($price, $this->package->descriptor);
+            // TODO handle this part
+            $this->payment->redirect();
 
-        // Process purchase
-        return $this->processPurchase();
+            // Otherwise continue
+        } else {
+            return $this->processPurchase();
+        }
+
     }
 
     /**
