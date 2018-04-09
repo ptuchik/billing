@@ -7,6 +7,7 @@ use Ptuchik\Billing\Constants\CouponRedeemType;
 use Ptuchik\Billing\Contracts\Hostable;
 use Ptuchik\Billing\Factory;
 use Ptuchik\CoreUtilities\Models\Model;
+use Ptuchik\CoreUtilities\Traits\HasParams;
 
 /**
  * Class Coupon
@@ -14,11 +15,14 @@ use Ptuchik\CoreUtilities\Models\Model;
  */
 class Coupon extends Model
 {
+    use HasParams;
+
     protected $casts = [
         'id'      => 'integer',
         'percent' => 'boolean',
         'redeem'  => 'integer',
-        'prorate' => 'boolean'
+        'prorate' => 'boolean',
+        'params'  => 'array'
     ];
 
     protected $hidden = [
@@ -33,8 +37,13 @@ class Coupon extends Model
         'percent',
         'redeem',
         'prorate',
+        'params',
         'created_at',
         'updated_at'
+    ];
+
+    protected $appends = [
+        'connectedToReferralSystem'
     ];
 
     /**
@@ -44,6 +53,25 @@ class Coupon extends Model
     public function getRouteKeyName()
     {
         return 'code';
+    }
+
+    /**
+     * Connected to referral system attribute getter
+     * @return bool
+     */
+    public function getConnectedToReferralSystemAttribute()
+    {
+        return !empty($this->params['connectedToReferralSystem']);
+    }
+
+    /**
+     * Connected to referral system attribute getter
+     *
+     * @param $value
+     */
+    public function setConnectedToReferralSystemAttribute($value)
+    {
+        $this->setParam('connectedToReferralSystem', !empty($value));
     }
 
     /**

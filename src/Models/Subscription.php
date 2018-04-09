@@ -416,8 +416,7 @@ class Subscription extends Model
      */
     public function isActive()
     {
-        // if it is active or in grace period, return active
-        return $this->active && (is_null($this->endsAt) || $this->onGracePeriod());
+        return $this->active;
     }
 
     /**
@@ -543,26 +542,11 @@ class Subscription extends Model
      */
     public function setParamsFromPlan(Plan $plan)
     {
-        // Get package from plan
-        $package = $plan->package;
-
         // Get and set raw features from plan
         $this->setParam('features', json_decode($plan->getRawAttribute('features')));
 
-        // Get agreement text override from plan and package for all locales
-        $agreementOverrides = [];
-        foreach (config('app.locales', [config('app.locale')]) as $locale => $value) {
-
-            // If there isn't any override, set to null
-            if (!($agreementOverride = $plan->getTranslation('agreement', $locale)) &&
-                !($agreementOverride = $package->getTranslation('agreement', $locale))) {
-                $agreementOverride = null;
-            }
-            $agreementOverrides[$locale] = $agreementOverride;
-        }
-
         // Set agreement override
-        $this->setParam('agreement', $agreementOverrides);
+        $this->setParam('agreement', json_decode($plan->getRawAttribute('agreement')));
 
         return $this;
     }
@@ -585,6 +569,7 @@ class Subscription extends Model
             $package = $purchase->package()->getModel();
             $package->id = $purchase->packageId;
             $package->setRawAttribute('name', $package->getRawAttribute('name'));
+            $package->setRawAttribute('agreement', $package->getRawAttribute('agreement'));
             $package->alias = $packageData['alias'].'-removed-'.time();
             $package->save();
         }
@@ -639,6 +624,29 @@ class Subscription extends Model
     {
         // Call plan's purchase to renew
         return $this->plan->purchase($this->plan->host);
+    }
+
+    /**
+     * Prolong subscription
+     *
+     * @param int $months
+     *
+     * @return $this|bool
+     */
+    public function prolong($months = 0)
+    {
+        // If subscription is not active, return false
+        if (!$this->isActive()) {
+            return false;
+        }
+
+        $this->nextBillingDate = Carbon::createFromFormat('Y-m-d H:i:s', $this->nextBillingDate)->addMonths($months);
+        $this->endsAt = is_null($this->endsAt) ? null : $this->nextBillingDate;
+        $this->trialEndsAt = is_null($this->trialEndsAt) ? null : $this->nextBillingDate;
+
+        $this->save();
+
+        return $this;
     }
 
     /**
