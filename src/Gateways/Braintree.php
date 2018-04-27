@@ -55,11 +55,11 @@ class Braintree implements PaymentGateway
     /**
      * Find customer by profile
      *
-     * @param string $paymentProfile
+     * @param $paymentProfile
      *
      * @return mixed
      */
-    public function findCustomer(string $paymentProfile)
+    public function findCustomer($paymentProfile)
     {
         return $this->gateway->findCustomer($paymentProfile)->send()->getData();
     }
@@ -67,13 +67,13 @@ class Braintree implements PaymentGateway
     /**
      * Create payment method
      *
-     * @param string $paymentProfile
+     * @param $paymentProfile
      * @param string $token
      *
      * @return mixed
      * @throws \Exception
      */
-    public function createPaymentMethod(string $paymentProfile, string $token)
+    public function createPaymentMethod($paymentProfile, string $token)
     {
         // Create a payment method on remote gateway
         $paymentMethod = $this->gateway->createPaymentMethod()->setToken($token)
@@ -90,11 +90,11 @@ class Braintree implements PaymentGateway
     /**
      * Get payment methods
      *
-     * @param string $paymentProfile
+     * @param $paymentProfile
      *
      * @return array
      */
-    public function getPaymentMethods(string $paymentProfile) : array
+    public function getPaymentMethods($paymentProfile) : array
     {
         $paymentMethods = [];
 
@@ -146,7 +146,7 @@ class Braintree implements PaymentGateway
      *
      * @return mixed
      */
-    public function getPaymentToken(string $paymentProfile = null)
+    public function getPaymentToken($paymentProfile = null)
     {
         // Get and return payment token for user's payment profile
         return $this->gateway->clientToken()->setCustomerId($paymentProfile)->send()->getToken();
@@ -160,7 +160,7 @@ class Braintree implements PaymentGateway
      *
      * @return \Omnipay\Common\Message\RequestInterface
      */
-    public function preparePurchaseData(string $paymentProfile, string $description = null) : RequestInterface
+    public function preparePurchaseData($paymentProfile, string $description = null) : RequestInterface
     {
         // If nonce is provided, create payment method and unset nonce
         if (Request::filled('nonce')) {

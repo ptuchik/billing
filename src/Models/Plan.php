@@ -73,7 +73,8 @@ class Plan extends Model
         'isFree',
         'hasTrial',
         'isRecurring',
-        'agreementText'
+        'agreementText',
+        'hasCoupons'
     ];
 
     /**
@@ -233,6 +234,21 @@ class Plan extends Model
     public function additionalPlans()
     {
         return $this->belongsToMany(static::class, 'additional_plans', 'plan_id', 'additional_plan_id');
+    }
+
+    /**
+     * Has coupons attribute getter - checks if plan has manual coupons
+     * @return bool
+     */
+    public function getHasCouponsAttribute()
+    {
+        foreach ($this->coupons as $coupon) {
+            if ($coupon->redeem == Factory::getClass(CouponRedeemType::class)::MANUAL) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

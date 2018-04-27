@@ -21,6 +21,7 @@ class Coupons extends Migration
                 $table->integer('redeem')
                     ->default(\Ptuchik\Billing\Factory::getClass(\Ptuchik\Billing\Constants\CouponRedeemType::class)::INTERNAL);
                 $table->boolean('prorate')->default(false);
+                $table->longText('params')->nullable();
                 $table->timestamps();
             });
         }
