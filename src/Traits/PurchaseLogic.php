@@ -229,7 +229,7 @@ trait PurchaseLogic
         }
 
         // If response is redirect, interrupt the process
-        if ($this->payment->isRedirect()) {
+        if ($this->payment && $this->payment->isRedirect()) {
 
             // TODO handle this part
             $this->payment->redirect();
