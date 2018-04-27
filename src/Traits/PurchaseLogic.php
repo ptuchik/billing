@@ -43,6 +43,12 @@ trait PurchaseLogic
                 break;
             case $redeemTypes::MANUAL:
 
+                // If coupon is connected to referral system and user is enrolled in referral program,
+                // ignore coupon
+                if ($coupon->connectedToReferralSystem && $this->user && $this->user->referralId) {
+                    break;
+                }
+
                 // If redeem type is manual, check if coupon code provided by user, return it
                 if ($coupon->code == Request::input('coupon')) {
                     return $coupon;
