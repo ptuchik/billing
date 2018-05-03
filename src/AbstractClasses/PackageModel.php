@@ -361,7 +361,7 @@ abstract class PackageModel extends Model
     }
 
     /**
-     * Try to get fallback purchase for host, on main package's purchase deavtivation
+     * Try to get fallback purchase for host, on main package's purchase deactivation
      *
      * @param \Ptuchik\Billing\Contracts\Hostable $host
      *
