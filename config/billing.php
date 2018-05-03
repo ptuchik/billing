@@ -23,6 +23,11 @@ return [
     ],
 
     /**
+     * Allow plan downgrade or not
+     */
+    'downgrade_allowed'    => env('DOWNGRADE_ALLOWED', true),
+
+    /**
      * Here you can override the package classes to add your custom functionality and logic
      * Leave the left part unattended and change the right part of overrides to your overriding class name
      */

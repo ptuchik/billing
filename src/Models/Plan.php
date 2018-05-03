@@ -342,10 +342,30 @@ class Plan extends Model
     /**
      * Get previous discount for host
      * @return mixed
+     * @throws \Exception
      */
     public function getPreviousSubscription()
     {
         if (is_null($this->previousSubscription)) {
+
+            // If there is a previous subscription calculate the monthly price difference and determine
+            // if it is going to be upgraded or downgraded
+            if ($this->previousSubscription = $this->package->getPreviousSubscription($this->host)) {
+
+                $previousPlan = $this->previousSubscription->plan;
+                $previousPrice = $previousPlan->price / $previousPlan->billingFrequency;
+                $currentPrice = $this->price / $this->billingFrequency;
+
+                // If current price is lower than previous price, that means it is going to be
+                // downgraded, so we have to check if it is allowed or not
+                if ($currentPrice < $previousPrice && !config('ptuchik-billing.downgrade_allowed')) {
+                    throw new Exception(trans(config('ptuchik-billing.translation_prefixes.plan').'.no_downgrade',
+                        ['newpackage' => $this->package->name, 'oldpackage' => $previousPlan->package->name]));
+                }
+
+            } elseif (!$this->isRecurring) {
+                $this->previousSubscription = $this->package->setPurchase($this->host)->subscription;
+            }
 
             // If there is no previous subscription and current plan is not recurring,
             // try to get current subscription as previous if any
