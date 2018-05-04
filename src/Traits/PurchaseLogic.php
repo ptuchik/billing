@@ -2,6 +2,7 @@
 
 namespace Ptuchik\Billing\Traits;
 
+use Exception;
 use Omnipay\Common\Message\ResponseInterface;
 use Ptuchik\Billing\Constants\CouponRedeemType;
 use Ptuchik\Billing\Constants\TransactionStatus;
@@ -133,7 +134,8 @@ trait PurchaseLogic
      * @param \Ptuchik\Billing\Contracts\Hostable            $host
      * @param \Omnipay\Common\Message\ResponseInterface|null $payment
      *
-     * @return bool|mixed|\Ptuchik\Billing\Models\Invoice|\Ptuchik\Billing\Traits\Invoice
+     * @return bool|mixed|\Ptuchik\Billing\Models\Invoice
+     * @throws \Exception
      */
     public function purchase(Hostable $host, ResponseInterface $payment = null)
     {
@@ -166,6 +168,11 @@ trait PurchaseLogic
                     // If package is not in use and is not in trial, switch to it
                     return $this->useExistingPurchase();
                 }
+
+                // If current plan is not recurring and there is an active subscription,
+                // but switching from recurring to lifetime is not allowed, interrupt the process
+            } elseif (!config('ptuchik-billing.switch_recurring_to_lifetime_allowed')) {
+                throw new Exception(trans(config('ptuchik-billing.translation_prefixes.plan').'.no_switch_to_lifetime'));
             }
 
             // If there is no active subscription but purchase is active, use the existing one
@@ -348,7 +355,8 @@ trait PurchaseLogic
 
     /**
      * Create transaction
-     * @return mixed|\Ptuchik\Billing\Models\Invoice
+     * @return mixed
+     * @throws \Exception
      */
     protected function createTransaction()
     {
@@ -384,7 +392,7 @@ trait PurchaseLogic
             // If payment failed, fire a failed purchase event
             Event::purchaseFailed($this, $transaction);
 
-            throw new Exception(trans('general.payment_processor').': '.$this->payment->getMessage());
+            throw new Exception(trans(config('ptuchik-billing.translation_prefixes.general').'.payment_processor').': '.$this->payment->getMessage());
         }
 
         // Otherwise return an invoice

@@ -5,7 +5,7 @@ return [
     /**
      * Check gifted coupons
      */
-    'check_gifted_coupons' => [
+    'check_gifted_coupons'                 => [
 
         // Indicates by which column to check coupon, available values are 'code', 'id'
         'by'   => env('CHECK_GIFTED_COUPONS_BY', 'code'),
@@ -17,7 +17,7 @@ return [
     /**
      * Prefixes to put before translation strings in trans() usage
      */
-    'translation_prefixes' => [
+    'translation_prefixes'                 => [
         'general' => 'general',
         'plan'    => 'plan',
     ],
@@ -25,13 +25,18 @@ return [
     /**
      * Allow plan downgrade or not
      */
-    'downgrade_allowed'    => env('DOWNGRADE_ALLOWED', true),
+    'downgrade_allowed'                    => env('DOWNGRADE_ALLOWED', true),
+
+    /**
+     * Allow switch recurring subscription to lifetime or not
+     */
+    'switch_recurring_to_lifetime_allowed' => env('SWITCH_RECURRING_TO_LIFETIME_ALLOWED', true),
 
     /**
      * Here you can override the package classes to add your custom functionality and logic
      * Leave the left part unattended and change the right part of overrides to your overriding class name
      */
-    'class_overrides'      => [
+    'class_overrides'                      => [
 
         // Confirmation type constants
         \Ptuchik\Billing\Constants\ConfirmationType::class   => \Ptuchik\Billing\Constants\ConfirmationType::class,
@@ -76,7 +81,7 @@ return [
     /**
      * Here you can define your event classes
      */
-    'events'               => [
+    'events'                               => [
 
         // Will receive Plan and Transaction instances
         'purchase_failed'                  => null,
@@ -92,7 +97,7 @@ return [
     ],
 
     // Default gateway if user's gateway is empty or invalid
-    'default_gateway'      => 'braintree',
+    'default_gateway'                      => 'braintree',
 
     /**
      * Add here gateway mappings to Omnipay gateways
@@ -100,7 +105,7 @@ return [
      *             which has to implement \Ptuchik\Billing\Contracts\PaymentGateway interface
      * @driver -   Omnipay driver class fully qualified name
      */
-    'gateways'             => [
+    'gateways'                             => [
         'braintree' => [
             'class'  => \Ptuchik\Billing\Gateways\Braintree::class,
             'driver' => 'Braintree'
