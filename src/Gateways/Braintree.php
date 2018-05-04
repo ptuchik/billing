@@ -67,7 +67,7 @@ class Braintree implements PaymentGateway
     /**
      * Create payment method
      *
-     * @param $paymentProfile
+     * @param        $paymentProfile
      * @param string $token
      *
      * @return mixed
@@ -298,7 +298,7 @@ class Braintree implements PaymentGateway
             'issuingBank'            => $creditCard->issuingBank,
             'countryOfIssuance'      => $creditCard->countryOfIssuance,
             'productId'              => $creditCard->productId,
-            'description'            => $creditCard->cardType.' '.trans('general.ending_in').' '.$creditCard->last4
+            'description'            => $creditCard->cardType.' '.trans(config('ptuchik-billing.translation_prefixes.general').'.ending_in').' '.$creditCard->last4
         ];
     }
 

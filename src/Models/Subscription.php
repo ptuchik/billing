@@ -467,7 +467,7 @@ class Subscription extends Model
             $agreementOverride = false;
         }
 
-        return $agreementOverride ?: trans('plan.agreement_recurring');
+        return $agreementOverride ?: trans(config('ptuchik-billing.translation_prefixes.plan').'.agreement_recurring');
     }
 
     /**

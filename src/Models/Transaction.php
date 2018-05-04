@@ -93,7 +93,6 @@ class Transaction extends Model
 
     /**
      * User relation
-     *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function user()
@@ -103,7 +102,6 @@ class Transaction extends Model
 
     /**
      * Subscription relation
-     *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function subscription()
@@ -113,7 +111,6 @@ class Transaction extends Model
 
     /**
      * Get transaction data
-     *
      * @return \Braintree\Transaction|mixed
      */
     public function getData()
@@ -139,7 +136,6 @@ class Transaction extends Model
 
     /**
      * Payment method attribute getter
-     *
      * @return object
      */
     public function getPaymentMethodAttribute()
@@ -187,7 +183,7 @@ class Transaction extends Model
             'cardType'        => $creditCard->cardType,
             'expirationMonth' => $creditCard->expirationMonth,
             'expirationYear'  => $creditCard->expirationYear,
-            'description'     => $creditCard->cardType.' '.trans('general.ending_in').' '.$creditCard->last4
+            'description'     => $creditCard->cardType.' '.trans(config('ptuchik-billing.translation_prefixes.general').'.ending_in').' '.$creditCard->last4
         ];
     }
 

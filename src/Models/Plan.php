@@ -146,7 +146,7 @@ class Plan extends Model
     {
         parent::__construct($attributes);
 
-        // Set default current user and default
+        // Set default current user and default host
         $this->host = $this->user = Auth::user();
     }
 
@@ -348,19 +348,28 @@ class Plan extends Model
     {
         if (is_null($this->previousSubscription)) {
 
-            // If there is a previous subscription calculate the monthly price difference and determine
+            // If there is a previous subscription and the current plan is recurring,
+            // calculate the monthly price difference and determine
             // if it is going to be upgraded or downgraded
             if ($this->previousSubscription = $this->package->getPreviousSubscription($this->host)) {
 
-                $previousPlan = $this->previousSubscription->plan;
-                $previousPrice = $previousPlan->price / $previousPlan->billingFrequency;
-                $currentPrice = $this->price / $this->billingFrequency;
+                // If current plan is recurring
+                if ($this->isRecurring) {
+                    $previousPlan = $this->previousSubscription->plan;
+                    $previousPrice = $previousPlan->price / $previousPlan->billingFrequency;
+                    $currentPrice = $this->price / $this->billingFrequency;
 
-                // If current price is lower than previous price, that means it is going to be
-                // downgraded, so we have to check if it is allowed or not
-                if ($currentPrice < $previousPrice && !config('ptuchik-billing.downgrade_allowed')) {
-                    throw new Exception(trans(config('ptuchik-billing.translation_prefixes.plan').'.no_downgrade',
-                        ['newpackage' => $this->package->name, 'oldpackage' => $previousPlan->package->name]));
+                    // If current price is lower than previous price, that means it is going to be
+                    // downgraded, so we have to check if it is allowed or not
+                    if ($currentPrice < $previousPrice && !config('ptuchik-billing.downgrade_allowed')) {
+                        throw new Exception(trans(config('ptuchik-billing.translation_prefixes.plan').'.no_downgrade',
+                            ['newpackage' => $this->package->name, 'oldpackage' => $previousPlan->package->name]));
+                    }
+
+                    // If current plan is not recurring and there is a previous subscription,
+                    // but switching from recurring to lifetime is not allowed, interrupt the process
+                } elseif (!config('ptuchik-billing.switch_recurring_to_lifetime_allowed')) {
+                    throw new Exception(trans(config('ptuchik-billing.translation_prefixes.plan').'.no_switch_to_lifetime'));
                 }
 
             } elseif (!$this->isRecurring) {
