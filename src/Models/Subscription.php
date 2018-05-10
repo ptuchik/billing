@@ -6,6 +6,7 @@ use Auth;
 use Carbon\Carbon;
 use Currency;
 use Exception;
+use Ptuchik\Billing\Constants\PlanVisibility;
 use Ptuchik\Billing\Constants\SubscriptionStatus;
 use Ptuchik\Billing\Constants\TransactionStatus;
 use Ptuchik\Billing\Event;
