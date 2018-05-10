@@ -581,6 +581,16 @@ class Subscription extends Model
     }
 
     /**
+     * Original plan relation
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function originalPlan()
+    {
+        return $this->belongsTo(Factory::getClass(Plan::class), 'alias', 'alias')
+            ->where('plans.visibility', '<>', Factory::getClass(PlanVisibility::class)::DISABLED);
+    }
+
+    /**
      * Plan attribute getter
      * @return mixed|\Ptuchik\Billing\Models\Plan
      */
