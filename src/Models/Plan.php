@@ -502,7 +502,7 @@ class Plan extends Model
      */
     public function getIsFreeAttribute()
     {
-        return empty($this->summary);
+        return empty((float) $this->summary);
     }
 
     /**
