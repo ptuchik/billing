@@ -4,7 +4,6 @@ namespace Ptuchik\Billing\Traits;
 
 use Currency;
 use Ptuchik\Billing\Constants\CouponRedeemType;
-use Ptuchik\Billing\Contracts\PaymentGateway;
 use Ptuchik\Billing\Factory;
 use Ptuchik\Billing\Models\Plan;
 use Ptuchik\Billing\Models\Subscription;
@@ -344,6 +343,14 @@ trait Billable
 
         // Format the given amount
         $purchaseData->setAmount(number_format($amount, 2, '.', ''));
+
+        // Set currency account if any
+        if ($merchantId = config('omnipay.gateways.'
+            .config('ptuchik-billing.gateways.'.$this->paymentGateway.'.driver')
+            .'.currencies.'.Currency::getUserCurrency())) {
+
+            $purchaseData->setMerchantAccountId($merchantId);
+        }
 
         // Finally charge user and return the gateway purchase response
         return $purchaseData->send();
