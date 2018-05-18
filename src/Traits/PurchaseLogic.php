@@ -2,6 +2,7 @@
 
 namespace Ptuchik\Billing\Traits;
 
+use Currency;
 use Exception;
 use Omnipay\Common\Message\ResponseInterface;
 use Ptuchik\Billing\Constants\CouponRedeemType;
@@ -370,6 +371,7 @@ trait PurchaseLogic
         $transaction->price = $this->price;
         $transaction->discount = $this->discount;
         $transaction->summary = 0;
+        $transaction->currency = Currency::getUserCurrency();
         $transaction->coupons = $this->discounts;
 
         // If there is no payment, return an empty invoice
