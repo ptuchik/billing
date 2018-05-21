@@ -15,6 +15,7 @@ use Ptuchik\Billing\Models\Transaction;
 use Ptuchik\CoreUtilities\Constants\DeviceType;
 use Ptuchik\CoreUtilities\Models\Model;
 use Ptuchik\CoreUtilities\Traits\HasIcon;
+use Ptuchik\CoreUtilities\Traits\HasParams;
 use Request;
 
 /**
@@ -24,7 +25,7 @@ use Request;
 abstract class PackageModel extends Model
 {
     // Use icon
-    use HasIcon;
+    use HasIcon, HasParams;
 
     /**
      * Exclude following attributes from sanitizing
@@ -56,6 +57,7 @@ abstract class PackageModel extends Model
         'id'       => 'integer',
         'public'   => 'boolean',
         'features' => 'array',
+        'params'   => 'array'
     ];
 
     /**
