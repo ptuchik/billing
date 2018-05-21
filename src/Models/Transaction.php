@@ -2,6 +2,7 @@
 
 namespace Ptuchik\Billing\Models;
 
+use Currency;
 use Ptuchik\Billing\Factory;
 use Ptuchik\CoreUtilities\Models\Model;
 
@@ -47,7 +48,8 @@ class Transaction extends Model
      * @var array
      */
     protected $appends = [
-        'paymentMethod'
+        'paymentMethod',
+        'currencySymbol'
     ];
 
     /**
@@ -132,6 +134,18 @@ class Transaction extends Model
     public function getCurrencyAttribute($value)
     {
         return $value ?: config('currency.default');
+    }
+
+    /**
+     * Currency symbol attribute getter
+     *
+     * @param $value
+     *
+     * @return \Illuminate\Config\Repository|mixed
+     */
+    public function getCurrencySymbolAttribute()
+    {
+        return array_get(Currency::getCurrency($this->currency), 'symbol');
     }
 
     /**

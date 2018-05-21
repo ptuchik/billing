@@ -59,6 +59,7 @@ class Subscription extends Model
     protected $appends = [
         'discount',
         'summary',
+        'currencySymbol',
         'status',
         'period',
         'duration',
@@ -280,6 +281,18 @@ class Subscription extends Model
     public function getCurrencyAttribute($value)
     {
         return $value ?: config('currency.default');
+    }
+
+    /**
+     * Currency symbol attribute getter
+     *
+     * @param $value
+     *
+     * @return \Illuminate\Config\Repository|mixed
+     */
+    public function getCurrencySymbolAttribute()
+    {
+        return array_get(Currency::getCurrency($this->currency), 'symbol');
     }
 
     /**
@@ -742,7 +755,7 @@ class Subscription extends Model
             }
 
             // Set currency
-            Currency::setUserCurrency($subscription->currency); // TODO check if session exists here
+            Currency::setUserCurrency($subscription->currency);
 
             // Set subscription's attempt and last attempt indicators
             $subscription->attempt = $attempt;
@@ -774,7 +787,7 @@ class Subscription extends Model
             }
 
             // Set currency
-            Currency::setUserCurrency($subscription->currency); // TODO check if session exists here
+            Currency::setUserCurrency($subscription->currency);
 
             // Set subscription's last attempt, to expire it
             $subscription->lastAttempt = true;
@@ -807,7 +820,7 @@ class Subscription extends Model
             }
 
             // Set currency
-            Currency::setUserCurrency($subscription->currency); // TODO check if session exists here
+            Currency::setUserCurrency($subscription->currency);
 
             // Check if user has payment method
             $subscription->user->checkPaymentMethod();
