@@ -33,7 +33,7 @@ trait PackagePurchaseListener
         $this->transaction = $event->transaction;
         $this->subscription = $this->transaction->subscription;
         $this->purchase = $this->transaction->purchase;
-        $this->user = $this->purchase->user;
+        $this->user = $this->transaction->user;
         $this->host = $this->purchase->host;
 
         // If there is no user, interrupt parsing
