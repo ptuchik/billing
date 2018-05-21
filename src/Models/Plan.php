@@ -234,7 +234,7 @@ class Plan extends Model
      */
     public function getCurrencyAttribute()
     {
-        return Currency::getCurrency()['code'];
+        return array_get(Currency::getCurrency(), 'code');
     }
 
     /**
@@ -243,7 +243,7 @@ class Plan extends Model
      */
     public function getCurrencySymbolAttribute()
     {
-        return Currency::getCurrency()['symbol'];
+        return array_get(Currency::getCurrency(), 'symbol');
     }
 
     /**
