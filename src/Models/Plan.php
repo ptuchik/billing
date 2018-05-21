@@ -68,6 +68,8 @@ class Plan extends Model
     protected $appends = [
         'discount',
         'summary',
+        'currency',
+        'currencySymbol',
         'period',
         'duration',
         'isFree',
@@ -224,6 +226,24 @@ class Plan extends Model
 
         // Encode and put back price
         $this->attributes['price'] = json_encode($price);
+    }
+
+    /**
+     * Currency attribute getter
+     * @return mixed
+     */
+    public function getCurrencyAttribute()
+    {
+        return Currency::getCurrency()['code'];
+    }
+
+    /**
+     * Currency symbol attribute getter
+     * @return mixed
+     */
+    public function getCurrencySymbolAttribute()
+    {
+        return Currency::getCurrency()['symbol'];
     }
 
     /**
