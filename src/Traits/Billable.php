@@ -389,7 +389,19 @@ trait Billable
     public function getPaymentMethods()
     {
         // Get payment methods from gateway
-        $paymentMethods = $this->getPaymentGateway()->getPaymentMethods($this->paymentProfile);
+        try {
+            $paymentMethods = $this->getPaymentGateway()->getPaymentMethods($this->paymentProfile);
+        } catch (Exception $e) {
+
+            // If there was a not found exception, try to recreate payment profile
+            if ($e instanceof NotFoundHttpException) {
+                $this->removePaymentProfile();
+
+                $paymentMethods = $this->getPaymentGateway()->getPaymentMethods($this->paymentProfile);
+            } else {
+                $paymentMethods = [];
+            }
+        }
 
         // If array is not empty, set user's hasPaymentMethod = true
         $this->hasPaymentMethod = !empty($paymentMethods);
