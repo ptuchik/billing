@@ -6,7 +6,7 @@ use App\User;
 use Braintree\CreditCard;
 use Braintree\PayPalAccount;
 use Exception;
-use Omnipay;
+use Omnipay\Omnipay;
 use Ptuchik\Billing\Contracts\PaymentGateway;
 use Request;
 use Omnipay\Common\Message\RequestInterface;
@@ -25,13 +25,27 @@ class Braintree implements PaymentGateway
     /**
      * Braintree constructor.
      *
-     * @param string|null $driver
-     * @param bool        $forceTestMode
+     * @param array $config
+     * @param bool  $forceTestMode
      */
-    public function __construct(string $driver = null, bool $forceTestMode = false)
+    public function __construct(array $config = [], bool $forceTestMode = false)
     {
-        $this->gateway = Omnipay::gateway($driver);
-        $this->gateway->setTestMode($forceTestMode ?: config('omnipay.gateways.'.$driver.'.testMode'));
+        $this->gateway = Omnipay::create(array_get($config, 'driver'));
+        $this->setCredentials($config, $forceTestMode ?: !empty(array_get($config, 'testMode')));
+    }
+
+    /**
+     * Set credentials
+     *
+     * @param array $config
+     * @param       $testMode
+     */
+    protected function setCredentials(array $config, $testMode)
+    {
+        $this->gateway->setMerchantId(array_get($config, $testMode ? 'sandboxMerchantId' : 'merchantId'));
+        $this->gateway->setPublicKey(array_get($config, $testMode ? 'sandboxPublicKey' : 'publicKey'));
+        $this->gateway->setPrivateKey(array_get($config, $testMode ? 'sandboxPrivateKey' : 'privateKey'));
+        $this->gateway->setTestMode($testMode);
     }
 
     /**

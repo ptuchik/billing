@@ -70,12 +70,10 @@ trait Billable
             $gatewayClass = config('ptuchik-billing.gateways.'.$paymentGateway.'.class');
             $gatewayClass = $gatewayClass ? '\\'.ltrim($gatewayClass, '\\') : null;
 
-            // Get Omnipay driver
-            $gatewayDriver = config('ptuchik-billing.gateways.'.$paymentGateway.'.driver');
-
             // If class from config exists initialize and set as current gateway
             if (class_exists($gatewayClass)) {
-                $this->gateway = new $gatewayClass($gatewayDriver, $this->isTester());
+                $this->gateway = new $gatewayClass(config('ptuchik-billing.gateways.'.$paymentGateway, []),
+                    $this->isTester());
 
                 // If does not exist and gateway was not provided call this method by passing default gateway
             } elseif (!$gateway) {
