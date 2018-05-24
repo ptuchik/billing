@@ -3,7 +3,6 @@
 namespace Ptuchik\Billing\Models;
 
 use Ptuchik\Billing\Event;
-use Ptuchik\Billing\Factory;
 
 /**
  * Class Invoice
@@ -48,8 +47,6 @@ class Invoice
 
         // If it was not an old invoice, fire new successful purchase event
         if (!$this->old) {
-
-            // Otherwise fire event and return invoice
             Event::purchaseSuccess($plan, $transaction);
         }
     }
