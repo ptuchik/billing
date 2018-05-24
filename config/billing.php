@@ -107,8 +107,20 @@ return [
      */
     'gateways'                             => [
         'braintree' => [
-            'class'  => \Ptuchik\Billing\Gateways\Braintree::class,
-            'driver' => 'Braintree'
+            'class'             => \Ptuchik\Billing\Gateways\Braintree::class,
+            'driver'            => 'Braintree',
+            'merchantId'        => env('BRAINTREE_MERCHANT_ID'),
+            'publicKey'         => env('BRAINTREE_PUBLIC_KEY'),
+            'privateKey'        => env('BRAINTREE_PRIVATE_KEY'),
+            'sandboxMerchantId' => env('BRAINTREE_SANDBOX_MERCHANT_ID'),
+            'sandboxPublicKey'  => env('BRAINTREE_SANDBOX_PUBLIC_KEY'),
+            'sandboxPrivateKey' => env('BRAINTREE_SANDBOX_PRIVATE_KEY'),
+            'testMode'          => env('BRAINTREE_ENV') == 'production' ? false : true,
+
+            // Currency merchant IDs
+            'currencies'        => [
+                'USD' => env('BRAINTREE_USD_MERCHANT_ID'),
+            ]
         ],
     ]
 ];

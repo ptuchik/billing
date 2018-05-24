@@ -14,10 +14,10 @@ interface PaymentGateway
     /**
      * PaymentGateway constructor.
      *
-     * @param string|null $driver
-     * @param bool        $forceTestMode
+     * @param array $config
+     * @param bool  $testMode
      */
-    public function __construct(string $driver = null, bool $forceTestMode = false);
+    public function __construct(array $config = [], bool $testMode = false);
 
     /**
      * Create payment profile
@@ -40,7 +40,7 @@ interface PaymentGateway
     /**
      * Create payment method
      *
-     * @param $paymentProfile
+     * @param        $paymentProfile
      * @param string $token
      *
      * @return mixed
