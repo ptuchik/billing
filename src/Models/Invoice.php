@@ -2,7 +2,7 @@
 
 namespace Ptuchik\Billing\Models;
 
-use App\Events\PackagePurchaseSuccessEvent;
+use Ptuchik\Billing\Event;
 use Ptuchik\Billing\Factory;
 
 /**
@@ -48,7 +48,9 @@ class Invoice
 
         // If it was not an old invoice, fire new successful purchase event
         if (!$this->old) {
-            event(Factory::get(PackagePurchaseSuccessEvent::class, true, $plan, $transaction));
+
+            // Otherwise fire event and return invoice
+            Event::purchaseSuccess($plan, $transaction);
         }
     }
 }

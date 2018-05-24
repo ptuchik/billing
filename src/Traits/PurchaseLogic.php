@@ -376,9 +376,6 @@ trait PurchaseLogic
 
         // If there is no payment, fire an event and return empty invoice
         if (!$this->payment) {
-
-            Event::purchaseSuccess($this, $transaction);
-
             return Factory::get(Invoice::class, true, $this, $transaction);
         }
 
@@ -399,9 +396,6 @@ trait PurchaseLogic
 
             throw new Exception(trans(config('ptuchik-billing.translation_prefixes.general').'.payment_processor').': '.$this->payment->getMessage());
         }
-
-        // Otherwise fire event and return invoice
-        Event::purchaseSuccess($this, $transaction);
 
         return Factory::get(Invoice::class, true, $this, $transaction);
     }
