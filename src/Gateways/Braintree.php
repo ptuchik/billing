@@ -5,6 +5,7 @@ namespace Ptuchik\Billing\Gateways;
 use App\User;
 use Braintree\CreditCard;
 use Braintree\PayPalAccount;
+use Currency;
 use Exception;
 use Omnipay\Omnipay;
 use Ptuchik\Billing\Contracts\PaymentGateway;
@@ -23,6 +24,11 @@ class Braintree implements PaymentGateway
     protected $gateway;
 
     /**
+     * @var array
+     */
+    protected $config;
+
+    /**
      * Braintree constructor.
      *
      * @param array $config
@@ -30,21 +36,21 @@ class Braintree implements PaymentGateway
      */
     public function __construct(array $config = [], bool $forceTestMode = false)
     {
-        $this->gateway = Omnipay::create(array_get($config, 'driver'));
-        $this->setCredentials($config, $forceTestMode ?: !empty(array_get($config, 'testMode')));
+        $this->config = $config;
+        $this->gateway = Omnipay::create(array_get($this->config, 'driver'));
+        $this->setCredentials($forceTestMode ?: !empty(array_get($this->config, 'testMode')));
     }
 
     /**
      * Set credentials
      *
-     * @param array $config
      * @param       $testMode
      */
-    protected function setCredentials(array $config, $testMode)
+    protected function setCredentials($testMode)
     {
-        $this->gateway->setMerchantId(array_get($config, $testMode ? 'sandboxMerchantId' : 'merchantId'));
-        $this->gateway->setPublicKey(array_get($config, $testMode ? 'sandboxPublicKey' : 'publicKey'));
-        $this->gateway->setPrivateKey(array_get($config, $testMode ? 'sandboxPrivateKey' : 'privateKey'));
+        $this->gateway->setMerchantId(array_get($this->config, $testMode ? 'sandboxMerchantId' : 'merchantId'));
+        $this->gateway->setPublicKey(array_get($this->config, $testMode ? 'sandboxPublicKey' : 'publicKey'));
+        $this->gateway->setPrivateKey(array_get($this->config, $testMode ? 'sandboxPrivateKey' : 'privateKey'));
         $this->gateway->setTestMode($testMode);
     }
 
@@ -193,6 +199,11 @@ class Braintree implements PaymentGateway
 
         // Set purchase descriptor
         $purchaseData->setDescriptor($this->generateDescriptor($description));
+
+        // Set currency account if any
+        if ($merchantId = array_get($this->config, 'currencies.'.Currency::getUserCurrency())) {
+            $purchaseData->setMerchantAccountId($merchantId);
+        }
 
         // Return purchase data
         return $purchaseData;

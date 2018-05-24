@@ -342,14 +342,6 @@ trait Billable
         // Format the given amount
         $purchaseData->setAmount(number_format($amount, 2, '.', ''));
 
-        // Set currency account if any
-        if ($merchantId = config('omnipay.gateways.'
-            .config('ptuchik-billing.gateways.'.$this->paymentGateway.'.driver')
-            .'.currencies.'.Currency::getUserCurrency())) {
-
-            $purchaseData->setMerchantAccountId($merchantId);
-        }
-
         // Finally charge user and return the gateway purchase response
         return $purchaseData->send();
     }
