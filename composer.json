@@ -16,8 +16,7 @@
     "type": "library",
     "require": {
         "ptuchik/core-utilities": "^1.0",
-        "ptuchik/braintree": "^1.1",
-        "ptuchik/braintree": "^1.1.3",
+        "omnipay/braintree": "~2.0@dev",
         "torann/currency": "^1.0"
     },
     "autoload": {
