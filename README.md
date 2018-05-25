@@ -2,7 +2,7 @@
 ## Sell anything for everything...
 
 [![Latest Stable Version](https://poser.pugx.org/ptuchik/billing/version.png)](https://packagist.org/packages/ptuchik/billing)
-[![Total Downloads](https://poser.pugx.org/ptuchik/billing/d/total.png)](https://packagist.org/packages/billing)
+[![Total Downloads](https://poser.pugx.org/ptuchik/billing/d/total.png)](https://packagist.org/packages/ptuchik/billing)
 
 Billing package for Laravel 5.5+ supporting packages, plans, coupons, addons, payments and subscriptions with multi currencies
 
