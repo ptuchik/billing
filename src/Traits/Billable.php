@@ -2,6 +2,7 @@
 
 namespace Ptuchik\Billing\Traits;
 
+use Braintree\Exception\NotFound;
 use Currency;
 use Ptuchik\Billing\Constants\CouponRedeemType;
 use Ptuchik\Billing\Factory;
@@ -12,7 +13,6 @@ use Exception;
 use Illuminate\Support\Collection;
 use Ptuchik\CoreUtilities\Traits\HasParams;
 use Ptuchik\Billing\Contracts\Hostable as HostableContract;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Trait Billable - Adds billing related methods
@@ -212,7 +212,7 @@ trait Billable
         } catch (Exception $e) {
 
             // If there was a not found exception, try to recreate payment profile
-            if ($e instanceof NotFoundHttpException) {
+            if ($e instanceof NotFound) {
                 $this->removePaymentProfile();
 
                 return $this->getPaymentGateway()->findCustomer($this->paymentProfile);
@@ -384,7 +384,7 @@ trait Billable
         } catch (Exception $e) {
 
             // If there was a not found exception, try to recreate payment profile
-            if ($e instanceof NotFoundHttpException) {
+            if ($e instanceof NotFound) {
                 $this->removePaymentProfile();
 
                 $paymentMethods = $this->getPaymentGateway()->getPaymentMethods($this->paymentProfile);

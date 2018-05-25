@@ -1,6 +1,9 @@
 # Billing
 ## Sell anything for everything...
 
+[![Latest Stable Version](https://poser.pugx.org/ptuchik/billing/version.png)](https://packagist.org/packages/ptuchik/billing)
+[![Total Downloads](https://poser.pugx.org/ptuchik/billing/d/total.png)](https://packagist.org/packages/billing)
+
 Billing package for Laravel 5.5+ supporting packages, plans, coupons, addons, payments and subscriptions with multi currencies
 
 ---
@@ -85,4 +88,4 @@ Coming soon...
 - [Taylor Otwell](mailto:taylor@laravel.com) for the best framework -  [Laravel](https://laravel.com/)
 - [Daniel Stainback aka Torann](mailto:torann@gmail.com) for [Currencies](http://lyften.com/projects/laravel-currency/)
 - [Spatie](mailto:info@spatie.be) for [Translatable package](https://github.com/spatie/laravel-translatable)
-- [The League of Extraordinary Packages](http://thephpleague.com) for [Omnipay - multi-gateway payment processing library](https://omnipay.thephpleague.com/) (waiting for v3.0 ) ;)
+- [The League of Extraordinary Packages](http://thephpleague.com) for [Omnipay - multi-gateway payment processing library](https://omnipay.thephpleague.com/)
