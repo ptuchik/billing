@@ -17,6 +17,7 @@
     "require": {
         "ptuchik/core-utilities": "^1.0",
         "ptuchik/braintree": "^1.1.3",
+        "php-http/guzzle6-adapter": "^1.1",
         "torann/currency": "^1.0"
     },
     "autoload": {
