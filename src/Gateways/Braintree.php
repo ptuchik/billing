@@ -9,6 +9,7 @@ use Currency;
 use Exception;
 use Omnipay\Omnipay;
 use Ptuchik\Billing\Contracts\PaymentGateway;
+use Ptuchik\Billing\Models\Order;
 use Request;
 use Omnipay\Common\Message\RequestInterface;
 
@@ -175,13 +176,18 @@ class Braintree implements PaymentGateway
     /**
      * Prepare purchase data
      *
-     * @param string      $paymentProfile
-     * @param string|null $description
+     * @param                                    $paymentProfile
+     * @param string|null                        $description
+     * @param \Ptuchik\Billing\Models\Order|null $order
      *
      * @return \Omnipay\Common\Message\RequestInterface
      */
-    public function preparePurchaseData($paymentProfile, string $description = null) : RequestInterface
-    {
+    public function preparePurchaseData(
+        $paymentProfile,
+        string $description = null,
+        Order $order = null
+    ) : RequestInterface {
+
         // If nonce is provided, create payment method and unset nonce
         if (Request::filled('nonce')) {
             $this->createPaymentMethod($paymentProfile, Request::input('nonce'));

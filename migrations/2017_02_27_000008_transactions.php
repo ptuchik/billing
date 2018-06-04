@@ -2,6 +2,8 @@
 
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Ptuchik\Billing\Constants\TransactionStatus;
+use Ptuchik\Billing\Factory;
 
 class Transactions extends Migration
 {
@@ -26,8 +28,7 @@ class Transactions extends Migration
                 $table->foreign('user_id')->references('id')->on('users')->onUpdate('cascade')->onDelete('cascade');
                 $table->string('gateway')->nullable();
                 $table->string('reference')->nullable();
-                $table->boolean('status')
-                    ->default(\Ptuchik\Billing\Factory::getClass(\Ptuchik\Billing\Constants\TransactionStatus::class)::SUCCESS);
+                $table->tinyInteger('status')->default(Factory::getClass(TransactionStatus::class)::SUCCESS);
                 $table->string('message')->nullable();
                 $table->decimal('price', 12, 2)->default(0.00);
                 $table->decimal('discount', 12, 2)->default(0.00);

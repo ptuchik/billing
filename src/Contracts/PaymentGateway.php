@@ -4,6 +4,7 @@ namespace Ptuchik\Billing\Contracts;
 
 use App\User;
 use Omnipay\Common\Message\RequestInterface;
+use Ptuchik\Billing\Models\Order;
 
 /**
  * Interface PaymentGateway
@@ -87,12 +88,17 @@ interface PaymentGateway
     /**
      * Prepare purchase data
      *
-     * @param string      $paymentProfile
-     * @param string|null $description
+     * @param                                    $paymentProfile
+     * @param string|null                        $description
+     * @param \Ptuchik\Billing\Models\Order|null $order
      *
      * @return \Omnipay\Common\Message\RequestInterface
      */
-    public function preparePurchaseData($paymentProfile, string $description = null) : RequestInterface;
+    public function preparePurchaseData(
+        $paymentProfile,
+        string $description = null,
+        Order $order = null
+    ) : RequestInterface;
 
     /**
      * Void transaction

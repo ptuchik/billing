@@ -2,6 +2,7 @@
 
 namespace Ptuchik\Billing\Traits;
 
+use Auth;
 use Currency;
 use Exception;
 use Omnipay\Common\Message\ResponseInterface;
@@ -12,6 +13,7 @@ use Ptuchik\Billing\Event;
 use Ptuchik\Billing\Factory;
 use Ptuchik\Billing\Models\Coupon;
 use Ptuchik\Billing\Models\Invoice;
+use Ptuchik\Billing\Models\Order;
 use Ptuchik\Billing\Models\Transaction;
 use Request;
 use Throwable;
@@ -134,15 +136,16 @@ trait PurchaseLogic
      *
      * @param \Ptuchik\Billing\Contracts\Hostable            $host
      * @param \Omnipay\Common\Message\ResponseInterface|null $payment
+     * @param \Ptuchik\Billing\Models\Order|null             $order
      *
      * @return bool|mixed|\Ptuchik\Billing\Models\Invoice
      * @throws \Exception
      */
-    public function purchase(Hostable $host, ResponseInterface $payment = null)
+    public function purchase(Hostable $host, ResponseInterface $payment = null, Order $order = null)
     {
         // If plan is in renew mode, jump to make purchase
         if ($this->inRenewMode) {
-            return $this->makePurchase($payment);
+            return $this->makePurchase($payment, $order);
         }
 
         // If there is an active subscription
@@ -182,7 +185,7 @@ trait PurchaseLogic
         }
 
         // Purchase plan, purchase additional plans and get invoice
-        return $this->purchaseAdditionalPlans($this->makePurchase($payment));
+        return $this->purchaseAdditionalPlans($this->makePurchase($payment, $order));
     }
 
     /**
@@ -214,10 +217,11 @@ trait PurchaseLogic
      * Make a purchase
      *
      * @param \Omnipay\Common\Message\ResponseInterface|null $payment
+     * @param \Ptuchik\Billing\Models\Order|null             $order
      *
      * @return bool|mixed|\Ptuchik\Billing\Models\Invoice
      */
-    protected function makePurchase(ResponseInterface $payment = null)
+    protected function makePurchase(ResponseInterface $payment = null, Order $order = null)
     {
         // If no payment provided, charge user
         if (!$payment) {
@@ -231,15 +235,14 @@ trait PurchaseLogic
             $price = $this->hasTrial ? 0 : $this->summary;
 
             // Make payment and set the result as plan's payment
-            $this->payment = $this->user->purchase($price, $this->package->descriptor);
+            $this->payment = $this->user->purchase($price, $this->package->descriptor, $order);
         } else {
             $this->payment = $payment;
         }
 
         // If response is redirect, interrupt the process
-        if ($this->payment && $this->payment->isRedirect()) {
+        if ($this->payment && Auth::user() && $this->payment->isRedirect()) {
 
-            // TODO handle this part
             $this->payment->redirect();
 
             // Otherwise continue

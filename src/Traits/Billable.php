@@ -6,6 +6,7 @@ use Braintree\Exception\NotFound;
 use Currency;
 use Ptuchik\Billing\Constants\CouponRedeemType;
 use Ptuchik\Billing\Factory;
+use Ptuchik\Billing\Models\Order;
 use Ptuchik\Billing\Models\Plan;
 use Ptuchik\Billing\Models\Subscription;
 use Ptuchik\Billing\Models\Transaction;
@@ -324,12 +325,13 @@ trait Billable
     /**
      * Purchase - Generic user's purchase method
      *
-     * @param      $amount
-     * @param null $description
+     * @param                                    $amount
+     * @param null                               $description
+     * @param \Ptuchik\Billing\Models\Order|null $order
      *
-     * @return null|\Omnipay\Common\Message\ResponseInterface
+     * @return null
      */
-    public function purchase($amount, $description = null)
+    public function purchase($amount, $description = null, Order $order = null)
     {
         // If amount is empty, interrupt payment
         if (empty((float) $amount)) {
@@ -337,7 +339,7 @@ trait Billable
         }
 
         // Prepare purchase data
-        $purchaseData = $this->getPaymentGateway()->preparePurchaseData($this->paymentProfile, $description);
+        $purchaseData = $this->getPaymentGateway()->preparePurchaseData($this->paymentProfile, $description, $order);
 
         // Format the given amount
         $purchaseData->setAmount(number_format($amount, 2, '.', ''));

@@ -2,6 +2,9 @@
 
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Ptuchik\Billing\Constants\ConfirmationType;
+use Ptuchik\Billing\Factory;
+use Ptuchik\CoreUtilities\Constants\DeviceType;
 
 class Confirmations extends Migration
 {
@@ -19,9 +22,8 @@ class Confirmations extends Migration
                 $table->longText('body')->nullable();
                 $table->text('button')->nullable();
                 $table->text('url')->nullable();
-                $table->integer('type')
-                    ->default(\Ptuchik\Billing\Factory::getClass(\Ptuchik\Billing\Constants\ConfirmationType::class)::PAID);
-                $table->integer('device')->default(\Ptuchik\CoreUtilities\Constants\DeviceType::ALL);
+                $table->integer('type')->default(Factory::getClass(ConfirmationType::class)::PAID);
+                $table->integer('device')->default(DeviceType::ALL);
                 $table->nullableMorphs('package');
                 $table->timestamps();
             });
