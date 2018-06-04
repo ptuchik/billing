@@ -339,7 +339,12 @@ trait Billable
         }
 
         // Prepare purchase data
-        $purchaseData = $this->getPaymentGateway()->preparePurchaseData($this->paymentProfile, $description, $order);
+        $purchaseData = $this->getPaymentGateway()->preparePurchaseData($this->paymentProfile, $description);
+
+        // Set transaction ID from $order if provided
+        if ($order) {
+            $purchaseData->setTransactionId($order->id);
+        }
 
         // Format the given amount
         $purchaseData->setAmount(number_format($amount, 2, '.', ''));
