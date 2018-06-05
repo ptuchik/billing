@@ -209,7 +209,7 @@ abstract class PackageModel extends Model
      */
     public function getPurchaseIdentifier(Purchase $purchase)
     {
-        return $purchase->host->getRouteKey();
+        return $purchase->host ? $purchase->host->getRouteKey() : $this->name;
     }
 
     /**
@@ -399,8 +399,8 @@ abstract class PackageModel extends Model
     {
         // Try to get an existing purchase for current package on current host,
         // and if not found create one
-        if (!$purchase = $host->purchases()->where('package_id', $this->id)
-            ->where('package_type', $this->getMorphClass())->first()) {
+        if (!$host || !$purchase = $host->purchases()->where('package_id', $this->id)
+                ->where('package_type', $this->getMorphClass())->first()) {
 
             $purchase = Factory::get(Purchase::class, true);
             $purchase->setRawAttribute('name', $this->getRawAttribute('name'));
