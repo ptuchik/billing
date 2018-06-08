@@ -170,24 +170,33 @@ abstract class PackageModel extends Model
     }
 
     /**
+     * All plans relation
+     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     */
+    public function allPlans()
+    {
+        return $this->morphMany(Factory::getClass(Plan::class), 'package')
+            ->orderBy('plans.id', 'asc');
+    }
+
+    /**
      * Plans relation
      * @return \Illuminate\Database\Eloquent\Relations\MorphMany
      */
     public function plans()
     {
         // Get all visible plans for package
-        $query = $this->morphMany(Factory::getClass(Plan::class), 'package')
-            ->where(function ($query) {
-                $query->where('plans.visibility', Factory::getClass(PlanVisibility::class)::VISIBLE);
+        $query = $this->allPlans()->where(function ($query) {
+            $query->where('plans.visibility', Factory::getClass(PlanVisibility::class)::VISIBLE);
 
-                // If additional plans are requested, include them also
-                if (Request::filled('additional')) {
-                    $query->orWhere(function ($query) {
-                        $query->whereIn('plans.alias', explode(',', Request::input('additional')));
-                        $query->where('plans.visibility', Factory::getClass(PlanVisibility::class)::HIDDEN);
-                    });
-                }
-            });
+            // If additional plans are requested, include them also
+            if (Request::filled('additional')) {
+                $query->orWhere(function ($query) {
+                    $query->whereIn('plans.alias', explode(',', Request::input('additional')));
+                    $query->where('plans.visibility', Factory::getClass(PlanVisibility::class)::HIDDEN);
+                });
+            }
+        });
 
         // If frequncy is requested, get only plans with matching frequencies
         if (Request::filled('frequency')) {
@@ -196,8 +205,7 @@ abstract class PackageModel extends Model
 
         // Order by ordering and return result query
         return $query->orderBy('plans.ordering', 'asc')
-            ->orderBy('plans.billing_frequency', 'desc')
-            ->orderBy('plans.id', 'asc');
+            ->orderBy('plans.billing_frequency', 'desc');
     }
 
     /**
