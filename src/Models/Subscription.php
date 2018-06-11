@@ -694,7 +694,7 @@ class Subscription extends Model
         $subscription->coupons = $plan->discounts;
         $subscription->addons = $plan->addonCoupons;
         $subscription->billingFrequency = $plan->billingFrequency;
-        $subscription->trialEndsAt = null;
+        $subscription->trialEndsAt = $this->trialEndsAt;
         $subscription->nextBillingDate = $this->nextBillingDate;
 
         // If user has no payment methods, start non-recurring subscription
