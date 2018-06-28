@@ -149,7 +149,7 @@ trait Billable
             $value = empty($value) ? config('ptuchik-billing.default_gateway') : $value;
 
             // If current currency has limited gateways
-            if ($gateways = array_wrap(array_get('ptuchik-billing.currency_limited_gateways.'.Currency::getUserCurrency()))) {
+            if ($gateways = array_wrap(config('ptuchik-billing.currency_limited_gateways.'.Currency::getUserCurrency()))) {
 
                 // If user's gateway exists among currency limited gateways, return it
                 if (in_array($value, $gateways)) {
