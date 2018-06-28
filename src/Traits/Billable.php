@@ -30,6 +30,12 @@ trait Billable
     protected $gateway;
 
     /**
+     * Payment gateway name
+     * @var string
+     */
+    protected $gatewayName;
+
+    /**
      * Balance attribute getter
      *
      * @param $value
@@ -75,6 +81,9 @@ trait Billable
             if (class_exists($gatewayClass)) {
                 $this->gateway = new $gatewayClass(config('ptuchik-billing.gateways.'.$paymentGateway, []),
                     $this->isTester());
+
+                // Set current payment gateway
+                $this->paymentGateway = $paymentGateway;
 
                 // If does not exist and gateway was not provided call this method by passing default gateway
             } elseif (!$gateway) {
@@ -134,7 +143,40 @@ trait Billable
      */
     public function getPaymentGatewayAttribute($value)
     {
-        return empty($value) ? config('ptuchik-billing.default_gateway') : $value;
+        if (is_null($this->gatewayName)) {
+
+            // If user has no gateway, get default gateway
+            $value = empty($value) ? config('ptuchik-billing.default_gateway') : $value;
+
+            // If current currency has limited gateways
+            if ($gateways = array_wrap(array_get('ptuchik-billing.currency_limited_gateways.'.Currency::getUserCurrency()))) {
+
+                // If user's gateway exists among currency limited gateways, return it
+                if (in_array($value, $gateways)) {
+                    $this->gatewayName = $value;
+
+                    // Otherwise return the first gateway from the list
+                } else {
+                    $this->gatewayName = array_first($gateways);
+                }
+
+                // Otherwise return user's gateway
+            } else {
+                $this->gatewayName = $value;
+            }
+        }
+
+        return $this->gatewayName;
+    }
+
+    /**
+     * Payment gateway setter
+     *
+     * @param $value
+     */
+    public function setPaymentGatewayAttribute($value)
+    {
+        $this->attributes['payment_gateway'] = $this->gatewayName = $value;
     }
 
     /**
