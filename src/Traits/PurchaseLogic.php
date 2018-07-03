@@ -421,7 +421,7 @@ trait PurchaseLogic
 
         // If there is a previous subscription, cancel and refund user
         if ($this->previousSubscription) {
-            $this->previousSubscription->cancelAndRefund($this, 0);
+            $this->previousSubscription->cancelAndRefund($this);
         }
 
         // Try to get the last successful transaction for current purchase
