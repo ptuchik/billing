@@ -30,7 +30,7 @@ class Plan extends Model
      */
     protected $unsanitized = [
         'agreement',
-//        'features',
+        'features',
         'description',
     ];
 
@@ -42,7 +42,7 @@ class Plan extends Model
         'name',
         'agreement',
         'description',
-//        'features'
+        'features'
     ];
 
     /**
@@ -58,7 +58,7 @@ class Plan extends Model
         'moneyback'         => 'boolean',
         'recommended'       => 'boolean',
         'package_id'        => 'integer',
-//        'features'          => 'array'
+        'features'          => 'array'
     ];
 
     /**
