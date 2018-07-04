@@ -30,7 +30,7 @@ class Plan extends Model
      */
     protected $unsanitized = [
         'agreement',
-        'features',
+//        'features',
         'description',
     ];
 
@@ -42,7 +42,7 @@ class Plan extends Model
         'name',
         'agreement',
         'description',
-        'features'
+//        'features'
     ];
 
     /**
@@ -58,7 +58,7 @@ class Plan extends Model
         'moneyback'         => 'boolean',
         'recommended'       => 'boolean',
         'package_id'        => 'integer',
-        'features'          => 'array'
+//        'features'          => 'array'
     ];
 
     /**
@@ -189,6 +189,14 @@ class Plan extends Model
             ->where('coupons.redeem', Factory::getClass(CouponRedeemType::class)::INTERNAL);
     }
 
+    /**
+     * Features relation
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function features()
+    {
+        return $this->belongsToMany(Factory::getClass(Feature::class), 'plan_features');
+    }
     /**
      * Price attribute getter
      *
