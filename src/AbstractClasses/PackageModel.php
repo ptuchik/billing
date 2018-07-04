@@ -498,11 +498,12 @@ abstract class PackageModel extends Model
     {
         if ($plan->payment) {
             switch ($plan->payment->getCode()) {
-                case 'settling':
-                case 'settled':
-                    return $plan->user->refund($plan->payment->getTransactionReference());
-                default:
+                case 'authorized':
+                case 'submitted_for_settlement':
+                case 'settlement_pending':
                     return $plan->user->void($plan->payment->getTransactionReference());
+                default:
+                    return $plan->user->refund($plan->payment->getTransactionReference());
             }
         }
     }
