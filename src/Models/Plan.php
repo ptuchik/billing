@@ -57,7 +57,8 @@ class Plan extends Model
         'trial_days'        => 'integer',
         'billing_frequency' => 'integer',
         'package_id'        => 'integer',
-        'features'          => 'array'
+        'features'          => 'array',
+        'params'            => 'array'
     ];
 
     /**
