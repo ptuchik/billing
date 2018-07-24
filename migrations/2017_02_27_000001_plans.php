@@ -25,9 +25,8 @@ class Plans extends Migration
                 $table->text('price')->nullable();
                 $table->integer('trial_days')->default(0);
                 $table->integer('billing_frequency')->default(0);
-                $table->boolean('moneyback')->default(false);
-                $table->boolean('recommended')->default(false);
                 $table->morphs('package');
+                $table->longText('params')->nullable();
                 $table->timestamps();
             });
         }
