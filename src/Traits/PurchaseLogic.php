@@ -161,7 +161,7 @@ trait PurchaseLogic
                     if ($subscription->billingFrequency == $this->billingFrequency) {
 
                         // Call subscription's renew
-                        return $subscription->renew();
+                        return $subscription->renew($payment);
                     } else {
 
                         // Otherwise switch subscriptions billing frequency and price
@@ -185,7 +185,7 @@ trait PurchaseLogic
         }
 
         // Purchase plan, purchase additional plans and get invoice
-        return $this->purchaseAdditionalPlans($this->makePurchase($payment, $order));
+        return $this->purchaseAdditionalPlans($this->makePurchase($payment, $order), $payment);
     }
 
     /**
@@ -247,6 +247,10 @@ trait PurchaseLogic
 
             // Otherwise continue
         } else {
+
+            // Get summary to calculate discounts and summary
+            $this->summary;
+
             return $this->processPurchase();
         }
 
@@ -417,7 +421,7 @@ trait PurchaseLogic
 
         // If there is a previous subscription, cancel and refund user
         if ($this->previousSubscription) {
-            $this->previousSubscription->cancelAndRefund($this, 0);
+            $this->previousSubscription->cancelAndRefund($this);
         }
 
         // Try to get the last successful transaction for current purchase
