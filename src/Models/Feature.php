@@ -43,6 +43,6 @@ class Feature extends Model
      */
     public function plans()
     {
-        return $this->belongsToMany();
+        return $this->belongsToMany(Factory::getClass(Feature::class), 'plan_features');
     }
 }
