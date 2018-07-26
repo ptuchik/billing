@@ -17,6 +17,7 @@ class Features extends Migration
             Schema::create('features', function (Blueprint $table) {
                 $table->increments('id');
                 $table->text('title')->nullable();
+                $table->longText('description')->nullable();
                 $table->string('package_type');
                 $table->timestamps();
             });

@@ -23,7 +23,8 @@ class Feature extends Model
      * @var array
      */
     public $translatable = [
-        'title'
+        'title',
+        'description'
     ];
 
     /**

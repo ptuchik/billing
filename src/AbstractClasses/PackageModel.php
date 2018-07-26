@@ -689,4 +689,14 @@ abstract class PackageModel extends Model
 
         return parent::delete();
     }
+
+    /**
+     * Package Features relation
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\morphToMany
+     */
+    public function features()
+    {
+        return $this->morphToMany(Factory::getClass(Feature::class), 'package', 'packages_features');
+    }
 }
