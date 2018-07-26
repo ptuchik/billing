@@ -37,12 +37,12 @@ class Feature extends Model
     ];
 
     /**
-     * Package relation
+     * Plans relation
      *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
-    public function package()
+    public function plans()
     {
-        return $this->morphTo();
+        return $this->belongsToMany();
     }
 }
