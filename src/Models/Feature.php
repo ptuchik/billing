@@ -48,6 +48,6 @@ class Feature extends Model
 
     public function features()
     {
-        return $this->morphedByMany(Factory::getClass(Sites::class), 'package', 'packages_features');
+        return $this->morphedByMany(Factory::getClass(Sites::class), 'package', 'package_features');
     }
 }

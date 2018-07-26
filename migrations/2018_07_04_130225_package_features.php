@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
@@ -16,8 +15,7 @@ class PackageFeatures extends Migration
         if (!Schema::hasTable('package_features')) {
             Schema::create('package_features', function (Blueprint $table) {
                 $table->unsignedInteger('feature_id');
-                $table->unsignedInteger('package_id');
-                $table->string("package_type");
+                $table->morphs('package');
                 $table->foreign('feature_id')->references('id')->on('features')->onUpdate('cascade')->onDelete('cascade');
             });
         }

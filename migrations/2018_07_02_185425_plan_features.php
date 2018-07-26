@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
@@ -15,10 +14,10 @@ class PlanFeatures extends Migration
     {
         if (!Schema::hasTable('plan_features')) {
             Schema::create('plan_features', function (Blueprint $table) {
-                $table->unsignedInteger('plan_id');
                 $table->unsignedInteger('feature_id');
-                $table->foreign('plan_id')->references('id')->on('plans')->onUpdate('cascade')->onDelete('cascade');
+                $table->unsignedInteger('plan_id');
                 $table->foreign('feature_id')->references('id')->on('features')->onUpdate('cascade')->onDelete('cascade');
+                $table->foreign('plan_id')->references('id')->on('plans')->onUpdate('cascade')->onDelete('cascade');
             });
         }
     }

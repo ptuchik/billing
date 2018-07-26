@@ -698,6 +698,6 @@ abstract class PackageModel extends Model
      */
     public function features()
     {
-        return $this->morphToMany(Factory::getClass(Feature::class), 'package', 'packages_features');
+        return $this->morphToMany(Factory::getClass(Feature::class), 'package', 'package_features');
     }
 }
