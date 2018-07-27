@@ -1,8 +1,10 @@
 <?php
+
 namespace Ptuchik\Billing\Models;
 
 use App\Factory;
 use Ptuchik\CoreUtilities\Models\Model;
+use Ptuchik\CoreUtilities\Traits\HasParams;
 
 /**
  * Class Features
@@ -10,12 +12,15 @@ use Ptuchik\CoreUtilities\Models\Model;
  */
 class Feature extends Model
 {
+    use HasParams;
+    
     /**
      * Cast following attributes
      * @var array
      */
     protected $casts = [
-        'id' => 'integer'
+        'id'     => 'integer',
+        'params' => 'array'
     ];
 
     /**
@@ -38,7 +43,6 @@ class Feature extends Model
 
     /**
      * Plans relation
-     *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
     public function plans()
