@@ -14,6 +14,11 @@ class Feature extends Model
 {
     use HasParams;
     
+    protected $fillable = [
+        'id',
+        'ordering'
+    ];
+    
     /**
      * Cast following attributes
      * @var array
