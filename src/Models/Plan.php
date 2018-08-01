@@ -92,7 +92,10 @@ class Plan extends Model
      * Hide coupons
      * @var array
      */
-    protected $hidden = ['coupons'];
+    protected $hidden = [
+        'coupons',
+        'activeFeatures'
+    ];
 
     /**
      * Discounts collection, which still needs to be calculated
@@ -250,13 +253,14 @@ class Plan extends Model
     }
 
     /**
-     * Features relation
+     * Active features relation
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
-    public function features()
+    public function activeFeatures()
     {
         return $this->belongsToMany(Factory::getClass(Feature::class), 'plan_features');
     }
+
     /**
      * Price attribute getter
      *

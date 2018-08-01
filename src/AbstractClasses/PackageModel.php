@@ -8,6 +8,7 @@ use Ptuchik\Billing\Constants\PlanVisibility;
 use Ptuchik\Billing\Contracts\Hostable;
 use Ptuchik\Billing\Factory;
 use Ptuchik\Billing\Models\Confirmation;
+use Ptuchik\Billing\Models\Feature;
 use Ptuchik\Billing\Models\Plan;
 use Ptuchik\Billing\Models\Purchase;
 use Ptuchik\Billing\Models\Subscription;
