@@ -47,11 +47,29 @@ class Feature extends Model
     ];
 
     /**
+     * Append following attributes
+     * @var array
+     */
+    protected $appends = [
+        'active'
+    ];
+
+    /**
      * Plans relation
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
     public function plans()
     {
         return $this->belongsToMany(Factory::getClass(Feature::class), 'plan_features');
+    }
+
+    /**
+     * @param $value
+     *
+     * @return bool
+     */
+    public function getActiveAttribute($value):bool
+    {
+        return $this->plans()->exists();
     }
 }
