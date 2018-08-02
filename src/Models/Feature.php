@@ -46,13 +46,6 @@ class Feature extends Model
         'updated_at'
     ];
 
-    /**
-     * Append following attributes
-     * @var array
-     */
-    protected $appends = [
-        'active'
-    ];
 
     /**
      * Plans relation
@@ -60,16 +53,7 @@ class Feature extends Model
      */
     public function plans()
     {
-        return $this->belongsToMany(Factory::getClass(Feature::class), 'plan_features');
+        return $this->belongsToMany(Factory::getClass(Plan::class), 'plan_features');
     }
 
-    /**
-     * @param $value
-     *
-     * @return bool
-     */
-    public function getActiveAttribute($value):bool
-    {
-        return $this->plans()->exists();
-    }
 }

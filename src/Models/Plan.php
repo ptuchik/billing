@@ -263,14 +263,14 @@ class Plan extends Model
 
 
     /**
-     * Active features relation
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * All features relation
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    public function Features()
+    public function allFeatures()
     {
-        return $this->hasMany(Factory::getClass(Feature::class), 'package_type','package_type');
+        return $this->hasMany(Factory::getClass(Feature::class), 'package_type', 'package_type')
+            ->orderBy('ordering');
     }
-
 
     /**
      * Price attribute getter
