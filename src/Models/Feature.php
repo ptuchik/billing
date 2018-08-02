@@ -13,12 +13,12 @@ use Ptuchik\CoreUtilities\Traits\HasParams;
 class Feature extends Model
 {
     use HasParams;
-    
+
     protected $fillable = [
         'id',
         'ordering'
     ];
-    
+
     /**
      * Cast following attributes
      * @var array
@@ -26,6 +26,14 @@ class Feature extends Model
     protected $casts = [
         'id'     => 'integer',
         'params' => 'array'
+    ];
+
+    /**
+     * Get group with features
+     * @var array
+     */
+    protected $with = [
+        'group'
     ];
 
     /**
@@ -46,7 +54,6 @@ class Feature extends Model
         'updated_at'
     ];
 
-
     /**
      * Plans relation
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
@@ -56,4 +63,12 @@ class Feature extends Model
         return $this->belongsToMany(Factory::getClass(Plan::class), 'plan_features');
     }
 
+    /**
+     * Group relation
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function group()
+    {
+        return $this->belongsTo(Factory::getClass(FeatureGroup::class), 'group_id');
+    }
 }

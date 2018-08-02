@@ -3,7 +3,7 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class Features extends Migration
+class FeatureGroups extends Migration
 {
     /**
      * Run the migrations.
@@ -11,17 +11,14 @@ class Features extends Migration
      */
     public function up()
     {
-        if (!Schema::hasTable('features')) {
-            Schema::create('features', function (Blueprint $table) {
+        if (!Schema::hasTable('feature_groups')) {
+            Schema::create('feature_groups', function (Blueprint $table) {
                 $table->increments('id');
                 $table->text('title')->nullable();
                 $table->longText('description')->nullable();
                 $table->longText('params')->nullable();
                 $table->integer('ordering')->default(1);
                 $table->string('package_type');
-                $table->unsignedInteger('group_id');
-                $table->foreign('group_id')->references('id')->on('feature_groups')->onUpdate('cascade')
-                    ->onDelete('set null');
                 $table->timestamps();
             });
         }
@@ -33,8 +30,8 @@ class Features extends Migration
      */
     public function down()
     {
-        if (Schema::hasTable('features')) {
-            Schema::dropIfExists('features');
+        if (Schema::hasTable('feature_groups')) {
+            Schema::dropIfExists('feature_groups');
         }
     }
 }
