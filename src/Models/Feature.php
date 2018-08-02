@@ -46,12 +46,14 @@ class Feature extends Model
         'updated_at'
     ];
 
+
     /**
      * Plans relation
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
     public function plans()
     {
-        return $this->belongsToMany(Factory::getClass(Feature::class), 'plan_features');
+        return $this->belongsToMany(Factory::getClass(Plan::class), 'plan_features');
     }
+
 }

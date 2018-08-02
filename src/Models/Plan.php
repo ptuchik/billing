@@ -261,6 +261,17 @@ class Plan extends Model
         return $this->belongsToMany(Factory::getClass(Feature::class), 'plan_features');
     }
 
+
+    /**
+     * All features relation
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function allFeatures()
+    {
+        return $this->hasMany(Factory::getClass(Feature::class), 'package_type', 'package_type')
+            ->orderBy('ordering');
+    }
+
     /**
      * Price attribute getter
      *
