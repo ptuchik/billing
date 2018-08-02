@@ -18,6 +18,7 @@ class Features extends Migration
                 $table->text('title')->nullable();
                 $table->longText('description')->nullable();
                 $table->longText('params')->nullable();
+                $table->integer('ordering')->default(1);
                 $table->string('package_type');
                 $table->timestamps();
             });
