@@ -15,10 +15,7 @@ class FeatureGroups extends Migration
             Schema::create('feature_groups', function (Blueprint $table) {
                 $table->increments('id');
                 $table->text('title')->nullable();
-                $table->longText('description')->nullable();
-                $table->longText('params')->nullable();
-                $table->integer('ordering')->default(1);
-                $table->string('package_type');
+                $table->string('alias')->nullable();
                 $table->timestamps();
             });
         }

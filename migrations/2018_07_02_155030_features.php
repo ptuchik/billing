@@ -19,7 +19,7 @@ class Features extends Migration
                 $table->longText('params')->nullable();
                 $table->integer('ordering')->default(1);
                 $table->string('package_type');
-                $table->unsignedInteger('group_id');
+                $table->unsignedInteger('group_id')->nullable();
                 $table->foreign('group_id')->references('id')->on('feature_groups')->onUpdate('cascade')
                     ->onDelete('set null');
                 $table->timestamps();
