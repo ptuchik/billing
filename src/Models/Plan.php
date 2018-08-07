@@ -26,6 +26,14 @@ class Plan extends Model
     use HasIcon, HasParams, PurchaseLogic, HasFrequency;
 
     /**
+     * @var array
+     */
+    protected $fillable = [
+        'id',
+        'ordering'
+    ];
+
+    /**
      * Exclude following attributes from sanitizing
      * @var array
      */
