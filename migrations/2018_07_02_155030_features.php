@@ -7,7 +7,6 @@ class Features extends Migration
 {
     /**
      * Run the migrations.
-     *
      * @return void
      */
     public function up()
@@ -18,7 +17,11 @@ class Features extends Migration
                 $table->text('title')->nullable();
                 $table->longText('description')->nullable();
                 $table->longText('params')->nullable();
+                $table->integer('ordering')->default(1);
                 $table->string('package_type');
+                $table->unsignedInteger('group_id')->nullable();
+                $table->foreign('group_id')->references('id')->on('feature_groups')->onUpdate('cascade')
+                    ->onDelete('set null');
                 $table->timestamps();
             });
         }
@@ -26,7 +29,6 @@ class Features extends Migration
 
     /**
      * Reverse the migrations.
-     *
      * @return void
      */
     public function down()
