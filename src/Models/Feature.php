@@ -14,8 +14,10 @@ class Feature extends Model
 {
     use HasParams;
 
+    /**
+     * @var array
+     */
     protected $fillable = [
-        'id',
         'ordering'
     ];
 
