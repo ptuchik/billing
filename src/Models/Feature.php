@@ -13,9 +13,11 @@ use Ptuchik\CoreUtilities\Traits\HasParams;
 class Feature extends Model
 {
     use HasParams;
-    
+
+    /**
+     * @var array
+     */
     protected $fillable = [
-        'id',
         'ordering'
     ];
     
