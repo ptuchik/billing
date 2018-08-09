@@ -242,15 +242,18 @@ trait Billable
 
     /**
      * Get payment customer
+     *
+     * @param null $gateway
+     *
      * @return mixed
-     * @throws Exception
+     * @throws \Exception
      */
-    public function getPaymentCustomer()
+    public function getPaymentCustomer($gateway = null)
     {
         try {
 
             // Try to get payment customer from gateway
-            return $this->getPaymentGateway()->findCustomer($this->paymentProfile);
+            return $this->getPaymentGateway($gateway)->findCustomer($this->paymentProfile);
 
         } catch (Exception $e) {
 
@@ -258,7 +261,7 @@ trait Billable
             if ($e instanceof NotFound) {
                 $this->removePaymentProfile();
 
-                return $this->getPaymentGateway()->findCustomer($this->paymentProfile);
+                return $this->getPaymentGateway($gateway)->findCustomer($this->paymentProfile);
             } else {
                 throw $e;
             }
@@ -267,22 +270,28 @@ trait Billable
 
     /**
      * Get payment token
+     *
+     * @param null $gateway
+     *
      * @return mixed
      */
-    public function getPaymentToken()
+    public function getPaymentToken($gateway = null)
     {
         // Get and return payment token for user's payment profile
-        return $this->getPaymentGateway()->getPaymentToken($this->paymentProfile);
+        return $this->getPaymentGateway($gateway)->getPaymentToken($this->paymentProfile);
     }
 
     /**
      * Create payment profile
+     *
+     * @param null $gateway
+     *
      * @return mixed
      */
-    protected function createPaymentProfile()
+    protected function createPaymentProfile($gateway = null)
     {
         // Create payment profile on gateway
-        $paymentProfile = $this->getPaymentGateway()->createPaymentProfile($this);
+        $paymentProfile = $this->getPaymentGateway($gateway)->createPaymentProfile($this);
 
         $this->paymentProfile = $paymentProfile;
         $this->save();
@@ -370,10 +379,11 @@ trait Billable
      * @param                                    $amount
      * @param null                               $description
      * @param \Ptuchik\Billing\Models\Order|null $order
+     * @param null                               $gateway
      *
-     * @return null
+     * @return null|\Omnipay\Common\Message\ResponseInterface
      */
-    public function purchase($amount, $description = null, Order $order = null)
+    public function purchase($amount, $description = null, Order $order = null, $gateway = null)
     {
         // If amount is empty, interrupt payment
         if (empty((float) $amount)) {
@@ -381,7 +391,7 @@ trait Billable
         }
 
         // Prepare purchase data
-        $purchaseData = $this->getPaymentGateway()->preparePurchaseData($this->paymentProfile, $description);
+        $purchaseData = $this->getPaymentGateway($gateway)->preparePurchaseData($this->paymentProfile, $description);
 
         // Set transaction ID from $order if provided
         if ($order) {
@@ -398,45 +408,48 @@ trait Billable
     /**
      * Void transaction
      *
-     * @param $reference
+     * @param      $reference
+     * @param null $gateway
      *
      * @return mixed
-     * @throws Exception
      */
-    public function void($reference)
+    public function void($reference, $gateway = null)
     {
-        return $this->getPaymentGateway()->void($reference);
+        return $this->getPaymentGateway($gateway)->void($reference);
     }
 
     /**
      * Refund transaction
      *
-     * @param $reference
+     * @param      $reference
+     * @param null $gateway
      *
      * @return mixed
-     * @throws \Exception
      */
-    public function refund($reference)
+    public function refund($reference, $gateway = null)
     {
-        return $this->getPaymentGateway()->refund($reference);
+        return $this->getPaymentGateway($gateway)->refund($reference);
     }
 
     /**
      * Get payment methods
+     *
+     * @param null $gateway
+     *
      * @return array
      */
-    public function getPaymentMethods()
+    public function getPaymentMethods($gateway = null)
     {
         // Get payment methods from gateway
         try {
-            $paymentMethods = $this->getPaymentGateway()->getPaymentMethods($this->paymentProfile);
+            $paymentMethods = $this->getPaymentGateway($gateway)->getPaymentMethods($this->paymentProfile);
         } catch (Exception $e) {
 
             // If there was a not found exception, try to recreate payment profile
             if ($e instanceof NotFound) {
                 $this->removePaymentProfile();
 
-                $paymentMethods = $this->getPaymentGateway()->getPaymentMethods($this->paymentProfile);
+                $paymentMethods = $this->getPaymentGateway($gateway)->getPaymentMethods($this->paymentProfile);
             } else {
                 $paymentMethods = [];
             }
@@ -469,28 +482,28 @@ trait Billable
     /**
      * Set default payment method
      *
-     * @param $token
+     * @param      $token
+     * @param null $gateway
      *
      * @return mixed
-     * @throws \Exception
      */
-    public function setDefaultPaymentMethod($token)
+    public function setDefaultPaymentMethod($token, $gateway = null)
     {
-        return $this->getPaymentGateway()->setDefaultPaymentMethod($token);
+        return $this->getPaymentGateway($gateway)->setDefaultPaymentMethod($token);
     }
 
     /**
      * Create payment method
      *
-     * @param $token
+     * @param      $token
+     * @param null $gateway
      *
      * @return mixed
-     * @throws \Exception
      */
-    public function createPaymentMethod($token)
+    public function createPaymentMethod($token, $gateway = null)
     {
         // Create payment method
-        $paymentMethod = $this->getPaymentGateway()->createPaymentMethod($this->paymentProfile, $token);
+        $paymentMethod = $this->getPaymentGateway($gateway)->createPaymentMethod($this->paymentProfile, $token);
 
         // Set user's hasPaymentMethod = true
         $this->hasPaymentMethod = true;
@@ -503,14 +516,15 @@ trait Billable
     /**
      * Delete payment method
      *
-     * @param $token
+     * @param      $token
+     * @param null $gateway
      *
      * @return array|bool
      */
-    public function deletePaymentMethod($token)
+    public function deletePaymentMethod($token, $gateway = null)
     {
         // Delete payment method from remote gateway
-        if ($this->getPaymentGateway()->deletePaymentMethod($token)) {
+        if ($this->getPaymentGateway($gateway)->deletePaymentMethod($token)) {
 
             return $this->getPaymentMethods();
         } else {
