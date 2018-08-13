@@ -79,8 +79,7 @@ trait Billable
 
             // If class from config exists initialize and set as current gateway
             if (class_exists($gatewayClass)) {
-                $this->gateway = new $gatewayClass(config('ptuchik-billing.gateways.'.$paymentGateway, []),
-                    $this->isTester());
+                $this->gateway = new $gatewayClass($this, config('ptuchik-billing.gateways.'.$paymentGateway, []));
 
                 // Set current payment gateway
                 $this->paymentGateway = $paymentGateway;
@@ -291,7 +290,7 @@ trait Billable
     protected function createPaymentProfile($gateway = null)
     {
         // Create payment profile on gateway
-        $paymentProfile = $this->getPaymentGateway($gateway)->createPaymentProfile($this);
+        $paymentProfile = $this->getPaymentGateway($gateway)->createPaymentProfile();
 
         $this->paymentProfile = $paymentProfile;
         $this->save();
@@ -390,19 +389,8 @@ trait Billable
             return null;
         }
 
-        // Prepare purchase data
-        $purchaseData = $this->getPaymentGateway($gateway)->preparePurchaseData($this->paymentProfile, $description);
-
-        // Set transaction ID from $order if provided
-        if ($order) {
-            $purchaseData->setTransactionId($order->id);
-        }
-
-        // Format the given amount
-        $purchaseData->setAmount(number_format($amount, 2, '.', ''));
-
-        // Finally charge user and return the gateway purchase response
-        return $purchaseData->send();
+        // Charge user and return
+        return $this->getPaymentGateway($gateway)->purchase(number_format($amount, 2, '.', ''), $description, $order);
     }
 
     /**
@@ -442,14 +430,14 @@ trait Billable
     {
         // Get payment methods from gateway
         try {
-            $paymentMethods = $this->getPaymentGateway($gateway)->getPaymentMethods($this->paymentProfile);
+            $paymentMethods = $this->getPaymentGateway($gateway)->getPaymentMethods();
         } catch (Exception $e) {
 
             // If there was a not found exception, try to recreate payment profile
             if ($e instanceof NotFound) {
                 $this->removePaymentProfile();
 
-                $paymentMethods = $this->getPaymentGateway($gateway)->getPaymentMethods($this->paymentProfile);
+                $paymentMethods = $this->getPaymentGateway($gateway)->getPaymentMethods();
             } else {
                 $paymentMethods = [];
             }

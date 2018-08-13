@@ -4,6 +4,8 @@ namespace Ptuchik\Billing\Contracts;
 
 use App\User;
 use Omnipay\Common\Message\RequestInterface;
+use Omnipay\Common\Message\ResponseInterface;
+use Ptuchik\Billing\Models\Order;
 
 /**
  * Interface PaymentGateway
@@ -14,48 +16,38 @@ interface PaymentGateway
     /**
      * PaymentGateway constructor.
      *
-     * @param array $config
-     * @param bool  $testMode
+     * @param \App\User $user
+     * @param array     $config
      */
-    public function __construct(array $config = [], bool $testMode = false);
+    public function __construct(User $user, array $config = []);
 
     /**
      * Create payment profile
-     *
-     * @param \App\User $user
-     *
      * @return mixed
      */
-    public function createPaymentProfile(User $user);
+    public function createPaymentProfile();
 
     /**
      * Find customer by profile
-     *
-     * @param $paymentProfile
-     *
      * @return mixed
      */
-    public function findCustomer($paymentProfile);
+    public function findCustomer();
 
     /**
      * Create payment method
      *
-     * @param        $paymentProfile
      * @param string $token
      *
      * @return mixed
      * @throws \Exception
      */
-    public function createPaymentMethod($paymentProfile, string $token);
+    public function createPaymentMethod(string $token);
 
     /**
      * Get payment methods
-     *
-     * @param $paymentProfile
-     *
      * @return array
      */
-    public function getPaymentMethods($paymentProfile) : array;
+    public function getPaymentMethods() : array;
 
     /**
      * Set default payment method
@@ -77,22 +69,20 @@ interface PaymentGateway
 
     /**
      * Get payment token
-     *
-     * @param string|null $paymentProfile
-     *
      * @return mixed
      */
-    public function getPaymentToken($paymentProfile = null);
+    public function getPaymentToken();
 
     /**
-     * Prepare purchase data
+     * Purchase
      *
-     * @param string      $paymentProfile
-     * @param string|null $description
+     * @param                                    $amount
+     * @param string|null                        $description
+     * @param \Ptuchik\Billing\Models\Order|null $order
      *
-     * @return \Omnipay\Common\Message\RequestInterface
+     * @return \Omnipay\Common\Message\ResponseInterface
      */
-    public function preparePurchaseData($paymentProfile, string $description = null) : RequestInterface;
+    public function purchase($amount, string $description = null, Order $order = null) : ResponseInterface;
 
     /**
      * Void transaction
