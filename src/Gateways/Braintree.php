@@ -31,6 +31,12 @@ class Braintree implements PaymentGateway
     protected $config;
 
     /**
+     * App\User
+     * @var
+     */
+    protected $user;
+
+    /**
      * Braintree constructor.
      *
      * @param \App\User $user
@@ -39,8 +45,9 @@ class Braintree implements PaymentGateway
     public function __construct(User $user, array $config = [])
     {
         $this->config = $config;
+        $this->user = $user;
         $this->gateway = Omnipay::create(array_get($this->config, 'driver'));
-        $this->setCredentials($forceTestMode ?: !empty(array_get($this->config, 'testMode')));
+        $this->setCredentials($user->isTester() ?: !empty(array_get($this->config, 'testMode')));
     }
 
     /**
