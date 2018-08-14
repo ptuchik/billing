@@ -101,7 +101,6 @@ class Plan extends Model
      */
     protected $hidden = [
         'coupons',
-        'activeFeatures'
     ];
 
     /**
