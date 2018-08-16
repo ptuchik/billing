@@ -252,7 +252,7 @@ trait Billable
         try {
 
             // Try to get payment customer from gateway
-            return $this->getPaymentGateway($gateway)->findCustomer($this->paymentProfile);
+            return $this->getPaymentGateway($gateway)->findCustomer();
 
         } catch (Exception $e) {
 
@@ -260,7 +260,7 @@ trait Billable
             if ($e instanceof NotFound) {
                 $this->removePaymentProfile();
 
-                return $this->getPaymentGateway($gateway)->findCustomer($this->paymentProfile);
+                return $this->getPaymentGateway($gateway)->findCustomer();
             } else {
                 throw $e;
             }
@@ -277,7 +277,7 @@ trait Billable
     public function getPaymentToken($gateway = null)
     {
         // Get and return payment token for user's payment profile
-        return $this->getPaymentGateway($gateway)->getPaymentToken($this->paymentProfile);
+        return $this->getPaymentGateway($gateway)->getPaymentToken();
     }
 
     /**
@@ -491,7 +491,7 @@ trait Billable
     public function createPaymentMethod($token, $gateway = null)
     {
         // Create payment method
-        $paymentMethod = $this->getPaymentGateway($gateway)->createPaymentMethod($this->paymentProfile, $token);
+        $paymentMethod = $this->getPaymentGateway($gateway)->createPaymentMethod($token);
 
         // Set user's hasPaymentMethod = true
         $this->hasPaymentMethod = true;
