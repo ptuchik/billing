@@ -118,7 +118,7 @@ class Braintree implements PaymentGateway
         $paymentMethods = [];
 
         // Get user's all payment methods from gateway and parse the needed data to return
-        foreach ($this->findCustomer($this->user->paymentProfile)->paymentMethods as $gatewayPaymentMethod) {
+        foreach ($this->findCustomer()->paymentMethods as $gatewayPaymentMethod) {
             $paymentMethods[] = $this->parsePaymentMethod($gatewayPaymentMethod);
         }
 
@@ -181,7 +181,7 @@ class Braintree implements PaymentGateway
     {
         // If nonce is provided, create payment method and unset nonce
         if (Request::filled('nonce')) {
-            $this->createPaymentMethod($this->user->paymentProfile, Request::input('nonce'));
+            $this->createPaymentMethod(Request::input('nonce'));
             Request::offsetUnset('nonce');
         }
 
