@@ -14,5 +14,5 @@ class TransactionStatus extends AbstractTypes
     const SUCCESS = 1;
     const REFUNDED = 2;
     const VOIDED = 3;
-    const UNPAID = 4;
+    const PENDING = 4;
 }

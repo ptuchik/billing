@@ -390,7 +390,15 @@ trait PurchaseLogic
 
         $transaction->data = serialize($this->payment->getData()->transaction);
         $transaction->reference = $this->payment->getTransactionReference();
-        $transaction->status = $this->payment->isSuccessful() ? $transactionStatus::SUCCESS : $transactionStatus::FAILED;
+        if ($this->payment->isSuccessful()) {
+            if (!empty(config('ptuchik-billing.gateways.'.$transaction->gateway.'.cash'))) {
+                $transaction->status = $transactionStatus::PENDING;
+            } else {
+                $transaction->status = $transactionStatus::SUCCESS;
+            }
+        } else {
+            $transaction->status = $transactionStatus::FAILED;
+        }
         $transaction->message = $this->payment->getMessage();
         $transaction->summary = $this->payment->isSuccessful() ? $this->payment->getAmount() : $this->summary;
         $transaction->save();
