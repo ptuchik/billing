@@ -388,7 +388,7 @@ trait PurchaseLogic
 
         $transactionStatus = Factory::getClass(TransactionStatus::class);
 
-        $transaction->data = serialize($this->payment->getData()->transaction);
+        $transaction->data = serialize($this->payment->getData()->transaction ?? '');
         $transaction->reference = $this->payment->getTransactionReference();
         if ($this->payment->isSuccessful()) {
             if (!empty(config('ptuchik-billing.gateways.'.$transaction->gateway.'.cash'))) {
@@ -400,7 +400,7 @@ trait PurchaseLogic
             $transaction->status = $transactionStatus::FAILED;
         }
         $transaction->message = $this->payment->getMessage();
-        $transaction->summary = $this->payment->isSuccessful() ? $this->payment->getAmount() : $this->summary;
+        $transaction->summary = $this->summary;
         $transaction->save();
 
         // Finally if payment was not successful throw an exception with error message
