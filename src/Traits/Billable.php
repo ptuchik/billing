@@ -14,6 +14,7 @@ use Exception;
 use Illuminate\Support\Collection;
 use Ptuchik\CoreUtilities\Traits\HasParams;
 use Ptuchik\Billing\Contracts\Hostable as HostableContract;
+use Request;
 
 /**
  * Trait Billable - Adds billing related methods
@@ -71,7 +72,11 @@ trait Billable
         if (is_null($this->gateway)) {
 
             // If gateway is not provided, get user's payment gateway
-            $paymentGateway = $gateway ?: $this->paymentGateway;
+            if ($gateway || $gateway = Request::input('gateway')) {
+                $paymentGateway = $this->getPaymentGatewayAttribute($gateway);
+            } else {
+                $paymentGateway = $this->paymentGateway;
+            }
 
             // Get trimmed class name from config
             $gatewayClass = config('ptuchik-billing.gateways.'.$paymentGateway.'.class');
