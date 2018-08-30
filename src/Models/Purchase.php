@@ -133,12 +133,12 @@ class Purchase extends Model
             $subscription->user()->associate(Auth::user() ?: $plan->user);
             $subscription->setParamsFromPlan($plan);
             $subscription->active = true;
-            $date = Carbon::today();
+            $date = Carbon::today()->endOfDay();
 
             // Else if there is a subscription but it is on trial set the starting date
             // today to count the next billing date
         } elseif ($subscription->onTrial()) {
-            $date = Carbon::today();
+            $date = Carbon::today()->endOfDay();
 
             // If there is an active subscription, set the starting date to it's next
             // billing date

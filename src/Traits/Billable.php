@@ -6,6 +6,7 @@ use Braintree\Exception\NotFound;
 use Currency;
 use Ptuchik\Billing\Constants\CouponRedeemType;
 use Ptuchik\Billing\Factory;
+use Ptuchik\Billing\Models\Order;
 use Ptuchik\Billing\Models\Plan;
 use Ptuchik\Billing\Models\Subscription;
 use Ptuchik\Billing\Models\Transaction;
@@ -27,6 +28,12 @@ trait Billable
      * @var \Ptuchik\Billing\Contracts\PaymentGateway
      */
     protected $gateway;
+
+    /**
+     * Payment gateway name
+     * @var string
+     */
+    protected $gatewayName;
 
     /**
      * Balance attribute getter
@@ -74,6 +81,9 @@ trait Billable
             if (class_exists($gatewayClass)) {
                 $this->gateway = new $gatewayClass(config('ptuchik-billing.gateways.'.$paymentGateway, []),
                     $this->isTester());
+
+                // Set current payment gateway
+                $this->paymentGateway = $paymentGateway;
 
                 // If does not exist and gateway was not provided call this method by passing default gateway
             } elseif (!$gateway) {
@@ -133,7 +143,40 @@ trait Billable
      */
     public function getPaymentGatewayAttribute($value)
     {
-        return empty($value) ? config('ptuchik-billing.default_gateway') : $value;
+        if (is_null($this->gatewayName)) {
+
+            // If user has no gateway, get default gateway
+            $value = empty($value) ? config('ptuchik-billing.default_gateway') : $value;
+
+            // If current currency has limited gateways
+            if ($gateways = array_wrap(config('ptuchik-billing.currency_limited_gateways.'.Currency::getUserCurrency()))) {
+
+                // If user's gateway exists among currency limited gateways, return it
+                if (in_array($value, $gateways)) {
+                    $this->gatewayName = $value;
+
+                    // Otherwise return the first gateway from the list
+                } else {
+                    $this->gatewayName = array_first($gateways);
+                }
+
+                // Otherwise return user's gateway
+            } else {
+                $this->gatewayName = $value;
+            }
+        }
+
+        return $this->gatewayName;
+    }
+
+    /**
+     * Payment gateway setter
+     *
+     * @param $value
+     */
+    public function setPaymentGatewayAttribute($value)
+    {
+        $this->attributes['payment_gateway'] = $this->gatewayName = $value;
     }
 
     /**
@@ -324,12 +367,13 @@ trait Billable
     /**
      * Purchase - Generic user's purchase method
      *
-     * @param      $amount
-     * @param null $description
+     * @param                                    $amount
+     * @param null                               $description
+     * @param \Ptuchik\Billing\Models\Order|null $order
      *
-     * @return null|\Omnipay\Common\Message\ResponseInterface
+     * @return null
      */
-    public function purchase($amount, $description = null)
+    public function purchase($amount, $description = null, Order $order = null)
     {
         // If amount is empty, interrupt payment
         if (empty((float) $amount)) {
@@ -338,6 +382,11 @@ trait Billable
 
         // Prepare purchase data
         $purchaseData = $this->getPaymentGateway()->preparePurchaseData($this->paymentProfile, $description);
+
+        // Set transaction ID from $order if provided
+        if ($order) {
+            $purchaseData->setTransactionId($order->id);
+        }
 
         // Format the given amount
         $purchaseData->setAmount(number_format($amount, 2, '.', ''));

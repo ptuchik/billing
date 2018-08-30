@@ -8,6 +8,7 @@ use Ptuchik\Billing\Constants\PlanVisibility;
 use Ptuchik\Billing\Contracts\Hostable;
 use Ptuchik\Billing\Factory;
 use Ptuchik\Billing\Models\Confirmation;
+use Ptuchik\Billing\Models\Feature;
 use Ptuchik\Billing\Models\Plan;
 use Ptuchik\Billing\Models\Purchase;
 use Ptuchik\Billing\Models\Subscription;
@@ -170,24 +171,33 @@ abstract class PackageModel extends Model
     }
 
     /**
+     * All plans relation
+     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     */
+    public function allPlans()
+    {
+        return $this->morphMany(Factory::getClass(Plan::class), 'package')
+            ->orderBy('plans.id', 'asc');
+    }
+
+    /**
      * Plans relation
      * @return \Illuminate\Database\Eloquent\Relations\MorphMany
      */
     public function plans()
     {
         // Get all visible plans for package
-        $query = $this->morphMany(Factory::getClass(Plan::class), 'package')
-            ->where(function ($query) {
-                $query->where('plans.visibility', Factory::getClass(PlanVisibility::class)::VISIBLE);
+        $query = $this->allPlans()->where(function ($query) {
+            $query->where('plans.visibility', Factory::getClass(PlanVisibility::class)::VISIBLE);
 
-                // If additional plans are requested, include them also
-                if (Request::filled('additional')) {
-                    $query->orWhere(function ($query) {
-                        $query->whereIn('plans.alias', explode(',', Request::input('additional')));
-                        $query->where('plans.visibility', Factory::getClass(PlanVisibility::class)::HIDDEN);
-                    });
-                }
-            });
+            // If additional plans are requested, include them also
+            if (Request::filled('additional')) {
+                $query->orWhere(function ($query) {
+                    $query->whereIn('plans.alias', explode(',', Request::input('additional')));
+                    $query->where('plans.visibility', Factory::getClass(PlanVisibility::class)::HIDDEN);
+                });
+            }
+        });
 
         // If frequncy is requested, get only plans with matching frequencies
         if (Request::filled('frequency')) {
@@ -196,8 +206,7 @@ abstract class PackageModel extends Model
 
         // Order by ordering and return result query
         return $query->orderBy('plans.ordering', 'asc')
-            ->orderBy('plans.billing_frequency', 'desc')
-            ->orderBy('plans.id', 'asc');
+            ->orderBy('plans.billing_frequency', 'desc');
     }
 
     /**
@@ -209,7 +218,7 @@ abstract class PackageModel extends Model
      */
     public function getPurchaseIdentifier(Purchase $purchase)
     {
-        return $purchase->host->getRouteKey();
+        return $purchase->host ? $purchase->host->getRouteKey() : $this->name;
     }
 
     /**
@@ -399,8 +408,8 @@ abstract class PackageModel extends Model
     {
         // Try to get an existing purchase for current package on current host,
         // and if not found create one
-        if (!$purchase = $host->purchases()->where('package_id', $this->id)
-            ->where('package_type', $this->getMorphClass())->first()) {
+        if (!$host || !$purchase = $host->purchases()->where('package_id', $this->id)
+                ->where('package_type', $this->getMorphClass())->first()) {
 
             $purchase = Factory::get(Purchase::class, true);
             $purchase->setRawAttribute('name', $this->getRawAttribute('name'));
@@ -490,11 +499,12 @@ abstract class PackageModel extends Model
     {
         if ($plan->payment) {
             switch ($plan->payment->getCode()) {
-                case 'settling':
-                case 'settled':
-                    return $plan->user->refund($plan->payment->getTransactionReference());
-                default:
+                case 'authorized':
+                case 'submitted_for_settlement':
+                case 'settlement_pending':
                     return $plan->user->void($plan->payment->getTransactionReference());
+                default:
+                    return $plan->user->refund($plan->payment->getTransactionReference());
             }
         }
     }
@@ -680,5 +690,15 @@ abstract class PackageModel extends Model
             ->where('package_type', $this->getMorphClass())->delete();
 
         return parent::delete();
+    }
+
+    /**
+     * Package Features relation
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\morphToMany
+     */
+    public function features()
+    {
+        return $this->morphToMany(Factory::getClass(Feature::class), 'package', 'package_features');
     }
 }
