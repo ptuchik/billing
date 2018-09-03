@@ -26,13 +26,6 @@ class Order extends Model
         'plan_id' => 'integer',
     ];
 
-    /**
-     * @return bool
-     */
-    public function isRefSubscription()
-    {
-        return $this->reference_type == 'subscription';
-    }
 
     /**
      * Reference relation
