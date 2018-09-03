@@ -27,6 +27,22 @@ class Order extends Model
     ];
 
     /**
+     * @return bool
+     */
+    public function isRefSubscription()
+    {
+        return $this->reference_type == 'subscription';
+    }
+
+    /**
+     * Reference relation
+     * @return \Illuminate\Database\Eloquent\Relations\MorphTo
+     */
+    public function reference()
+    {
+        return $this->morphTo();
+    }
+    /**
      * User relation
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
