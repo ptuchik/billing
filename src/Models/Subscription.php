@@ -6,6 +6,7 @@ use Auth;
 use Carbon\Carbon;
 use Currency;
 use Exception;
+use Omnipay\Common\Message\ResponseInterface;
 use Ptuchik\Billing\Constants\PlanVisibility;
 use Ptuchik\Billing\Constants\SubscriptionStatus;
 use Ptuchik\Billing\Constants\TransactionStatus;
@@ -644,10 +645,10 @@ class Subscription extends Model
      * @return mixed
      * @throws Exception
      */
-    public function renew()
+    public function renew(ResponseInterface $payment = null)
     {
         // Call plan's purchase to renew
-        return $this->plan->purchase($this->plan->host);
+        return $this->plan->purchase($this->plan->host, $payment);
     }
 
     /**
@@ -694,7 +695,7 @@ class Subscription extends Model
         $subscription->coupons = $plan->discounts;
         $subscription->addons = $plan->addonCoupons;
         $subscription->billingFrequency = $plan->billingFrequency;
-        $subscription->trialEndsAt = null;
+        $subscription->trialEndsAt = $this->trialEndsAt;
         $subscription->nextBillingDate = $this->nextBillingDate;
 
         // If user has no payment methods, start non-recurring subscription

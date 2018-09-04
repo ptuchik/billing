@@ -20,6 +20,7 @@ class Purchases extends Migration
                 $table->nullableMorphs('package');
                 $table->nullableMorphs('reference');
                 $table->boolean('active')->default(false);
+                $table->longText('params')->nullable();
                 $table->timestamps();
             });
         }

@@ -7,8 +7,10 @@ use Braintree\CreditCard;
 use Braintree\PayPalAccount;
 use Currency;
 use Exception;
+use Omnipay\Common\Message\ResponseInterface;
 use Omnipay\Omnipay;
 use Ptuchik\Billing\Contracts\PaymentGateway;
+use Ptuchik\Billing\Models\Order;
 use Request;
 use Omnipay\Common\Message\RequestInterface;
 
@@ -29,16 +31,23 @@ class Braintree implements PaymentGateway
     protected $config;
 
     /**
+     * App\User
+     * @var
+     */
+    protected $user;
+
+    /**
      * Braintree constructor.
      *
-     * @param array $config
-     * @param bool  $forceTestMode
+     * @param \App\User $user
+     * @param array     $config
      */
-    public function __construct(array $config = [], bool $forceTestMode = false)
+    public function __construct(User $user, array $config = [])
     {
         $this->config = $config;
+        $this->user = $user;
         $this->gateway = Omnipay::create(array_get($this->config, 'driver'));
-        $this->setCredentials($forceTestMode ?: !empty(array_get($this->config, 'testMode')));
+        $this->setCredentials($user->isTester() ?: !empty(array_get($this->config, 'testMode')));
     }
 
     /**
@@ -56,17 +65,14 @@ class Braintree implements PaymentGateway
 
     /**
      * Create payment profile
-     *
-     * @param \App\User $user
-     *
      * @return mixed
      */
-    public function createPaymentProfile(User $user)
+    public function createPaymentProfile()
     {
         $profile = $this->gateway->createCustomer()->setCustomerData([
-            'firstName' => $user->firstName,
-            'lastName'  => $user->lastName,
-            'email'     => $user->email
+            'firstName' => $this->user->firstName,
+            'lastName'  => $this->user->lastName,
+            'email'     => $this->user->email
         ])->send()->getData();
 
         return $profile->customer->id;
@@ -74,30 +80,26 @@ class Braintree implements PaymentGateway
 
     /**
      * Find customer by profile
-     *
-     * @param $paymentProfile
-     *
      * @return mixed
      */
-    public function findCustomer($paymentProfile)
+    public function findCustomer()
     {
-        return $this->gateway->findCustomer($paymentProfile)->send()->getData();
+        return $this->gateway->findCustomer($this->user->paymentProfile)->send()->getData();
     }
 
     /**
      * Create payment method
      *
-     * @param        $paymentProfile
      * @param string $token
      *
      * @return mixed
      * @throws \Exception
      */
-    public function createPaymentMethod($paymentProfile, string $token)
+    public function createPaymentMethod(string $token)
     {
         // Create a payment method on remote gateway
         $paymentMethod = $this->gateway->createPaymentMethod()->setToken($token)
-            ->setMakeDefault(true)->setCustomerId($paymentProfile)->send();
+            ->setMakeDefault(true)->setCustomerId($this->user->paymentProfile)->send();
 
         if (!$paymentMethod->isSuccessful()) {
             throw new Exception($paymentMethod->getMessage());
@@ -109,17 +111,14 @@ class Braintree implements PaymentGateway
 
     /**
      * Get payment methods
-     *
-     * @param $paymentProfile
-     *
      * @return array
      */
-    public function getPaymentMethods($paymentProfile) : array
+    public function getPaymentMethods() : array
     {
         $paymentMethods = [];
 
         // Get user's all payment methods from gateway and parse the needed data to return
-        foreach ($this->findCustomer($paymentProfile)->paymentMethods as $gatewayPaymentMethod) {
+        foreach ($this->findCustomer()->paymentMethods as $gatewayPaymentMethod) {
             $paymentMethods[] = $this->parsePaymentMethod($gatewayPaymentMethod);
         }
 
@@ -161,35 +160,33 @@ class Braintree implements PaymentGateway
 
     /**
      * Get payment token
-     *
-     * @param string|null $paymentProfile
-     *
      * @return mixed
      */
-    public function getPaymentToken($paymentProfile = null)
+    public function getPaymentToken()
     {
         // Get and return payment token for user's payment profile
-        return $this->gateway->clientToken()->setCustomerId($paymentProfile)->send()->getToken();
+        return $this->gateway->clientToken()->setCustomerId($this->user->paymentProfile)->send()->getToken();
     }
 
     /**
-     * Prepare purchase data
+     * Purchase
      *
-     * @param string      $paymentProfile
-     * @param string|null $description
+     * @param                                    $amount
+     * @param string|null                        $description
+     * @param \Ptuchik\Billing\Models\Order|null $order
      *
-     * @return \Omnipay\Common\Message\RequestInterface
+     * @return \Omnipay\Common\Message\ResponseInterface
      */
-    public function preparePurchaseData($paymentProfile, string $description = null) : RequestInterface
+    public function purchase($amount, string $description = null, Order $order = null) : ResponseInterface
     {
         // If nonce is provided, create payment method and unset nonce
         if (Request::filled('nonce')) {
-            $this->createPaymentMethod($paymentProfile, Request::input('nonce'));
+            $this->createPaymentMethod(Request::input('nonce'));
             Request::offsetUnset('nonce');
         }
 
         // Get payment gateway and set up purchase request with customer ID
-        $purchaseData = $this->gateway->purchase()->setCustomerId($paymentProfile);
+        $purchaseData = $this->gateway->purchase()->setCustomerId($this->user->paymentProfile);
 
         // If existing payment method's token is provided, add paymentMethodToken attribute
         // to request
@@ -198,15 +195,25 @@ class Braintree implements PaymentGateway
         }
 
         // Set purchase descriptor
-        $purchaseData->setDescriptor($this->generateDescriptor($description));
+        if ($description) {
+            $purchaseData->setDescriptor($this->generateDescriptor($description));
+        }
 
         // Set currency account if any
         if ($merchantId = array_get($this->config, 'currencies.'.Currency::getUserCurrency())) {
             $purchaseData->setMerchantAccountId($merchantId);
         }
 
-        // Return purchase data
-        return $purchaseData;
+        // Set transaction ID from $order if provided
+        if ($order) {
+            $purchaseData->setTransactionId($order->id);
+        }
+
+        // Set amount
+        $purchaseData->setAmount($amount);
+
+        // Finally charge user and return the gateway purchase response
+        return $purchaseData->send();
     }
 
     /**

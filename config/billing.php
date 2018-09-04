@@ -117,10 +117,22 @@ return [
             'sandboxPrivateKey' => env('BRAINTREE_SANDBOX_PRIVATE_KEY'),
             'testMode'          => env('BRAINTREE_ENV') == 'production' ? false : true,
 
+            // Available payment methods for current gateway
+            'payment_methods'   => [],
+
             // Currency merchant IDs
             'currencies'        => [
                 'USD' => env('BRAINTREE_USD_MERCHANT_ID'),
             ]
         ],
-    ]
+    ],
+
+    /**
+     * Here you can optionally add currency limited payment gateways
+     * to make them available only for given currency.
+     * If the key with current currency will be missing,
+     * all payment gateways will be available
+     * Example: ['USD' => ['braintree']]
+     */
+    'currency_limited_gateways'            => []
 ];

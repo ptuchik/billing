@@ -12,6 +12,7 @@ use Ptuchik\Billing\Traits\HasFrequency;
 use Ptuchik\Billing\Traits\PurchaseLogic;
 use Ptuchik\CoreUtilities\Models\Model;
 use Ptuchik\CoreUtilities\Traits\HasIcon;
+use Ptuchik\CoreUtilities\Traits\HasParams;
 
 /**
  * Class Plan
@@ -22,7 +23,14 @@ class Plan extends Model
     /**
      * Use icon and add purchase logic to model
      */
-    use HasIcon, PurchaseLogic, HasFrequency;
+    use HasIcon, HasParams, PurchaseLogic, HasFrequency;
+
+    /**
+     * @var array
+     */
+    protected $fillable = [
+        'ordering'
+    ];
 
     /**
      * Exclude following attributes from sanitizing
@@ -55,10 +63,9 @@ class Plan extends Model
         'ordering'          => 'integer',
         'trial_days'        => 'integer',
         'billing_frequency' => 'integer',
-        'moneyback'         => 'boolean',
-        'recommended'       => 'boolean',
         'package_id'        => 'integer',
-        'features'          => 'array'
+        'features'          => 'array',
+        'params'            => 'array'
     ];
 
     /**
@@ -76,7 +83,10 @@ class Plan extends Model
         'hasTrial',
         'isRecurring',
         'agreementText',
-        'hasCoupons'
+        'hasCoupons',
+        'moneyback',
+        'recommended',
+        'popular'
     ];
 
     /**
@@ -89,7 +99,9 @@ class Plan extends Model
      * Hide coupons
      * @var array
      */
-    protected $hidden = ['coupons'];
+    protected $hidden = [
+        'coupons',
+    ];
 
     /**
      * Discounts collection, which still needs to be calculated
@@ -187,6 +199,83 @@ class Plan extends Model
     {
         return $this->belongsToMany(Factory::getClass(Coupon::class), 'plan_addons')
             ->where('coupons.redeem', Factory::getClass(CouponRedeemType::class)::INTERNAL);
+    }
+
+    /**
+     * Recommended attribute setter
+     *
+     * @param $value
+     */
+    public function setRecommendedAttribute($value)
+    {
+        $this->setParam('recommended', !empty($value));
+    }
+
+    /**
+     * Recommended attribute getter
+     * @return bool
+     */
+    public function getRecommendedAttribute()
+    {
+        return $this->getParam('recommended', false);
+    }
+
+    /**
+     * Popular attribute setter
+     *
+     * @param $value
+     */
+    public function setPopularAttribute($value)
+    {
+        $this->setParam('popular', !empty($value));
+    }
+
+    /**
+     * Popular attribute getter
+     * @return bool
+     */
+    public function getPopularAttribute()
+    {
+        return $this->getParam('popular', false);
+    }
+
+    /**
+     * Moneyback attribute setter
+     *
+     * @param $value
+     */
+    public function setMoneybackAttribute($value)
+    {
+        $this->setParam('moneyback', !empty($value));
+    }
+
+    /**
+     * Moneyback attribute setter
+     * @return bool
+     */
+    public function getMoneybackAttribute()
+    {
+        return $this->getParam('moneyback', false);
+    }
+
+    /**
+     * Active features relation
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function activeFeatures()
+    {
+        return $this->belongsToMany(Factory::getClass(Feature::class), 'plan_features');
+    }
+
+
+    /**
+     * All features relation
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function allFeatures()
+    {
+        return $this->hasMany(Factory::getClass(Feature::class), 'package_type', 'package_type')
+            ->orderBy('ordering');
     }
 
     /**
