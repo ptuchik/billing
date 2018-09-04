@@ -2,7 +2,6 @@
 
 namespace Ptuchik\Billing\Models;
 
-use Ptuchik\Billing\Factory;
 use Ptuchik\CoreUtilities\Models\Model;
 use Ptuchik\CoreUtilities\Traits\HasParams;
 
@@ -19,11 +18,11 @@ class Order extends Model
      * @var array
      */
     protected $casts = [
-        'id'      => 'integer',
-        'params'  => 'array',
-        'user_id' => 'integer',
-        'host_id' => 'integer',
-        'plan_id' => 'integer',
+        'id'            => 'integer',
+        'params'        => 'array',
+        'user_id'       => 'integer',
+        'host_id'       => 'integer',
+        'reference_id'  => 'integer',
     ];
 
 
@@ -42,15 +41,6 @@ class Order extends Model
     public function user()
     {
         return $this->belongsTo(config('auth.providers.users.model'));
-    }
-
-    /**
-     * Plan relation
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function plan()
-    {
-        return $this->belongsTo(Factory::getClass(Plan::class));
     }
 
     /**
