@@ -19,8 +19,7 @@ class Orders extends Migration
         if (!Schema::hasTable('orders')) {
             Schema::create('orders', function (Blueprint $table) {
                 $table->increments('id');
-                $table->unsignedInteger('plan_id');
-                $table->foreign('plan_id')->references('id')->on('plans')->onUpdate('cascade')->onDelete('cascade');
+                $table->nullableMorphs('reference');
                 $table->unsignedInteger('user_id');
                 $table->foreign('user_id')->references('id')->on('users')->onUpdate('cascade')->onDelete('cascade');
                 $table->morphs('host');

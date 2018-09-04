@@ -18,13 +18,12 @@ class Order extends Model
      * @var array
      */
     protected $casts = [
-        'id'            => 'integer',
-        'params'        => 'array',
-        'user_id'       => 'integer',
-        'host_id'       => 'integer',
-        'reference_id'  => 'integer',
+        'id'           => 'integer',
+        'params'       => 'array',
+        'user_id'      => 'integer',
+        'host_id'      => 'integer',
+        'reference_id' => 'integer',
     ];
-
 
     /**
      * Reference relation
@@ -34,6 +33,7 @@ class Order extends Model
     {
         return $this->morphTo();
     }
+
     /**
      * User relation
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
