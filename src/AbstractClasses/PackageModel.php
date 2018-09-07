@@ -18,6 +18,7 @@ use Ptuchik\CoreUtilities\Models\Model;
 use Ptuchik\CoreUtilities\Traits\HasIcon;
 use Ptuchik\CoreUtilities\Traits\HasParams;
 use Request;
+use Throwable;
 
 /**
  * Class PackageModel - all package models have to extend this model
@@ -502,7 +503,11 @@ abstract class PackageModel extends Model
                 case 'authorized':
                 case 'submitted_for_settlement':
                 case 'settlement_pending':
-                    return $plan->user->void($plan->payment->getTransactionReference());
+                    try {
+                        return $plan->user->void($plan->payment->getTransactionReference());
+                    } catch (Throwable $exception) {
+                        return $plan->user->refund($plan->payment->getTransactionReference());
+                    }
                 default:
                     return $plan->user->refund($plan->payment->getTransactionReference());
             }
@@ -694,7 +699,6 @@ abstract class PackageModel extends Model
 
     /**
      * Package Features relation
-     *
      * @return \Illuminate\Database\Eloquent\Relations\morphToMany
      */
     public function features()
