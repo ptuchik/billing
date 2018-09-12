@@ -243,7 +243,9 @@ trait PurchaseLogic
         // If response is redirect, interrupt the process
         if ($this->payment && Auth::user() && $this->payment->isRedirect()) {
 
-            $this->payment->redirect();
+            return $this->payment->getRedirectMethod() != 'GET' ? $this->payment->redirect() : [
+                'redirect_url' => $this->payment->getRedirectUrl()
+            ];
 
             // Otherwise continue
         } else {
