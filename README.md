@@ -1,4 +1,7 @@
 # Billing
+
+``WARNING!!! If you are already using v1.x version, please stay on it, v2.x may have some backward incompatibilities...``
+
 ## Sell anything for everything...
 
 [![Latest Stable Version](https://poser.pugx.org/ptuchik/billing/version.png)](https://packagist.org/packages/ptuchik/billing)
