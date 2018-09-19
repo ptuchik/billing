@@ -4,7 +4,7 @@ namespace Ptuchik\Billing\Traits;
 
 use Auth;
 use Currency;
-use Illuminate\Http\RedirectResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Omnipay\Common\Message\ResponseInterface;
 use Ptuchik\Billing\Constants\CouponRedeemType;
 use Ptuchik\Billing\Constants\TransactionStatus;
@@ -449,12 +449,13 @@ trait Billable
                 } else {
                     Response::json([
                         'order_id' => $order->id ?? 0,
-                        'form'     => $response
+                        'form'     => $response->getContent()
                     ])->send();
                 }
             } else {
                 $payment->redirect();
             }
+            exit;
         }
     }
 
