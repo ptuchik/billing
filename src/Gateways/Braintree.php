@@ -4,6 +4,7 @@ namespace Ptuchik\Billing\Gateways;
 
 use App\User;
 use Braintree\CreditCard;
+use Braintree\Exception\NotFound;
 use Braintree\PayPalAccount;
 use Currency;
 use Exception;
@@ -84,7 +85,13 @@ class Braintree implements PaymentGateway
      */
     public function findCustomer()
     {
-        return $this->gateway->findCustomer($this->user->paymentProfile)->send()->getData();
+        try {
+            return $this->gateway->findCustomer($this->user->paymentProfile)->send()->getData();
+        } catch (NotFound $exception) {
+            $this->user->removePaymentProfile();
+
+            return $this->gateway->findCustomer($this->user->paymentProfile)->send()->getData();
+        }
     }
 
     /**

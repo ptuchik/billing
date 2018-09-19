@@ -2,9 +2,13 @@
 
 namespace Ptuchik\Billing\Traits;
 
-use Braintree\Exception\NotFound;
+use Auth;
 use Currency;
+use Illuminate\Http\RedirectResponse;
+use Omnipay\Common\Message\ResponseInterface;
 use Ptuchik\Billing\Constants\CouponRedeemType;
+use Ptuchik\Billing\Constants\TransactionStatus;
+use Ptuchik\Billing\Constants\TransactionType;
 use Ptuchik\Billing\Factory;
 use Ptuchik\Billing\Models\Order;
 use Ptuchik\Billing\Models\Plan;
@@ -15,6 +19,7 @@ use Illuminate\Support\Collection;
 use Ptuchik\CoreUtilities\Traits\HasParams;
 use Ptuchik\Billing\Contracts\Hostable as HostableContract;
 use Request;
+use Response;
 
 /**
  * Trait Billable - Adds billing related methods
@@ -250,26 +255,11 @@ trait Billable
      * @param null $gateway
      *
      * @return mixed
-     * @throws \Exception
      */
     public function getPaymentCustomer($gateway = null)
     {
-        try {
-
-            // Try to get payment customer from gateway
-            return $this->getPaymentGateway($gateway)->findCustomer();
-
-        } catch (Exception $e) {
-
-            // If there was a not found exception, try to recreate payment profile
-            if ($e instanceof NotFound) {
-                $this->removePaymentProfile();
-
-                return $this->getPaymentGateway($gateway)->findCustomer();
-            } else {
-                throw $e;
-            }
-        }
+        // Get payment customer from gateway
+        return $this->getPaymentGateway($gateway)->findCustomer();
     }
 
     /**
@@ -399,6 +389,116 @@ trait Billable
     }
 
     /**
+     * Refill balance - Generic user's refill method
+     *
+     * @param                                                $amount
+     * @param null                                           $description
+     * @param \Ptuchik\Billing\Models\Order|null             $order
+     * @param null                                           $gateway
+     * @param \Omnipay\Common\Message\ResponseInterface|null $payment
+     *
+     * @return mixed|null|\Omnipay\Common\Message\ResponseInterface|\Ptuchik\Billing\Models\Transaction
+     */
+    public function refillBalance(
+        $amount,
+        $description = null,
+        Order $order = null,
+        $gateway = null,
+        ResponseInterface $payment = null
+    ) {
+        // If amount is empty, interrupt payment
+        if ($amount <= 0) {
+            return null;
+        }
+
+        // If payment is not provided, charge user's payment method
+        if (!$payment) {
+            $payment = $this->getPaymentGateway($gateway)->purchase(number_format($amount, 2, '.', ''), $description,
+                $order);
+        }
+
+        // If payment is successful add funds to balance
+        if ($payment->isSuccessful()) {
+            $this->balance = $this->balance + $amount;
+            $this->save();
+
+            // If it is redirect and it is a user session, redirect user
+        } elseif ($payment->isRedirect()) {
+            $this->handleRedirect($payment, $order);
+        }
+
+        // Create income transaction and return
+        return $this->createTransaction($amount, $payment);
+    }
+
+    /**
+     * Handle payment method redirection
+     *
+     * @param \Omnipay\Common\Message\ResponseInterface $payment
+     * @param \Ptuchik\Billing\Models\Order|null        $order
+     */
+    protected function handleRedirect(ResponseInterface $payment, Order $order = null)
+    {
+        if ($payment->isRedirect() && Auth::user()) {
+            if (Request::wantsJson()) {
+                if (($response = $payment->getRedirectResponse()) instanceof RedirectResponse) {
+                    Response::json([
+                        'order_id'     => $order->id ?? 0,
+                        'redirect_url' => $transaction->getRedirectUrl()
+                    ])->send();
+                } else {
+                    Response::json([
+                        'order_id' => $order->id ?? 0,
+                        'form'     => $response
+                    ])->send();
+                }
+            } else {
+                $payment->redirect();
+            }
+        }
+    }
+
+    /**
+     * Create transaction
+     *
+     * @param                                           $amount
+     * @param \Omnipay\Common\Message\ResponseInterface $payment
+     *
+     * @return mixed|\Ptuchik\Billing\Models\Transaction
+     */
+    protected function createTransaction($amount, ResponseInterface $payment)
+    {
+        // Create a new transaction with collected data
+        $transaction = Factory::get(Transaction::class, true);
+        $transaction->name = trans(config('ptuchik-billing.translation_prefixes.general').'.recharge_balance');
+        $transaction->user()->associate($this);
+        $transaction->gateway = $this->paymentGateway;
+        $transaction->price = $amount;
+        $transaction->discount = 0;
+        $transaction->summary = $amount;
+        $transaction->currency = Currency::getUserCurrency();
+
+        $transactionStatus = Factory::getClass(TransactionStatus::class);
+
+        $transaction->data = serialize($payment->getData()->transaction ?? '');
+        $transaction->reference = $payment->getTransactionReference();
+        $transaction->type = Factory::getClass(TransactionType::class)::INCOME;
+        if ($payment->isSuccessful()) {
+            if (!empty(config('ptuchik-billing.gateways.'.$transaction->gateway.'.cash'))) {
+                $transaction->status = $transactionStatus::PENDING;
+            } else {
+                $transaction->status = $transactionStatus::SUCCESS;
+            }
+        } else {
+            $transaction->status = $transactionStatus::FAILED;
+        }
+        $transaction->message = $payment->getMessage();
+        $transaction->save();
+
+        return $transaction;
+    }
+
+    /**
      * Void transaction
      *
      * @param      $reference
@@ -437,15 +537,7 @@ trait Billable
         try {
             $paymentMethods = $this->getPaymentGateway($gateway)->getPaymentMethods();
         } catch (Exception $e) {
-
-            // If there was a not found exception, try to recreate payment profile
-            if ($e instanceof NotFound) {
-                $this->removePaymentProfile();
-
-                $paymentMethods = $this->getPaymentGateway($gateway)->getPaymentMethods();
-            } else {
-                $paymentMethods = [];
-            }
+            $paymentMethods = [];
         }
 
         // If array is not empty, set user's hasPaymentMethod = true

@@ -267,7 +267,6 @@ class Plan extends Model
         return $this->belongsToMany(Factory::getClass(Feature::class), 'plan_features');
     }
 
-
     /**
      * All features relation
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
@@ -559,9 +558,6 @@ class Plan extends Model
             // Get previous subscription balance as discount
             $this->calculatedDiscount = $this->subscriptionBalanceDiscount;
 
-            // Add user's balance as discount
-            $this->calculatedDiscount += $this->userBalanceDiscount;
-
             // Add coupons as discount
             $this->calculatedDiscount += $this->couponDiscount;
 
@@ -579,7 +575,8 @@ class Plan extends Model
      */
     public function getSummaryAttribute()
     {
-        $summary = $this->price - $this->discount;
+        $summary = $this->price - $this->discount - $this->userBalanceDiscount;
+
         if ($summary < 0) {
             $summary = 0;
         }
@@ -611,7 +608,7 @@ class Plan extends Model
      */
     public function getIsFreeAttribute()
     {
-        return empty((float) $this->summary);
+        return ($this->price - $this->discount) <= 0;
     }
 
     /**

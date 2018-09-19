@@ -8,6 +8,7 @@ use Exception;
 use Omnipay\Common\Message\ResponseInterface;
 use Ptuchik\Billing\Constants\CouponRedeemType;
 use Ptuchik\Billing\Constants\TransactionStatus;
+use Ptuchik\Billing\Constants\TransactionType;
 use Ptuchik\Billing\Contracts\Hostable;
 use Ptuchik\Billing\Event;
 use Ptuchik\Billing\Factory;
@@ -132,17 +133,57 @@ trait PurchaseLogic
     }
 
     /**
+     * Check balance and refill if needed
+     *
+     * @param \Ptuchik\Billing\Contracts\Hostable            $host
+     * @param \Omnipay\Common\Message\ResponseInterface|null $payment
+     * @param \Ptuchik\Billing\Models\Order|null             $order
+     * @param null                                           $gateway
+     *
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Exception
+     */
+    public function checkBalance(
+        Hostable $host,
+        ResponseInterface $payment = null,
+        Order $order = null,
+        $gateway = null
+    ) {
+        if (!$this->user) {
+            throw new Exception(trans(config('ptuchik-billing.translation_prefixes.general').'.no_logged_in_user'));
+        }
+
+        // Calculate required amount
+        $price = $this->hasTrial ? 0 : $this->price - $this->discount;
+
+        // If plan has additional plans, calculate them also
+        if ($this->additionalPlans->isNotEmpty()) {
+            foreach ($this->additionalPlans as $additional) {
+                $price += $additional->hasTrial ? 0 : $additional->price - $additional->discount;
+            }
+        }
+
+        // Refill balance if needed
+        if (($amount = $price - $this->userBalanceDiscount) > 0) {
+            $this->user->refillBalance($amount, $this->package->descriptor, $order, $gateway, $payment);
+        }
+    }
+
+    /**
      * Prepare plan and purchase
      *
      * @param \Ptuchik\Billing\Contracts\Hostable            $host
      * @param \Omnipay\Common\Message\ResponseInterface|null $payment
      * @param \Ptuchik\Billing\Models\Order|null             $order
+     * @param null                                           $gateway
      *
      * @return bool|mixed|\Ptuchik\Billing\Models\Invoice
      * @throws \Exception
      */
-    public function purchase(Hostable $host, ResponseInterface $payment = null, Order $order = null)
+    public function purchase(Hostable $host, ResponseInterface $payment = null, Order $order = null, $gateway = null)
     {
+        $this->checkBalance($host, $payment, $order, $gateway);
+
         // If plan is in renew mode, jump to make purchase
         if ($this->inRenewMode) {
             return $this->makePurchase($payment, $order);
@@ -240,22 +281,7 @@ trait PurchaseLogic
             $this->payment = $payment;
         }
 
-        // If response is redirect, interrupt the process
-        if ($this->payment && Auth::user() && $this->payment->isRedirect()) {
-
-            return $this->payment->getRedirectMethod() != 'GET' ? $this->payment->redirect() : [
-                'redirect_url' => $this->payment->getRedirectUrl()
-            ];
-
-            // Otherwise continue
-        } else {
-
-            // Get summary to calculate discounts and summary
-            $this->summary;
-
-            return $this->processPurchase();
-        }
-
+        return $this->processPurchase();
     }
 
     /**
@@ -278,7 +304,7 @@ trait PurchaseLogic
         }
 
         // If there is a successful payment, add plan's addon coupons to user coupons
-        if ($this->payment && $this->payment->isSuccessful()) {
+        if (!$this->isFree && !$this->hasTrial && (!$this->payment || $this->payment->isSuccessful())) {
             $this->user->addCoupons($this->addonCoupons, $this, $this->host);
         }
 
@@ -378,35 +404,41 @@ trait PurchaseLogic
         $transaction->user()->associate($this->user);
         $transaction->gateway = $this->user->paymentGateway;
         $transaction->price = $this->price;
-        $transaction->discount = $this->discount;
+        $transaction->discount = ($discount = $this->discount) > $this->price ? $this->price : $discount;
         $transaction->summary = 0;
         $transaction->currency = Currency::getUserCurrency();
         $transaction->coupons = $this->discounts;
+        $transaction->type = Factory::getClass(TransactionType::class)::EXPENSE;
 
-        // If there is no payment, fire an event and return empty invoice
-        if (!$this->payment) {
+        // If plan is free or it is in trial, fire an event and return empty invoice
+        if ($this->isFree || $this->hasTrial) {
             return Factory::get(Invoice::class, true, $this, $transaction);
         }
 
         $transactionStatus = Factory::getClass(TransactionStatus::class);
 
-        $transaction->data = serialize($this->payment->getData()->transaction ?? '');
-        $transaction->reference = $this->payment->getTransactionReference();
-        if ($this->payment->isSuccessful()) {
-            if (!empty(config('ptuchik-billing.gateways.'.$transaction->gateway.'.cash'))) {
-                $transaction->status = $transactionStatus::PENDING;
+        if ($this->payment) {
+            $transaction->data = serialize($this->payment->getData()->transaction ?? '');
+            $transaction->reference = $this->payment->getTransactionReference();
+            if ($this->payment->isSuccessful()) {
+                if (!empty(config('ptuchik-billing.gateways.'.$transaction->gateway.'.cash'))) {
+                    $transaction->status = $transactionStatus::PENDING;
+                } else {
+                    $transaction->status = $transactionStatus::SUCCESS;
+                }
             } else {
-                $transaction->status = $transactionStatus::SUCCESS;
+                $transaction->status = $transactionStatus::FAILED;
             }
+            $transaction->message = $this->payment->getMessage();
         } else {
-            $transaction->status = $transactionStatus::FAILED;
+            $transaction->status = $transactionStatus::SUCCESS;
         }
-        $transaction->message = $this->payment->getMessage();
-        $transaction->summary = $this->summary;
+
+        $transaction->summary = $transaction->price - $transaction->discount;
         $transaction->save();
 
         // Finally if payment was not successful throw an exception with error message
-        if (!$this->payment->isSuccessful()) {
+        if ($this->payment && !$this->payment->isSuccessful()) {
 
             // If payment failed, fire a failed purchase event
             Event::purchaseFailed($this, $transaction);
