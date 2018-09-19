@@ -164,12 +164,17 @@ trait PurchaseLogic
         // Refill balance if needed
         if (($amount = $price - $this->userBalanceDiscount) > 0) {
 
+            // Small fix for some payment gateways
+            if ($amount < 1) {
+                $amount = 1;
+            }
+
             // Create an order to pass to purchase process
             $order = Factory::get(Order::class, true);
             $order->user()->associate($this->user);
             $order->host()->associate(($host = $this->host) && $host->exists ? $host : $this->user);
             $order->reference()->associate($this);
-            $order->action = Factory::getClass(OrderAction::class)::CHECKOUT;
+            $order->action = Factory::getClass(OrderAction::class)::REFILL;
             $order->save();
 
             try {
@@ -178,7 +183,7 @@ trait PurchaseLogic
                 // Complete order
                 $order->status = Factory::getClass(OrderStatus::class)::DONE;
                 $order->save();
-            } catch (Exception $exception) {
+            } catch (Throwable $exception) {
                 $order->status = Factory::getClass(OrderStatus::class)::FAILED;
                 $order->save();
                 throw $exception;
