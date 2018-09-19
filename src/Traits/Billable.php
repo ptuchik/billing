@@ -437,14 +437,14 @@ trait Billable
      * @param \Omnipay\Common\Message\ResponseInterface $payment
      * @param \Ptuchik\Billing\Models\Order|null        $order
      */
-    protected function handleRedirect(ResponseInterface $payment, Order $order = null)
+    public function handleRedirect(ResponseInterface $payment, Order $order = null)
     {
         if ($payment->isRedirect() && Auth::user()) {
             if (Request::wantsJson()) {
                 if (($response = $payment->getRedirectResponse()) instanceof RedirectResponse) {
                     Response::json([
                         'order_id'     => $order->id ?? 0,
-                        'redirect_url' => $transaction->getRedirectUrl()
+                        'redirect_url' => $payment->getRedirectUrl()
                     ])->send();
                 } else {
                     Response::json([
