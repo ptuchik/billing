@@ -123,7 +123,7 @@ trait PurchaseLogic
         // If preparation is for purchase, return subscription
         if ($forPurchase) {
 
-            $this->checkBalance($payment);
+            $this->checkBalance();
 
             return $subscription;
         }
@@ -145,7 +145,7 @@ trait PurchaseLogic
      * @return \Illuminate\Http\JsonResponse
      * @throws \Exception
      */
-    protected function checkBalance(ResponseInterface $payment = null)
+    public function checkBalance(ResponseInterface $payment = null)
     {
         if (!$this->user) {
             throw new Exception(trans(config('ptuchik-billing.translation_prefixes.general').'.no_logged_in_user'));
