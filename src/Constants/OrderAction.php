@@ -1,0 +1,16 @@
+<?php
+
+namespace Ptuchik\Billing\Constants;
+
+use Ptuchik\CoreUtilities\AbstractClasses\AbstractTypes;
+
+/**
+ * Class OrderAction
+ * @package Ptuchik\Billing\Constants
+ */
+class OrderAction extends AbstractTypes
+{
+    const CHECKOUT = 'checkout';
+    const REFILL = 'refill';
+    const ADD_PAYMENT_METHOD = 'add_payment_method';
+}
