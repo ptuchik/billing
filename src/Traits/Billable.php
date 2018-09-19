@@ -373,11 +373,10 @@ trait Billable
      * @param                                    $amount
      * @param null                               $description
      * @param \Ptuchik\Billing\Models\Order|null $order
-     * @param null                               $gateway
      *
      * @return null|\Omnipay\Common\Message\ResponseInterface
      */
-    public function purchase($amount, $description = null, Order $order = null, $gateway = null)
+    public function purchase($amount, $description = null, Order $order = null)
     {
         // If amount is empty, interrupt payment
         if (empty((float) $amount)) {
@@ -385,7 +384,8 @@ trait Billable
         }
 
         // Charge user and return
-        return $this->getPaymentGateway($gateway)->purchase(number_format($amount, 2, '.', ''), $description, $order);
+        return $this->getPaymentGateway(Request::input('gateway'))
+            ->purchase(number_format($amount, 2, '.', ''), $description, $order);
     }
 
     /**
@@ -394,18 +394,12 @@ trait Billable
      * @param                                                $amount
      * @param null                                           $description
      * @param \Ptuchik\Billing\Models\Order|null             $order
-     * @param null                                           $gateway
      * @param \Omnipay\Common\Message\ResponseInterface|null $payment
      *
      * @return mixed|null|\Omnipay\Common\Message\ResponseInterface|\Ptuchik\Billing\Models\Transaction
      */
-    public function refillBalance(
-        $amount,
-        $description = null,
-        Order $order = null,
-        $gateway = null,
-        ResponseInterface $payment = null
-    ) {
+    public function refillBalance($amount, $description = null, Order $order = null, ResponseInterface $payment = null)
+    {
         // If amount is empty, interrupt payment
         if ($amount <= 0) {
             return null;
@@ -413,8 +407,8 @@ trait Billable
 
         // If payment is not provided, charge user's payment method
         if (!$payment) {
-            $payment = $this->getPaymentGateway($gateway)->purchase(number_format($amount, 2, '.', ''), $description,
-                $order);
+            $payment = $this->getPaymentGateway(Request::input('gateway'))
+                ->purchase(number_format($amount, 2, '.', ''), $description, $order);
         }
 
         // If payment is successful add funds to balance

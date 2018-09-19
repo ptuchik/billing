@@ -7,6 +7,8 @@ use Currency;
 use Exception;
 use Omnipay\Common\Message\ResponseInterface;
 use Ptuchik\Billing\Constants\CouponRedeemType;
+use Ptuchik\Billing\Constants\OrderAction;
+use Ptuchik\Billing\Constants\OrderStatus;
 use Ptuchik\Billing\Constants\TransactionStatus;
 use Ptuchik\Billing\Constants\TransactionType;
 use Ptuchik\Billing\Contracts\Hostable;
@@ -120,6 +122,9 @@ trait PurchaseLogic
 
         // If preparation is for purchase, return subscription
         if ($forPurchase) {
+
+            $this->checkBalance($payment);
+
             return $subscription;
         }
 
@@ -135,20 +140,13 @@ trait PurchaseLogic
     /**
      * Check balance and refill if needed
      *
-     * @param \Ptuchik\Billing\Contracts\Hostable            $host
      * @param \Omnipay\Common\Message\ResponseInterface|null $payment
-     * @param \Ptuchik\Billing\Models\Order|null             $order
-     * @param null                                           $gateway
      *
      * @return \Illuminate\Http\JsonResponse
      * @throws \Exception
      */
-    public function checkBalance(
-        Hostable $host,
-        ResponseInterface $payment = null,
-        Order $order = null,
-        $gateway = null
-    ) {
+    protected function checkBalance(ResponseInterface $payment = null)
+    {
         if (!$this->user) {
             throw new Exception(trans(config('ptuchik-billing.translation_prefixes.general').'.no_logged_in_user'));
         }
@@ -165,7 +163,26 @@ trait PurchaseLogic
 
         // Refill balance if needed
         if (($amount = $price - $this->userBalanceDiscount) > 0) {
-            $this->user->refillBalance($amount, $this->package->descriptor, $order, $gateway, $payment);
+
+            // Create an order to pass to purchase process
+            $order = Factory::get(Order::class, true);
+            $order->user()->associate($this->user);
+            $order->host()->associate(($host = $this->host) && $host->exists ? $host : $this->user);
+            $order->reference()->associate($this);
+            $order->action = Factory::getClass(OrderAction::class)::CHECKOUT;
+            $order->save();
+
+            try {
+                $this->user->refillBalance($amount, $this->package->descriptor, $order, $payment);
+
+                // Complete order
+                $order->status = Factory::getClass(OrderStatus::class)::DONE;
+                $order->save();
+            } catch (Exception $exception) {
+                $order->status = Factory::getClass(OrderStatus::class)::FAILED;
+                $order->save();
+                throw $exception;
+            }
         }
     }
 
@@ -175,18 +192,17 @@ trait PurchaseLogic
      * @param \Ptuchik\Billing\Contracts\Hostable            $host
      * @param \Omnipay\Common\Message\ResponseInterface|null $payment
      * @param \Ptuchik\Billing\Models\Order|null             $order
-     * @param null                                           $gateway
      *
      * @return bool|mixed|\Ptuchik\Billing\Models\Invoice
      * @throws \Exception
      */
-    public function purchase(Hostable $host, ResponseInterface $payment = null, Order $order = null, $gateway = null)
+    public function purchase(Hostable $host, ResponseInterface $payment = null)
     {
-        $this->checkBalance($host, $payment, $order, $gateway);
-
         // If plan is in renew mode, jump to make purchase
         if ($this->inRenewMode) {
-            return $this->makePurchase($payment, $order);
+            $this->checkBalance($payment);
+
+            return $this->makePurchase($payment);
         }
 
         // If there is an active subscription
@@ -226,7 +242,7 @@ trait PurchaseLogic
         }
 
         // Purchase plan, purchase additional plans and get invoice
-        return $this->purchaseAdditionalPlans($this->makePurchase($payment, $order), $payment);
+        return $this->purchaseAdditionalPlans($this->makePurchase($payment), $payment);
     }
 
     /**
@@ -258,11 +274,10 @@ trait PurchaseLogic
      * Make a purchase
      *
      * @param \Omnipay\Common\Message\ResponseInterface|null $payment
-     * @param \Ptuchik\Billing\Models\Order|null             $order
      *
      * @return bool|mixed|\Ptuchik\Billing\Models\Invoice
      */
-    protected function makePurchase(ResponseInterface $payment = null, Order $order = null)
+    protected function makePurchase(ResponseInterface $payment = null)
     {
         // If no payment provided, charge user
         if (!$payment) {
@@ -276,7 +291,7 @@ trait PurchaseLogic
             $price = $this->hasTrial ? 0 : $this->summary;
 
             // Make payment and set the result as plan's payment
-            $this->payment = $this->user->purchase($price, $this->package->descriptor, $order);
+            $this->payment = $this->user->purchase($price, $this->package->descriptor);
         } else {
             $this->payment = $payment;
         }
