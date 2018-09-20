@@ -117,9 +117,6 @@ trait PurchaseLogic
         // Set purchase for current package on current host and try to get latest subscription
         $subscription = $this->package->setPurchase($this->host, $forPurchase)->subscription;
 
-        // Get previous subscription
-        $this->getPreviousSubscription();
-
         // If preparation is for purchase, return subscription
         if ($forPurchase) {
 
@@ -406,8 +403,8 @@ trait PurchaseLogic
         $price = $this->price - $this->couponDiscount;
 
         // If there is previous subscription and so previous user
-        if ($this->previousSubscription) {
-            $price = $this->previousSubscription->cancelAndRefund($this, $price);
+        if ($previousSubscription = $this->getPreviousSubscription()) {
+            $price = $previousSubscription->cancelAndRefund($this, $price);
         }
 
         // Update current user's balance
@@ -491,8 +488,8 @@ trait PurchaseLogic
         $this->package->activate($this->host, $this);
 
         // If there is a previous subscription, cancel and refund user
-        if ($this->previousSubscription) {
-            $this->previousSubscription->cancelAndRefund($this);
+        if ($previousSubscription = $this->getPreviousSubscription()) {
+            $previousSubscription->cancelAndRefund($this);
         }
 
         // Try to get the last successful transaction for current purchase

@@ -125,7 +125,7 @@ class Plan extends Model
      * The fallback subscription, who's owner will get the price difference on his balance
      * @var
      */
-    protected $previousSubscription;
+    protected $previousSubscription = false;
 
     /**
      * Current user, who is going to purchase this plan
@@ -454,7 +454,7 @@ class Plan extends Model
      */
     public function getPreviousSubscription()
     {
-        if (is_null($this->previousSubscription)) {
+        if ($this->previousSubscription === false) {
 
             // If there is a previous subscription and the current plan is recurring,
             // calculate the monthly price difference and determine
@@ -481,12 +481,6 @@ class Plan extends Model
                 }
 
             } elseif (!$this->isRecurring) {
-                $this->previousSubscription = $this->package->setPurchase($this->host)->subscription;
-            }
-
-            // If there is no previous subscription and current plan is not recurring,
-            // try to get current subscription as previous if any
-            if (!($this->previousSubscription = $this->package->getPreviousSubscription($this->host)) && !$this->isRecurring) {
                 $this->previousSubscription = $this->package->setPurchase($this->host)->subscription;
             }
         }
