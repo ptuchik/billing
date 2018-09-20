@@ -123,7 +123,11 @@ trait PurchaseLogic
         // If preparation is for purchase, return subscription
         if ($forPurchase) {
 
-            $this->checkBalance();
+            if ($subscription) {
+                $subscription->plan->checkBalance();
+            } else {
+                $this->checkBalance();
+            }
 
             return $subscription;
         }
@@ -178,7 +182,12 @@ trait PurchaseLogic
             $order->save();
 
             try {
-                $this->user->refillBalance($amount, $this->package->descriptor, $order, $payment);
+                $transaction = $this->user->refillBalance($amount, $this->package->descriptor, $order, $payment);
+
+                if ($transaction->status != Factory::getClass(TransactionStatus::class)::SUCCESS) {
+                    throw new Exception(trans(config('ptuchik-billing.translation_prefixes.general').'.payment_processor')
+                        .': '.$transaction->message);
+                }
 
                 // Complete order
                 $order->status = Factory::getClass(OrderStatus::class)::DONE;
