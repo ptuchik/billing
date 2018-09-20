@@ -50,7 +50,7 @@ trait Billable
      */
     public function getBalanceAttribute($value)
     {
-        return currency($value, null, null, false);
+        return round(currency($value, null, null, false), 2);
     }
 
     /**
