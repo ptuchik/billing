@@ -98,10 +98,11 @@ trait PurchaseLogic
      *
      * @param \Ptuchik\Billing\Contracts\Hostable $host
      * @param bool                                $forPurchase
+     * @param bool                                $getSubscription
      *
      * @return $this
      */
-    public function prepare(Hostable $host, $forPurchase = false)
+    public function prepare(Hostable $host, $forPurchase = false, $getSubscription = false)
     {
         // Validate host against required package and if it exists, set to plan
         if (($host = $this->package->validate($host, $this->user, $forPurchase))->exists) {
@@ -118,14 +119,7 @@ trait PurchaseLogic
         $subscription = $this->package->setPurchase($this->host, $forPurchase)->subscription;
 
         // If preparation is for purchase, return subscription
-        if ($forPurchase) {
-
-            if ($subscription) {
-                $subscription->plan->checkBalance();
-            } else {
-                $this->checkBalance();
-            }
-
+        if ($forPurchase || $getSubscription) {
             return $subscription;
         }
 
@@ -253,6 +247,8 @@ trait PurchaseLogic
         }
 
         // Purchase plan, purchase additional plans and get invoice
+        $this->checkBalance();
+
         return $this->purchaseAdditionalPlans($this->makePurchase($payment), $payment);
     }
 
