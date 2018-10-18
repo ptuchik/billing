@@ -16,4 +16,5 @@ class SubscriptionStatus extends AbstractTypes
     const CANCELLED = 5;
     const TRIAL_ACTIVE = 6;
     const TRIAL_EXPIRED = 7;
+    const PENDING = 8;
 }

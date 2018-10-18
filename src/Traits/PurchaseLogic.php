@@ -185,7 +185,13 @@ trait PurchaseLogic
         }
 
         // Purchase plan, purchase additional plans and get invoice
-        return $this->purchaseAdditionalPlans($this->makePurchase($payment, $order), $payment);
+        $purchase = $this->makePurchase($payment, $order);
+
+        if ($purchase instanceof Invoice) {
+            return $this->purchaseAdditionalPlans($purchase, $payment);
+        } else {
+            return $purchase;
+        }
     }
 
     /**
@@ -243,9 +249,13 @@ trait PurchaseLogic
         // If response is redirect, interrupt the process
         if ($this->payment && Auth::user() && $this->payment->isRedirect()) {
 
-            return $this->payment->getRedirectMethod() != 'GET' ? $this->payment->redirect() : [
-                'redirect_url' => $this->payment->getRedirectUrl()
-            ];
+            $response = $this->payment->getRedirectResponse();
+
+            if ($response instanceof RedirectResponse) {
+                return ['redirect_url' => $response->getTargetUrl()];
+            } else {
+                return ['form' => $response->getContent()];
+            }
 
             // Otherwise continue
         } else {
@@ -392,12 +402,10 @@ trait PurchaseLogic
 
         $transaction->data = serialize($this->payment->getData()->transaction ?? '');
         $transaction->reference = $this->payment->getTransactionReference();
-        if ($this->payment->isSuccessful()) {
-            if (!empty(config('ptuchik-billing.gateways.'.$transaction->gateway.'.cash'))) {
-                $transaction->status = $transactionStatus::PENDING;
-            } else {
-                $transaction->status = $transactionStatus::SUCCESS;
-            }
+        if ($this->payment->isPending()) {
+            $transaction->status = $transactionStatus::PENDING;
+        } elseif ($this->payment->isSuccessful()) {
+            $transaction->status = $transactionStatus::SUCCESS;
         } else {
             $transaction->status = $transactionStatus::FAILED;
         }
