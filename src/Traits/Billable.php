@@ -203,7 +203,7 @@ trait Billable
     {
         // If user is not tester, save his payment profile
         if (!$this->isTester()) {
-            $paymentProfiles = $this->paymentProfiles;
+            $paymentProfiles = $this->paymentProfiles['profiles'];
             $paymentProfiles[$this->paymentGateway] = $value;
             $this->paymentProfiles = $paymentProfiles;
         }
@@ -221,8 +221,8 @@ trait Billable
         }
 
         // Try to get user's payment profile
-        if (is_array($this->paymentProfiles) && !empty($this->paymentProfiles[$this->paymentGateway])) {
-            return $this->paymentProfiles[$this->paymentGateway];
+        if (is_array($this->paymentProfiles['profiles']) && !empty($this->paymentProfiles['profiles'][$this->paymentGateway])) {
+            return $this->paymentProfiles['profiles'][$this->paymentGateway];
 
             // If user has no payment profile, create it to continue
         } else {
@@ -236,12 +236,18 @@ trait Billable
      */
     public function removePaymentProfile()
     {
-        $paymentProfiles = $this->paymentProfiles;
-        unset($paymentProfiles[$this->paymentGateway]);
-        $this->paymentProfiles = $paymentProfiles;
+        $getwayName = $this->paymentGateway;
+        $userPayments = $this->paymentProfiles;
+
+        if (!empty($userPayments['profiles'])) {
+            unset($userPayments['profiles'][$getwayName]);
+        }
+
+        // Update user's payment Profiles
+        $this->paymentProfiles = $userPayments;
         $this->save();
 
-        return $this->paymentProfiles;
+        return $userPayments;
     }
 
     /**
@@ -297,7 +303,17 @@ trait Billable
         // Create payment profile on gateway
         $paymentProfile = $this->getPaymentGateway($gateway)->createPaymentProfile();
 
-        $this->paymentProfile = $paymentProfile;
+        $getwayName = $this->getPaymentGatewayAttribute($gateway);
+        $userPayments = $this->paymentProfiles;
+
+        if (empty($userPayments['profiles'])) {
+            $userPayments['profiles'] = [$getwayName => $paymentProfile];
+        } else {
+            $userPayments['profiles'][$getwayName] = $paymentProfile;
+        }
+
+        // Store user's payment Profiles
+        $this->paymentProfiles = $userPayments;
         $this->save();
 
         return $paymentProfile;
@@ -498,6 +514,22 @@ trait Billable
         // Create payment method
         $paymentMethod = $this->getPaymentGateway($gateway)->createPaymentMethod($token);
 
+        $getwayName = $this->getPaymentGatewayAttribute($gateway);
+        $userPayments = $this->paymentProfiles;
+
+        if (empty($userPayments['methods'])) {
+            $userPayments['methods'] = [$getwayName => [$paymentMethod]];
+        } else {
+            if (!empty($userPayments['methods'][$getwayName])) {
+                array_push($userPayments['methods'][$getwayName], [$paymentMethod]);
+            } else {
+                $userPayments['methods'][$getwayName] = [$paymentMethod];
+            }
+        }
+
+        // Store user's payment methods
+        $this->paymentProfiles = $userPayments;
+
         // Set user's hasPaymentMethod = true
         $this->hasPaymentMethod = true;
         $this->save();
@@ -517,7 +549,22 @@ trait Billable
     public function deletePaymentMethod($token, $gateway = null)
     {
         // Delete payment method from remote gateway
-        if ($this->getPaymentGateway($gateway)->deletePaymentMethod($token)) {
+        if ($deletedMethod = $this->getPaymentGateway($gateway)->deletePaymentMethod($token)) {
+
+            $getwayName = $this->getPaymentGatewayAttribute($gateway);
+            $userPayments = $this->paymentProfiles;
+
+            if (!empty($userPayments['methods'][$getwayName])) {
+                foreach ($userPayments['methods'][$getwayName] as $key => $method) {
+                    if ($method['token'] === $token) {
+                        unset($userPayments['methods'][$getwayName][$key]);
+                    }
+                }
+            }
+
+            // Update user's payment methods
+            $this->paymentProfiles = $userPayments;
+            $this->save();
 
             return $this->getPaymentMethods();
         } else {
