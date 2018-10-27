@@ -55,7 +55,11 @@ trait PurchaseLogic
 
                 // If redeem type is manual, check if coupon code provided by user, return it
                 if ($coupon->code == Request::input('coupon')) {
-                    return $coupon;
+                    if ($coupon->numberOfCoupons <= $coupon->usedCoupons) {
+                        throw new Exception(trans('general.coupon_limit_has_expired'));
+                    } else {
+                        return $coupon;
+                    }
                 }
                 break;
             case $redeemTypes::AUTOREDEEM:
@@ -64,6 +68,20 @@ trait PurchaseLogic
                 return $coupon;
             default:
                 return;
+        }
+    }
+
+    /**
+     * Caclculate coupon usage
+     */
+    protected function calculateCouponUsage() {
+        if (!$this->inRenewMode) {
+            foreach ($this->discounts as $discount) {
+                if ($discount->redeem == $redeemTypes::MANUAL && is_null($discount->numberOfCoupons)) {
+                    $discount->usedCoupons = $discount->usedCoupons + 1;
+                    $discount->save;
+                }
+            }
         }
     }
 
@@ -275,6 +293,9 @@ trait PurchaseLogic
 
             // Remove user's coupons if needed
             $this->user->removeCoupons($this->discounts);
+
+            // Increment coupon usage
+            $this->calculateCouponUsage();
         }
 
         // If there is a successful payment, add plan's addon coupons to user coupons

@@ -43,7 +43,9 @@ class Coupon extends Model
     ];
 
     protected $appends = [
-        'connectedToReferralSystem'
+        'connectedToReferralSystem',
+        'numberOfCoupons',
+        'usedCoupons'
     ];
 
     /**
@@ -61,7 +63,7 @@ class Coupon extends Model
      */
     public function getConnectedToReferralSystemAttribute()
     {
-        return !empty($this->params['connectedToReferralSystem']);
+        return !empty($this->getParam('connectedToReferralSystem'));
     }
 
     /**
@@ -72,6 +74,43 @@ class Coupon extends Model
     public function setConnectedToReferralSystemAttribute($value)
     {
         $this->setParam('connectedToReferralSystem', !empty($value));
+    }
+
+    /**
+     * Number Of Coupons attribute getter
+     * @return null|int
+     */
+    public function getNumberOfCouponsAttribute()
+    {
+        return $this->getParam('numberOfCoupons') ;
+    }
+
+    /**
+     * Number Of Coupons attribute setter
+     *
+     * @param $value
+     */
+    public function setNumberOfCouponsAttribute($value)
+    {
+        $this->setParam('numberOfCoupons', $value);
+    }
+
+    /**
+     * Used Coupons attribute getter
+     * @return int
+     */
+    public function getUsedCouponsAttribute()
+    {
+        return $this->getParam('usedCoupons', 0) ;
+    }
+
+    /** Used Coupons attribute setter
+     *
+     * @param $value
+     */
+    public function setUsedCouponsAttribute($value)
+    {
+        $this->setParam('usedCoupons', $value);
     }
 
     /**
