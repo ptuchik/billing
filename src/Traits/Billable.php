@@ -303,7 +303,7 @@ trait Billable
         // Create payment profile on gateway
         $paymentProfile = $this->getPaymentGateway($gateway)->createPaymentProfile();
 
-        $getwayName = $this->getPaymentGatewayAttribute($gateway);
+        $getwayName = $this->paymentGateway;;
         $userPayments = $this->paymentProfiles;
 
         if (empty($userPayments['profiles'])) {
@@ -514,17 +514,22 @@ trait Billable
         // Create payment method
         $paymentMethod = $this->getPaymentGateway($gateway)->createPaymentMethod($token);
 
-        $getwayName = $this->getPaymentGatewayAttribute($gateway);
+        $getwayName = $this->paymentGateway;
         $userPayments = $this->paymentProfiles;
+        $methodExist = false;
 
-        if (empty($userPayments['methods'])) {
-            $userPayments['methods'] = [$getwayName => [$paymentMethod]];
-        } else {
-            if (!empty($userPayments['methods'][$getwayName])) {
-                array_push($userPayments['methods'][$getwayName], [$paymentMethod]);
-            } else {
-                $userPayments['methods'][$getwayName] = [$paymentMethod];
+        if (!empty($userPayments['methods'][$getwayName])) {
+            foreach ($userPayments['methods'][$getwayName] as $key => $method) {
+                if ($method['token'] === $token) {
+                    $methodExist = true;
+                }
             }
+
+            if (!$methodExist) {
+                array_push($userPayments['methods'][$getwayName], $paymentMethod);
+            }
+        } else {
+            $userPayments['methods'][$getwayName][] = $paymentMethod;
         }
 
         // Store user's payment methods
@@ -551,7 +556,7 @@ trait Billable
         // Delete payment method from remote gateway
         if ($deletedMethod = $this->getPaymentGateway($gateway)->deletePaymentMethod($token)) {
 
-            $getwayName = $this->getPaymentGatewayAttribute($gateway);
+            $getwayName = $this->paymentGateway;
             $userPayments = $this->paymentProfiles;
 
             if (!empty($userPayments['methods'][$getwayName])) {
