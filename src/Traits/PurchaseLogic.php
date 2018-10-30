@@ -16,6 +16,7 @@ use Ptuchik\Billing\Models\Invoice;
 use Ptuchik\Billing\Models\Order;
 use Ptuchik\Billing\Models\Transaction;
 use Request;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Throwable;
 
 /**
