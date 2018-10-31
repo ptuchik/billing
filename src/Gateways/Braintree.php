@@ -105,6 +105,22 @@ class Braintree implements PaymentGateway
             throw new Exception($paymentMethod->getMessage());
         }
 
+        $getwayName = $this->gateway->paymentGateway;;
+        $userPayments = $this->gateway->paymentProfiles;
+
+        if (!empty($userPayments['methods'][$getwayName])) {
+            array_push($userPayments['methods'][$getwayName], $paymentMethod);
+        } else {
+            $userPayments['methods'][$getwayName][] = $paymentMethod;
+        }
+
+        // Store user's payment methods
+        $this->user->paymentProfiles = $userPayments;
+
+        // Set user's hasPaymentMethod = true
+        $this->user->hasPaymentMethod = true;
+        $this->user->save();
+
         // Parse the result and return the payment method instance
         return $this->parsePaymentMethod($paymentMethod->getData()->paymentMethod);
     }
