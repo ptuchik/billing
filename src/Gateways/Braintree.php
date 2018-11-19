@@ -2,17 +2,17 @@
 
 namespace Ptuchik\Billing\Gateways;
 
-use App\User;
 use Braintree\CreditCard;
+use Braintree\Exception\NotFound;
 use Braintree\PayPalAccount;
 use Currency;
 use Exception;
 use Omnipay\Common\Message\ResponseInterface;
 use Omnipay\Omnipay;
+use Ptuchik\Billing\Contracts\Billable;
 use Ptuchik\Billing\Contracts\PaymentGateway;
 use Ptuchik\Billing\Models\Order;
 use Request;
-use Omnipay\Common\Message\RequestInterface;
 
 /**
  * Class Braintree
@@ -39,10 +39,10 @@ class Braintree implements PaymentGateway
     /**
      * Braintree constructor.
      *
-     * @param \App\User $user
-     * @param array     $config
+     * @param \Ptuchik\Billing\Contracts\Billable $user
+     * @param array                               $config
      */
-    public function __construct(User $user, array $config = [])
+    public function __construct(Billable $user, array $config = [])
     {
         $this->config = $config;
         $this->user = $user;
@@ -84,21 +84,27 @@ class Braintree implements PaymentGateway
      */
     public function findCustomer()
     {
-        return $this->gateway->findCustomer($this->user->paymentProfile)->send()->getData();
+        try {
+            return $this->gateway->findCustomer($this->user->paymentProfile)->send()->getData();
+        } catch (NotFound $exception) {
+            $this->user->removePaymentProfile();
+
+            return $this->gateway->findCustomer($this->user->paymentProfile)->send()->getData();
+        }
     }
 
     /**
      * Create payment method
      *
-     * @param string $token
+     * @param string $nonce
      *
      * @return mixed
      * @throws \Exception
      */
-    public function createPaymentMethod(string $token)
+    public function createPaymentMethod(string $nonce)
     {
         // Create a payment method on remote gateway
-        $paymentMethod = $this->gateway->createPaymentMethod()->setToken($token)
+        $paymentMethod = $this->gateway->createPaymentMethod()->setToken($nonce)
             ->setMakeDefault(true)->setCustomerId($this->user->paymentProfile)->send();
 
         if (!$paymentMethod->isSuccessful()) {
@@ -301,14 +307,13 @@ class Braintree implements PaymentGateway
      *
      * @param $creditCard
      *
-     * @return object
+     * @return array
      */
     protected function parseBraintreeCreditCard($creditCard)
     {
-        return (object) [
+        return [
             'token'                  => $creditCard->token,
             'type'                   => 'credit_card',
-            'default'                => $creditCard->default,
             'imageUrl'               => $creditCard->imageUrl,
             'createdAt'              => $creditCard->createdAt,
             'updatedAt'              => $creditCard->updatedAt,
@@ -339,14 +344,13 @@ class Braintree implements PaymentGateway
      *
      * @param $payPalAccount
      *
-     * @return object
+     * @return array
      */
     protected function parseBraintreePayPalAccount($payPalAccount)
     {
-        return (object) [
+        return [
             'token'              => $payPalAccount->token,
             'type'               => 'paypal_account',
-            'default'            => $payPalAccount->default,
             'imageUrl'           => $payPalAccount->imageUrl,
             'createdAt'          => $payPalAccount->createdAt,
             'updatedAtAt'        => $payPalAccount->updatedAt,

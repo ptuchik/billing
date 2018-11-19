@@ -126,7 +126,7 @@ class Plan extends Model
      * The fallback subscription, who's owner will get the price difference on his balance
      * @var
      */
-    protected $previousSubscription;
+    protected $previousSubscription = false;
 
     /**
      * Current user, who is going to purchase this plan
@@ -267,7 +267,6 @@ class Plan extends Model
     {
         return $this->belongsToMany(Factory::getClass(Feature::class), 'plan_features');
     }
-
 
     /**
      * All features relation
@@ -462,7 +461,7 @@ class Plan extends Model
      */
     public function getPreviousSubscription()
     {
-        if (is_null($this->previousSubscription)) {
+        if ($this->previousSubscription === false) {
 
             // If there is a previous subscription and the current plan is recurring,
             // calculate the monthly price difference and determine
@@ -489,12 +488,6 @@ class Plan extends Model
                 }
 
             } elseif (!$this->isRecurring) {
-                $this->previousSubscription = $this->package->setPurchase($this->host)->subscription;
-            }
-
-            // If there is no previous subscription and current plan is not recurring,
-            // try to get current subscription as previous if any
-            if (!($this->previousSubscription = $this->package->getPreviousSubscription($this->host)) && !$this->isRecurring) {
                 $this->previousSubscription = $this->package->setPurchase($this->host)->subscription;
             }
         }
@@ -566,9 +559,6 @@ class Plan extends Model
             // Get previous subscription balance as discount
             $this->calculatedDiscount = $this->subscriptionBalanceDiscount;
 
-            // Add user's balance as discount
-            $this->calculatedDiscount += $this->userBalanceDiscount;
-
             // Add coupons as discount
             $this->calculatedDiscount += $this->couponDiscount;
 
@@ -586,7 +576,7 @@ class Plan extends Model
      */
     public function getSummaryAttribute()
     {
-        $summary = $this->price - $this->discount;
+        $summary = $this->price - $this->discount - $this->userBalanceDiscount;
         if ($summary < 0) {
             $summary = 0;
         }
@@ -618,7 +608,7 @@ class Plan extends Model
      */
     public function getIsFreeAttribute()
     {
-        return empty((float) $this->summary);
+        return ($this->price - $this->discount) <= 0;
     }
 
     /**

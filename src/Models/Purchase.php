@@ -174,7 +174,12 @@ class Purchase extends Model
         }
 
         $subscription->endsAt = $subscription->endsAt ? $subscription->nextBillingDate : null;
-        $subscription->addons = $plan->payment && $plan->payment->isSuccessful() ? [] : $plan->addonCoupons;
+
+        if (!$plan->isFree && !$plan->hasTrial && (!$plan->payment || $plan->payment->isSuccessful())) {
+            $subscription->addons = [];
+        } else {
+            $subscription->addons = $plan->addonCoupons;
+        }
 
         // Save and return subscription instance
         $subscription->save();

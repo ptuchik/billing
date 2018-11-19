@@ -30,6 +30,7 @@ trait PurchaseLogic
      * @param \Ptuchik\Billing\Models\Coupon $coupon
      *
      * @return \Ptuchik\Billing\Models\Coupon|void
+     * @throws \Exception
      */
     protected function analizeCoupon(Coupon $coupon)
     {
@@ -74,7 +75,11 @@ trait PurchaseLogic
     /**
      * Caclculate coupon usage
      */
-    protected function calculateCouponUsage() {
+    protected function calculateCouponUsage()
+    {
+        // Define redeem types
+        $redeemTypes = Factory::getClass(CouponRedeemType::class);
+
         if (!$this->inRenewMode) {
             foreach ($this->discounts as $discount) {
                 if ($discount->redeem == $redeemTypes::MANUAL && is_null($discount->numberOfCoupons)) {
@@ -399,13 +404,13 @@ trait PurchaseLogic
         $transaction->user()->associate($this->user);
         $transaction->gateway = $this->user->paymentGateway;
         $transaction->price = $this->price;
-        $transaction->discount = $this->discount;
+        $transaction->discount = ($discount = $this->discount) > $this->price ? $this->price : $discount;
         $transaction->summary = 0;
         $transaction->currency = Currency::getUserCurrency();
         $transaction->coupons = $this->discounts;
 
-        // If there is no payment, fire an event and return empty invoice
-        if (!$this->payment) {
+        // If plan is free or it is in trial, fire an event and return empty invoice
+        if ($this->isFree || $this->hasTrial) {
             return Factory::get(Invoice::class, true, $this, $transaction);
         }
 
