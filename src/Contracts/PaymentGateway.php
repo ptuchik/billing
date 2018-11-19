@@ -2,7 +2,6 @@
 
 namespace Ptuchik\Billing\Contracts;
 
-use Omnipay\Common\Message\RequestInterface;
 use Omnipay\Common\Message\ResponseInterface;
 use Ptuchik\Billing\Models\Order;
 
@@ -35,12 +34,12 @@ interface PaymentGateway
     /**
      * Create payment method
      *
-     * @param string $token
+     * @param string $nonce
      *
      * @return mixed
      * @throws \Exception
      */
-    public function createPaymentMethod(string $token);
+    public function createPaymentMethod(string $nonce);
 
     /**
      * Get payment methods

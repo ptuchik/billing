@@ -13,6 +13,7 @@ use Ptuchik\Billing\Traits\PurchaseLogic;
 use Ptuchik\CoreUtilities\Models\Model;
 use Ptuchik\CoreUtilities\Traits\HasIcon;
 use Ptuchik\CoreUtilities\Traits\HasParams;
+use Request;
 
 /**
  * Class Plan
@@ -401,6 +402,7 @@ class Plan extends Model
      * Discount attribute getter, collecting all possible discounts,
      * calculating and setting as current discount
      * @return \Illuminate\Support\Collection
+     * @throws \Exception
      */
     public function getDiscountsAttribute()
     {
@@ -411,6 +413,12 @@ class Plan extends Model
 
         // Create an empty discounts collection, loop throught available coupons and add to discounts
         $this->currentDiscounts = collect([]);
+
+        // Check if the coupon exists in the plan coupons
+        if (($code = Request::input('coupon')) && !$this->coupons->contains('code', $code)) {
+            throw new Exception(trans('general.coupon_is_invalid'));
+        }
+
         foreach ($this->coupons as $coupon) {
 
             // If coupon is not added to discounts collection yet and is applicate, add to collection
@@ -570,7 +578,6 @@ class Plan extends Model
     public function getSummaryAttribute()
     {
         $summary = $this->price - $this->discount - $this->userBalanceDiscount;
-
         if ($summary < 0) {
             $summary = 0;
         }

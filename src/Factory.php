@@ -12,6 +12,8 @@ use ReflectionClass;
  */
 class Factory
 {
+    protected static $solvedClasses = [];
+
     /**
      * Container for already created instances
      * @var array
@@ -51,16 +53,20 @@ class Factory
      * @return string
      * @throws Exception
      */
-    public static function getClass(string $className): string
+    public static function getClass(string $className) : string
     {
+        if ($class = array_get(static::$solvedClasses, $className)) {
+            return $class;
+        }
+
         // Get overrided class name
         $override = config('ptuchik-billing.class_overrides.'.$className);
 
         // Check if overrided class name exists return it, if not return native class name
         if (class_exists($override)) {
-            return $override;
+            return static::$solvedClasses[$className] = $override;
         } elseif (class_exists($className)) {
-            return $className;
+            return static::$solvedClasses[$className] = $className;
         } else {
             throw new Exception('Invalid Class Name: '.$className);
         }

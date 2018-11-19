@@ -174,6 +174,7 @@ class Purchase extends Model
         }
 
         $subscription->endsAt = $subscription->endsAt ? $subscription->nextBillingDate : null;
+
         if (!$plan->isFree && !$plan->hasTrial && (!$plan->payment || $plan->payment->isSuccessful())) {
             $subscription->addons = [];
         } else {

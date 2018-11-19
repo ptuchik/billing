@@ -8,5 +8,4 @@ namespace Ptuchik\Billing\Contracts;
  */
 interface Billable
 {
-
 }
