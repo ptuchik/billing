@@ -139,11 +139,16 @@ trait HasPaymentMethods
         // Loop through user's payment methods and find the default to return
         foreach ($paymentMethods as $paymentMethod) {
             if ($paymentMethod['token'] == $this->defaultToken) {
+                $paymentMethod['default'] = true;
+
                 return $paymentMethod;
             }
         }
 
-        return array_last($paymentMethods);
+        $paymentMethod = array_last($paymentMethods);
+        $paymentMethod['default'] = true;
+
+        return $paymentMethod;
     }
 
     /**
