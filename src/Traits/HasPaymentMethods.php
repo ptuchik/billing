@@ -145,10 +145,11 @@ trait HasPaymentMethods
             }
         }
 
-        $paymentMethod = array_last($paymentMethods);
-        $paymentMethod['default'] = true;
+        if ($paymentMethod = array_last($paymentMethods)) {
+            $paymentMethod['default'] = true;
 
-        return $paymentMethod;
+            return $paymentMethod;
+        }
     }
 
     /**
