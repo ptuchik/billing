@@ -284,7 +284,7 @@ class Braintree implements PaymentGateway
      *
      * @return mixed
      */
-    protected function parsePaymentMethod($paymentMethod)
+    public function parsePaymentMethod($paymentMethod)
     {
         // Define payment method parser
         switch (get_class($paymentMethod)) {
@@ -314,6 +314,7 @@ class Braintree implements PaymentGateway
         return [
             'token'                  => $creditCard->token,
             'type'                   => 'credit_card',
+            'gateway'                => 'braintree',
             'imageUrl'               => $creditCard->imageUrl,
             'createdAt'              => $creditCard->createdAt,
             'updatedAt'              => $creditCard->updatedAt,
@@ -351,6 +352,7 @@ class Braintree implements PaymentGateway
         return [
             'token'              => $payPalAccount->token,
             'type'               => 'paypal_account',
+            'gateway'            => 'braintree',
             'imageUrl'           => $payPalAccount->imageUrl,
             'createdAt'          => $payPalAccount->createdAt,
             'updatedAtAt'        => $payPalAccount->updatedAt,

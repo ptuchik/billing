@@ -92,7 +92,6 @@ trait HasPaymentMethods
             try {
                 $paymentMethods = [];
                 foreach ($this->getPaymentGateway()->getPaymentMethods() as $method) {
-                    $method['gateway'] = $this->paymentGateway;
                     $paymentMethods[] = $method;
                 }
             } catch (Throwable $e) {
@@ -158,7 +157,7 @@ trait HasPaymentMethods
     {
         foreach ($this->getPaymentMethods() as $paymentMethod) {
             if ($paymentMethod['token'] == $token) {
-                $this->getPaymentGateway($paymentMethod['gateway'])->setDefaultPaymentMethod($token);
+                $this->getPaymentGateway($paymentMethod['gateway'] ?? '')->setDefaultPaymentMethod($token);
                 $this->defaultToken = $token;
                 $this->save();
             }
@@ -180,13 +179,12 @@ trait HasPaymentMethods
 
             // Check if payment method already exists
             foreach ($paymentMethods = $this->getPaymentMethods() as $method) {
-                if ($method['token'] == $paymentMethod['token'] && $method['gateway'] == $this->paymentGateway) {
+                if ($method['token'] == $paymentMethod['token'] && ($method['gateway'] ?? '') == $this->paymentGateway) {
                     return $paymentMethod;
                 }
             }
 
             // If there was no such payment method, add it
-            $paymentMethod['gateway'] = $this->paymentGateway;
             $paymentMethods[] = $paymentMethod;
             $this->paymentMethods = $paymentMethods;
 
@@ -214,7 +212,7 @@ trait HasPaymentMethods
         foreach ($this->getPaymentMethods() as $paymentMethod) {
             if ($paymentMethod['token'] == $token) {
                 try {
-                    $this->getPaymentGateway($paymentMethod['gateway'])->deletePaymentMethod($token);
+                    $this->getPaymentGateway($paymentMethod['gateway'] ?? '')->deletePaymentMethod($token);
                 } catch (Throwable $exception) {
 
                 }

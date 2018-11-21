@@ -57,6 +57,15 @@ interface PaymentGateway
     public function setDefaultPaymentMethod(string $token);
 
     /**
+     * Parse payment method
+     *
+     * @param $paymentMethod
+     *
+     * @return mixed
+     */
+    public function parsePaymentMethod($paymentMethod);
+
+    /**
      * Delete payment method
      *
      * @param string $token
