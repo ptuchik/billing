@@ -76,6 +76,9 @@ return [
 
         // Transaction model
         \Ptuchik\Billing\Models\Transaction::class           => \Ptuchik\Billing\Models\Transaction::class,
+
+        // Payment method model
+        \Ptuchik\Billing\Models\PaymentMethod::class         => \Ptuchik\Billing\Models\PaymentMethod::class,
     ],
 
     /**
