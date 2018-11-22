@@ -17,7 +17,7 @@
     "require": {
         "ptuchik/core-utilities": "^1.0",
         "league/omnipay": "^3.0",
-        "ptuchik/braintree": "dev-master",
+        "ptuchik/braintree": "1.1.4",
         "torann/currency": "^1.0"
     },
     "autoload": {
