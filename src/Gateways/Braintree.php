@@ -110,7 +110,6 @@ class Braintree implements PaymentGateway
             ->setToken($token)
             ->setMakeDefault(true)
             ->setCustomerId($this->user->paymentProfile)
-            ->setCardholderName($this->user->name)
             ->send();
 
         if (!$paymentMethod->isSuccessful()) {
