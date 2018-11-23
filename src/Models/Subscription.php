@@ -615,10 +615,14 @@ class Subscription extends Model
         if (!$this->currentPlan) {
 
             // Generate a plan from subscription
-            $plan = Factory::get(Plan::class, true);
-            $plan->setRawAttribute('name', $this->getRawAttribute('name'));
+            if (!$plan = Factory::getClass(Plan::class)::where('alias', $this->alias)->first()) {
+                $plan = Factory::get(Plan::class, true);
+                $plan->setRawAttribute('name', $this->getRawAttribute('name'));
+                $plan->alias = $this->alias;
+                $plan->features = $this->features;
+                $plan->agreementText = $this->agreementText;
+            }
             $plan->host = $this->purchase->host;
-            $plan->alias = $this->alias;
             $plan->price = currency($this->price, $this->currency, Currency::getUserCurrency(), false);
             $plan->trialDays = 0;
             $plan->billingFrequency = $this->billingFrequency;
@@ -626,8 +630,6 @@ class Subscription extends Model
             $plan->discounts = $this->discounts;
             $plan->addonCoupons = $this->addonCoupons;
             $plan->user = Auth::check() ? Auth::user() : $this->user;
-            $plan->features = $this->features;
-            $plan->agreementText = $this->agreementText;
             $plan->subscription = $this;
 
             // Prepare package to process
