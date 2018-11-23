@@ -615,8 +615,15 @@ class Subscription extends Model
         if (!$this->currentPlan) {
 
             // Generate a plan from subscription
-            if (!$plan = Factory::getClass(Plan::class)::where('alias', $this->alias)->first()) {
-                $plan = Factory::get(Plan::class, true);
+            $plan = Factory::get(Plan::class, true);
+
+            // Try to get some data from original plan
+            if ($originalPlan = $this->originalPlan) {
+                $plan->setRawAttribute('name', $originalPlan->getRawAttribute('name'));
+                $plan->alias = $originalPlan->alias;
+                $plan->features = $originalPlan->features;
+                $plan->agreementText = $originalPlan->agreementText;
+            } else {
                 $plan->setRawAttribute('name', $this->getRawAttribute('name'));
                 $plan->alias = $this->alias;
                 $plan->features = $this->features;
