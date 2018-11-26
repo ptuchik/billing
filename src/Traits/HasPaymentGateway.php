@@ -47,7 +47,7 @@ trait HasPaymentGateway
 
             // Try to get payment gateway from default payment method
             if (empty($value) && $paymentMethod = $this->getDefaultPaymentMethod()) {
-                $value = $paymentMethod['gateway'];
+                $value = $paymentMethod->gateway;
             }
 
             // If user has no gateway, get default gateway

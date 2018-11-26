@@ -2,6 +2,8 @@
 
 namespace Ptuchik\Billing\src\Traits;
 
+use Ptuchik\Billing\Factory;
+use Ptuchik\Billing\Models\PaymentMethod;
 use Throwable;
 
 /**
@@ -72,7 +74,7 @@ trait HasPaymentMethods
         $defaultPaymentMethod = $this->getDefaultPaymentMethod($methods = $this->getPaymentMethods());
         $paymentMethods = [];
         foreach ($methods as $method) {
-            $method['default'] = $method['token'] == $defaultPaymentMethod['token'];
+            $method->default = $method->token == $defaultPaymentMethod->token;
             $paymentMethods[] = $method;
         }
 
@@ -85,23 +87,26 @@ trait HasPaymentMethods
      */
     public function getPaymentMethods()
     {
+        $paymentMethods = [];
+
         // If user has no saved payment methods
-        if (!$paymentMethods = array_get($this->paymentProfiles, 'methods')) {
+        if ($methods = array_get($this->paymentProfiles, 'methods')) {
+            foreach ($methods as $method) {
+                $paymentMethods[] = Factory::get(PaymentMethod::class, true, $method);
+            }
+        } else {
 
             // Get payment methods from gateway
             try {
-                $paymentMethods = [];
                 foreach ($this->getPaymentGateway()->getPaymentMethods() as $method) {
                     $paymentMethods[] = $method;
                 }
             } catch (Throwable $e) {
-                $paymentMethods = [];
             }
-
-            $this->paymentMethods = $paymentMethods;
         }
 
         // If array is not empty, set user's hasPaymentMethod = true
+        $this->paymentMethods = $paymentMethods;
         $this->hasPaymentMethod = !empty($paymentMethods);
         $this->save();
 
@@ -138,15 +143,15 @@ trait HasPaymentMethods
 
         // Loop through user's payment methods and find the default to return
         foreach ($paymentMethods as $paymentMethod) {
-            if ($paymentMethod['token'] == $this->defaultToken) {
-                $paymentMethod['default'] = true;
+            if ($paymentMethod->token == $this->defaultToken) {
+                $paymentMethod->default = true;
 
                 return $paymentMethod;
             }
         }
 
         if ($paymentMethod = array_last($paymentMethods)) {
-            $paymentMethod['default'] = true;
+            $paymentMethod->default = true;
 
             return $paymentMethod;
         }
@@ -162,8 +167,8 @@ trait HasPaymentMethods
     public function setDefaultPaymentMethod($token)
     {
         foreach ($this->getPaymentMethods() as $paymentMethod) {
-            if ($paymentMethod['token'] == $token) {
-                $this->getPaymentGateway($paymentMethod['gateway'] ?? '')->setDefaultPaymentMethod($token);
+            if ($paymentMethod->token == $token) {
+                $this->getPaymentGateway($paymentMethod->gateway)->setDefaultPaymentMethod($token);
                 $this->defaultToken = $token;
                 $this->save();
             }
@@ -185,7 +190,7 @@ trait HasPaymentMethods
 
             // Check if payment method already exists
             foreach ($paymentMethods = $this->getPaymentMethods() as $method) {
-                if ($method['token'] == $paymentMethod['token'] && ($method['gateway'] ?? '') == $this->paymentGateway) {
+                if ($method->token == $paymentMethod->token && ($method->gateway) == $this->paymentGateway) {
                     return $paymentMethod;
                 }
             }
@@ -195,8 +200,8 @@ trait HasPaymentMethods
             $this->paymentMethods = $paymentMethods;
 
             // Set the new payment method as default
-            $this->defaultToken = $paymentMethod['token'];
-            $paymentMethod['default'] = true;
+            $this->defaultToken = $paymentMethod->token;
+            $paymentMethod->default = true;
 
             // Set user's hasPaymentMethod = true
             $this->hasPaymentMethod = true;
@@ -216,9 +221,9 @@ trait HasPaymentMethods
     {
         $paymentMethods = [];
         foreach ($this->getPaymentMethods() as $paymentMethod) {
-            if ($paymentMethod['token'] == $token) {
+            if ($paymentMethod->token == $token) {
                 try {
-                    $this->getPaymentGateway($paymentMethod['gateway'] ?? '')->deletePaymentMethod($token);
+                    $this->getPaymentGateway($paymentMethod->gateway)->deletePaymentMethod($token);
                 } catch (Throwable $exception) {
 
                 }
