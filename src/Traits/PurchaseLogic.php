@@ -161,7 +161,7 @@ trait PurchaseLogic
                     if ($subscription->billingFrequency == $this->billingFrequency) {
 
                         // Call subscription's renew
-                        return $subscription->renew($payment);
+                        return $subscription->renew($payment, $order);
                     } else {
 
                         // Otherwise switch subscriptions billing frequency and price

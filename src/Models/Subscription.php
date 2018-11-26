@@ -651,13 +651,16 @@ class Subscription extends Model
 
     /**
      * Renew subscription
+     *
+     * @param \Omnipay\Common\Message\ResponseInterface|null $payment
+     * @param \Ptuchik\Billing\Models\Order|null             $order
+     *
      * @return mixed
-     * @throws Exception
      */
-    public function renew(ResponseInterface $payment = null)
+    public function renew(ResponseInterface $payment = null, Order $order = null)
     {
         // Call plan's purchase to renew
-        return $this->plan->purchase($this->plan->host, $payment);
+        return $this->plan->purchase($this->plan->host, $payment, $order);
     }
 
     /**
