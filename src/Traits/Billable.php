@@ -98,14 +98,19 @@ trait Billable
      */
     public function purchase($amount, $description = null, Order $order = null, $gateway = null)
     {
+        $paymentGateway = $this->getPaymentGateway($gateway ?: Request::input('gateway'));
+
         // If amount is empty, interrupt payment
-        if (empty((float) $amount)) {
+        if ($amount > 0) {
+            $response = $paymentGateway->purchase(number_format($amount, 2, '.', ''), $description, $order);
+        } elseif (Request::filled('nonce')) {
+            $response = $paymentGateway->createPaymentMethod(Request::input('nonce'), $order);
+        } else {
             return null;
         }
 
         // Charge user and return
-        return $this->handleRedirect($this->getPaymentGateway($gateway ?: Request::input('gateway'))
-            ->purchase(number_format($amount, 2, '.', ''), $description, $order), $order);
+        return $this->handleRedirect($response, $order);
     }
 
     /**

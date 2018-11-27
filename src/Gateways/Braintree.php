@@ -104,12 +104,13 @@ class Braintree implements PaymentGateway
     /**
      * Create payment method
      *
-     * @param string $nonce
+     * @param string                             $nonce
+     * @param \Ptuchik\Billing\Models\Order|null $order
      *
      * @return mixed
      * @throws \Exception
      */
-    public function createPaymentMethod(string $nonce)
+    public function createPaymentMethod(string $nonce, Order $order = null)
     {
         // Create a payment method on remote gateway
         $paymentMethod = $this->gateway->createPaymentMethod()
