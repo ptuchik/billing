@@ -102,15 +102,14 @@ trait Billable
 
         // If amount is empty, interrupt payment
         if ($amount > 0) {
-            $response = $paymentGateway->purchase(number_format($amount, 2, '.', ''), $description, $order);
+            $purchase = $paymentGateway->purchase(number_format($amount, 2, '.', ''), $description, $order);
+
+            return $this->handleRedirect($purchase, $order);
         } elseif (Request::filled('nonce')) {
-            $response = $paymentGateway->createPaymentMethod(Request::input('nonce'), $order);
-        } else {
-            return null;
+            $paymentGateway->createPaymentMethod(Request::input('nonce'), $order);
         }
 
-        // Charge user and return
-        return $this->handleRedirect($response, $order);
+        return null;
     }
 
     /**
