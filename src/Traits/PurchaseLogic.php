@@ -266,9 +266,6 @@ trait PurchaseLogic
             $this->payment = $payment;
         }
 
-        // Set purchase to package
-        $this->package->setPurchase($this->host, true);
-
         return $this->processPurchase();
 
     }
