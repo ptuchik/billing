@@ -135,7 +135,7 @@ trait PurchaseLogic
         $this->calculateTrial();
 
         // Set purchase for current package on current host and try to get latest subscription
-        $subscription = $this->package->setPurchase($this->host, $forPurchase)->subscription;
+        $subscription = $this->package->setPurchase($this->host)->subscription;
 
         // Get previous subscription
         $this->getPreviousSubscription();
@@ -265,6 +265,9 @@ trait PurchaseLogic
         } else {
             $this->payment = $payment;
         }
+
+        // Set purchase to package
+        $this->package->setPurchase($this->host, true);
 
         return $this->processPurchase();
 
