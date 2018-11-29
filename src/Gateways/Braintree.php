@@ -199,7 +199,7 @@ class Braintree implements PaymentGateway
     {
         // If nonce is provided, create payment method and unset nonce
         if (Request::filled('nonce')) {
-            $this->createPaymentMethod(Request::input('nonce'));
+            $this->user->createPaymentMethod(Request::input('nonce'));
             Request::offsetUnset('nonce');
         }
 
