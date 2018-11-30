@@ -59,11 +59,11 @@ interface PaymentGateway
     /**
      * Parse payment method
      *
-     * @param $paymentMethod
+     * @param $paymentData
      *
      * @return mixed
      */
-    public function parsePaymentMethod($paymentMethod);
+    public function parsePaymentMethod($paymentData);
 
     /**
      * Delete payment method

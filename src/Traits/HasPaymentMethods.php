@@ -218,7 +218,7 @@ trait HasPaymentMethods
      *
      * @return \Ptuchik\Billing\Models\PaymentMethod
      */
-    protected function parsePaymentMethod(PaymentMethod $method, $default = null)
+    public function parsePaymentMethod(PaymentMethod $method, $default = null)
     {
         $method->description = $this->getPaymentMethodDescription($method);
         $method->imageUrl = $this->getPaymentMethodImageUrl($method);
