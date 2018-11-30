@@ -142,7 +142,7 @@ trait HasPaymentMethods
     {
         foreach ($this->getPaymentMethods() as $paymentMethod) {
             if ($paymentMethod->token == $token) {
-                $this->getPaymentGateway($paymentMethod->gateway)->setDefaultPaymentMethod($token);
+                $this->getPaymentGateway($paymentMethod->gateway, false)->setDefaultPaymentMethod($token);
                 $this->defaultToken = $token;
                 $this->save();
             }
