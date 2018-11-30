@@ -2,6 +2,9 @@
 
 namespace Ptuchik\Billing\Models;
 
+use Ptuchik\Billing\Constants\PaymentMethods;
+use Ptuchik\Billing\Factory;
+
 /**
  * Class PaymentMethod
  * @package Ptuchik\Billing\Models
@@ -9,7 +12,8 @@ namespace Ptuchik\Billing\Models;
 class PaymentMethod
 {
     public $token;
-    public $type = 'credit_card';
+    public $type;
+    public $last4;
     public $default = false;
     public $gateway;
     public $description;
@@ -26,12 +30,18 @@ class PaymentMethod
      */
     public function __construct(array $data = [])
     {
+        $this->type = Factory::getClass(PaymentMethods::class)::CREDIT_CARD;
+
         if (!is_null($token = array_get($data, 'token'))) {
             $this->token = $token;
         }
 
         if (!is_null($type = array_get($data, 'type'))) {
             $this->type = $type;
+        }
+
+        if (!is_null($last4 = array_get($data, 'last4'))) {
+            $this->last4 = $last4;
         }
 
         if (!is_null($default = array_get($data, 'default'))) {

@@ -102,6 +102,12 @@ trait Billable
 
         // If amount is empty, interrupt payment
         if ($amount > 0) {
+
+            // Update purchase amount in order
+            if ($order) {
+                $order->setParam('amount', $amount);
+            }
+
             $purchase = $paymentGateway->purchase(number_format($amount, 2, '.', ''), $description, $order);
 
             return $this->handleRedirect($purchase, $order);

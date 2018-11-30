@@ -836,7 +836,7 @@ class Subscription extends Model
             Currency::setUserCurrency($subscription->currency);
 
             // Check if user has payment method
-            $subscription->user->checkPaymentMethod();
+            $subscription->user->hasPaymentMethod;
 
             // Trigger reminder event
             Event::subscriptionExpirationReminder($subscription);

@@ -9,6 +9,7 @@ use Currency;
 use Exception;
 use Omnipay\Common\Message\ResponseInterface;
 use Omnipay\Omnipay;
+use Ptuchik\Billing\Constants\PaymentMethods;
 use Ptuchik\Billing\Contracts\Billable;
 use Ptuchik\Billing\Contracts\PaymentGateway;
 use Ptuchik\Billing\Factory;
@@ -328,11 +329,15 @@ class Braintree implements PaymentGateway
     {
         $paymentMethod = Factory::get(PaymentMethod::class, true);
         $paymentMethod->token = $creditCard->token;
-        $paymentMethod->type = 'credit_card';
+        if (in_array($type = strtolower($creditCard->cardType),
+            Factory::getClass(PaymentMethods::class)::all('array'))) {
+            $paymentMethod->type = $type;
+        } else {
+            $paymentMethod->type = Factory::getClass(PaymentMethods::class)::CREDIT_CARD;
+        }
+        $paymentMethod->last4 = $creditCard->last4;
         $paymentMethod->default = $creditCard->default;
         $paymentMethod->gateway = 'braintree';
-        $paymentMethod->description = $creditCard->cardType.' '.trans(config('ptuchik-billing.translation_prefixes.general').'.ending_in').' '.$creditCard->last4;
-        $paymentMethod->imageUrl = $creditCard->imageUrl;
         $paymentMethod->holder = $creditCard->cardholderName;
 
         return $paymentMethod;
@@ -349,11 +354,9 @@ class Braintree implements PaymentGateway
     {
         $paymentMethod = Factory::get(PaymentMethod::class, true);
         $paymentMethod->token = $payPalAccount->token;
-        $paymentMethod->type = 'paypal_account';
+        $paymentMethod->type = Factory::getClass(PaymentMethods::class)::PAYPAL_ACCOUNT;
         $paymentMethod->default = $payPalAccount->default;
         $paymentMethod->gateway = 'braintree';
-        $paymentMethod->description = $payPalAccount->email;
-        $paymentMethod->imageUrl = $payPalAccount->imageUrl;
         $paymentMethod->holder = $payPalAccount->email;
 
         return $paymentMethod;

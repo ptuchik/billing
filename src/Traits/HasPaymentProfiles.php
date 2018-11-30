@@ -29,7 +29,11 @@ trait HasPaymentProfiles
     {
         // If user is not tester, save his payment profile
         $paymentProfiles = $this->paymentProfiles;
-        $paymentProfiles['profiles'][$this->paymentGateway] = $value;
+        if (is_null($value)) {
+            unset($paymentProfiles['profiles'][$this->paymentGateway]);
+        } else {
+            $paymentProfiles['profiles'][$this->paymentGateway] = $value;
+        }
         $this->paymentProfiles = $paymentProfiles;
     }
 

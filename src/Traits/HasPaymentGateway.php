@@ -63,18 +63,19 @@ trait HasPaymentGateway
      * Get user's payment gateway
      *
      * @param null $gateway
+     * @param bool $checkAvailability
      *
      * @return \Ptuchik\Billing\Contracts\PaymentGateway
      * @throws \Exception
      */
-    public function getPaymentGateway($gateway = null)
+    public function getPaymentGateway($gateway = null, $checkAvailability = true)
     {
         // If gateway is not set yet, get it from user and instantiate
         if (is_null($this->gateway)) {
 
             // If gateway is not provided, get user's payment gateway
             if ($gateway || $gateway = Request::input('gateway')) {
-                $paymentGateway = $this->checkGatewayAvailability($gateway);
+                $paymentGateway = $checkAvailability ? $this->checkGatewayAvailability($gateway) : $gateway;
             } else {
                 $paymentGateway = $this->paymentGateway;
             }

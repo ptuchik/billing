@@ -2,6 +2,8 @@
 
 namespace Ptuchik\Billing\src\Traits;
 
+use File;
+use Ptuchik\Billing\Constants\PaymentMethods;
 use Ptuchik\Billing\Factory;
 use Ptuchik\Billing\Models\PaymentMethod;
 use Throwable;
@@ -13,24 +15,12 @@ use Throwable;
 trait HasPaymentMethods
 {
     /**
-     * Has payment method attribute setter
-     *
-     * @param $value
-     *
-     * @return mixed
-     */
-    public function setHasPaymentMethodAttribute($value)
-    {
-        $this->setParam('hasPaymentMethod', !empty($value));
-    }
-
-    /**
      * Has payment method attribute getter
      * @return bool
      */
     public function getHasPaymentMethodAttribute()
     {
-        return !empty($this->getParam('hasPaymentMethod'));
+        return !empty($this->paymentMethods);
     }
 
     /**
@@ -74,8 +64,9 @@ trait HasPaymentMethods
         $defaultPaymentMethod = $this->getDefaultPaymentMethod($methods = $this->getPaymentMethods());
         $paymentMethods = [];
         foreach ($methods as $method) {
-            $method->default = $method->token == $defaultPaymentMethod->token;
-            $paymentMethods[] = $method;
+            if ($method->gateway == $this->checkGatewayAvailability($method->gateway)) {
+                $paymentMethods[] = $this->parsePaymentMethod($method, $method->token == $defaultPaymentMethod->token);
+            }
         }
 
         return $paymentMethods;
@@ -90,42 +81,29 @@ trait HasPaymentMethods
         $paymentMethods = [];
 
         // If user has no saved payment methods
-        if ($methods = array_get($this->paymentProfiles, 'methods')) {
+        if ($methods = array_get($this->paymentProfiles, 'methods', [])) {
             foreach ($methods as $method) {
                 $paymentMethods[] = Factory::get(PaymentMethod::class, true, $method);
             }
         } else {
 
-            // Get payment methods from gateway
-            try {
-                foreach ($this->getPaymentGateway()->getPaymentMethods() as $method) {
-                    $paymentMethods[] = $method;
+            foreach (array_get($this->paymentProfiles, 'profiles', []) as $gateway => $profile) {
+                // Get payment methods from gateway
+                try {
+                    foreach ($this->getPaymentGateway($gateway, false)->getPaymentMethods() as $method) {
+                        $paymentMethods[] = $method;
+                    }
+                } catch (Throwable $e) {
                 }
-            } catch (Throwable $e) {
             }
         }
 
         // If array is not empty, set user's hasPaymentMethod = true
         $this->paymentMethods = $paymentMethods;
-        $this->hasPaymentMethod = !empty($paymentMethods);
         $this->save();
 
         // Finally return payment methods
         return $paymentMethods;
-    }
-
-    /**
-     * Check and save payment method existance
-     * @return mixed
-     */
-    public function checkPaymentMethod()
-    {
-        // If payment methods never checked yet, check and save result
-        if (isset($this->attributes['params']) && is_null($this->getParam('hasPaymentMethod'))) {
-            $this->getPaymentMethods();
-        }
-
-        return $this->hasPaymentMethod;
     }
 
     /**
@@ -144,16 +122,12 @@ trait HasPaymentMethods
         // Loop through user's payment methods and find the default to return
         foreach ($paymentMethods as $paymentMethod) {
             if ($paymentMethod->token == $this->defaultToken) {
-                $paymentMethod->default = true;
-
-                return $paymentMethod;
+                return $this->parsePaymentMethod($paymentMethod, true);
             }
         }
 
         if ($paymentMethod = array_last($paymentMethods)) {
-            $paymentMethod->default = true;
-
-            return $paymentMethod;
+            return $this->parsePaymentMethod($paymentMethod, true);
         }
     }
 
@@ -201,14 +175,10 @@ trait HasPaymentMethods
 
             // Set the new payment method as default
             $this->defaultToken = $paymentMethod->token;
-            $paymentMethod->default = true;
-
-            // Set user's hasPaymentMethod = true
-            $this->hasPaymentMethod = true;
             $this->save();
 
             // Return payment method
-            return $paymentMethod;
+            return $this->parsePaymentMethod($paymentMethod, true);
         }
     }
 
@@ -233,11 +203,73 @@ trait HasPaymentMethods
         }
 
         if (empty($paymentMethods)) {
-            $this->hasPaymentMethod = false;
             $this->defaultToken = null;
         }
 
         $this->paymentMethods = $paymentMethods;
         $this->save();
+    }
+
+    /**
+     * Parse payment method
+     *
+     * @param \Ptuchik\Billing\Models\PaymentMethod $method
+     * @param null                                  $default
+     *
+     * @return \Ptuchik\Billing\Models\PaymentMethod
+     */
+    protected function parsePaymentMethod(PaymentMethod $method, $default = null)
+    {
+        $method->description = $this->getPaymentMethodDescription($method);
+        $method->imageUrl = $this->getPaymentMethodImageUrl($method);
+        if (!is_null($default)) {
+            $method->default = (bool) $default;
+        }
+
+        return $method;
+    }
+
+    /**
+     * Get payment method description
+     *
+     * @param \Ptuchik\Billing\Models\PaymentMethod $method
+     *
+     * @return mixed|string
+     */
+    protected function getPaymentMethodDescription(PaymentMethod $method)
+    {
+        switch ($method->type) {
+            case Factory::getClass(PaymentMethods::class)::PAYPAL_ACCOUNT:
+                $description = $method->holder;
+                break;
+            default:
+                $description = trans(config('ptuchik-billing.translation_prefixes.general').'.'.$method->type);
+
+                if ($method->last4) {
+                    $description .= ' '
+                        .trans(config('ptuchik-billing.translation_prefixes.general').'.ending_in').' '.$method->last4;
+                }
+                break;
+        }
+
+        return $description;
+    }
+
+    /**
+     * Get payment method image URL
+     *
+     * @param \Ptuchik\Billing\Models\PaymentMethod $method
+     *
+     * @return \Illuminate\Contracts\Routing\UrlGenerator|string
+     */
+    protected function getPaymentMethodImageUrl(PaymentMethod $method)
+    {
+        $path = config('ptuchik-billing.payment_method_images_location').'/'.$method->type.'.png';
+
+        if (File::exists(public_path($path))) {
+            return url($path);
+        } else {
+            return url(config('ptuchik-billing.default_payment_method_image_location'));
+        }
     }
 }
