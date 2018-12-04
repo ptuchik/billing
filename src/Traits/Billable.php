@@ -106,6 +106,9 @@ trait Billable
             // Update purchase amount in order
             if ($order) {
                 $order->setParam('amount', $amount);
+                $order->setParam('currency', Currency::getUserCurrency());
+                $order->setParam('gateway', Request::input('gateway'));
+                $order->setParam('request', Request::except(['nonce', 'token']));
             }
 
             $purchase = $paymentGateway->purchase(number_format($amount, 2, '.', ''), $description, $order);
