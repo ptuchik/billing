@@ -87,6 +87,10 @@ trait HasPaymentMethods
             }
         } else {
 
+            // Get current payment gateway
+            $currentGateway = $this->paymentGateway;
+
+            // Loop through each payment profile and get payment methods
             foreach (array_get($this->paymentProfiles, 'profiles', []) as $gateway => $profile) {
                 // Get payment methods from gateway
                 try {
@@ -96,6 +100,9 @@ trait HasPaymentMethods
                 } catch (Throwable $e) {
                 }
             }
+
+            // Set back the current payment gateway
+            $this->paymentGateway = $currentGateway;
         }
 
         // If array is not empty, set user's hasPaymentMethod = true
