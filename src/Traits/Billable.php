@@ -104,7 +104,7 @@ trait Billable
         if ($order) {
             $order->setParam('amount', $amount);
             $order->setParam('currency', Currency::getUserCurrency());
-            $order->setParam('gateway', Request::input('gateway'));
+            $order->setParam('gateway', $paymentGateway->name ?? $gateway ?? Request::input('gateway'));
             $order->setParam('request', Request::except(['nonce', 'token']));
         }
 

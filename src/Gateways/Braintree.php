@@ -25,6 +25,8 @@ use Request;
  */
 class Braintree implements PaymentGateway
 {
+    public $name = 'braintree';
+
     /**
      * @var \Omnipay\Common\GatewayInterface
      */
@@ -350,7 +352,7 @@ class Braintree implements PaymentGateway
             $paymentMethod->type = Factory::getClass(PaymentMethods::class)::CREDIT_CARD;
         }
         $paymentMethod->last4 = $creditCard->last4;
-        $paymentMethod->gateway = 'braintree';
+        $paymentMethod->gateway = $this->name;
         $paymentMethod->holder = $creditCard->cardholderName;
 
         return $paymentMethod;
@@ -368,7 +370,7 @@ class Braintree implements PaymentGateway
         $paymentMethod = Factory::get(PaymentMethod::class, true);
         $paymentMethod->token = $payPalAccount->token;
         $paymentMethod->type = Factory::getClass(PaymentMethods::class)::PAYPAL_ACCOUNT;
-        $paymentMethod->gateway = 'braintree';
+        $paymentMethod->gateway = $this->name;
         $paymentMethod->holder = $payPalAccount->email;
 
         return $paymentMethod;
