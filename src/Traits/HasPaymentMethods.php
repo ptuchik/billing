@@ -81,17 +81,20 @@ trait HasPaymentMethods
         $paymentMethods = [];
 
         // If user has no saved payment methods
-        if ($methods = array_get($this->paymentProfiles, 'methods', [])) {
+        if ($methods = array_get($this->paymentProfiles, 'methods')) {
             foreach ($methods as $method) {
                 $paymentMethods[] = Factory::get(PaymentMethod::class, true, $method);
             }
-        } else {
+        } elseif (is_null($methods)) {
 
             // Get current payment gateway
             $currentGateway = $this->paymentGateway;
+            // Get payment profile for current gateway
+            $this->paymentProfile;
 
             // Loop through each payment profile and get payment methods
             foreach (array_get($this->paymentProfiles, 'profiles', []) as $gateway => $profile) {
+
                 // Get payment methods from gateway
                 try {
                     foreach ($this->getPaymentGateway($gateway, false)->getPaymentMethods() as $method) {
@@ -103,11 +106,11 @@ trait HasPaymentMethods
 
             // Set back the current payment gateway
             $this->paymentGateway = $currentGateway;
-        }
 
-        // If array is not empty, set user's hasPaymentMethod = true
-        $this->paymentMethods = $paymentMethods;
-        $this->save();
+            // If array is not empty, set user's hasPaymentMethod = true
+            $this->paymentMethods = $paymentMethods;
+            $this->save();
+        }
 
         // Finally return payment methods
         return $paymentMethods;

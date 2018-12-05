@@ -51,9 +51,9 @@ trait HasPaymentProfiles
 
             // If user has payment profile with old method, upgrade it
         } elseif ($profile = array_get($paymentProfiles, $this->paymentGateway)) {
-            $this->paymentProfile = $profile;
             unset($paymentProfiles[$this->paymentGateway]);
             $this->paymentProfiles = $paymentProfiles;
+            $this->paymentProfile = $profile;
             $this->save();
 
             return $profile;
