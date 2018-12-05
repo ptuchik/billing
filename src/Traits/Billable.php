@@ -100,16 +100,16 @@ trait Billable
     {
         $paymentGateway = $this->getPaymentGateway($gateway ?: Request::input('gateway'));
 
+        // Update purchase amount in order
+        if ($order) {
+            $order->setParam('amount', $amount);
+            $order->setParam('currency', Currency::getUserCurrency());
+            $order->setParam('gateway', Request::input('gateway'));
+            $order->setParam('request', Request::except(['nonce', 'token']));
+        }
+
         // If amount is empty, interrupt payment
         if ($amount > 0) {
-
-            // Update purchase amount in order
-            if ($order) {
-                $order->setParam('amount', $amount);
-                $order->setParam('currency', Currency::getUserCurrency());
-                $order->setParam('gateway', Request::input('gateway'));
-                $order->setParam('request', Request::except(['nonce', 'token']));
-            }
 
             $purchase = $paymentGateway->purchase(number_format($amount, 2, '.', ''), $description, $order);
 
