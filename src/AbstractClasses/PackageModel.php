@@ -29,8 +29,6 @@ abstract class PackageModel extends Model
     // Use icon
     use HasIcon, HasParams;
 
-    public $available = false;
-
     /**
      * Exclude following attributes from sanitizing
      * @var array
