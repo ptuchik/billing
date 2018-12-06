@@ -208,7 +208,7 @@ class Plan extends Model
      *
      * @param $value
      */
-    public function setCardRequiredAttrribute($value)
+    public function setCardRequiredAttribute($value)
     {
         $this->setParam('cardRequired', !empty($value));
     }
