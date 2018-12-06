@@ -57,7 +57,7 @@ trait PurchaseLogic
                 // If redeem type is manual, check if coupon code provided by user, return it
                 if ($coupon->code == Request::input('coupon')) {
                     if (!is_null($coupon->numberOfCoupons) && $coupon->numberOfCoupons <= $coupon->usedCoupons) {
-                        throw new Exception(trans(config('ptuchik-billing.translation_prefixes.general').'.coupon_limit_has_expired'));
+                        throw new Exception(trans(config('ptuchik-billing.translation_prefixes.general').'.coupon_limit_reached'));
                     } else {
                         return $coupon;
                     }
