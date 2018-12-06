@@ -87,7 +87,8 @@ class Plan extends Model
         'hasCoupons',
         'moneyback',
         'recommended',
-        'popular'
+        'popular',
+        'cardRequired'
     ];
 
     /**
@@ -200,6 +201,25 @@ class Plan extends Model
     {
         return $this->belongsToMany(Factory::getClass(Coupon::class), 'plan_addons')
             ->where('coupons.redeem', Factory::getClass(CouponRedeemType::class)::INTERNAL);
+    }
+
+    /**
+     * Card required attribute setter
+     *
+     * @param $value
+     */
+    public function setCardRequiredAttrribute($value)
+    {
+        $this->setParam('cardRequired', !empty($value));
+    }
+
+    /**
+     * Card required attribute getter
+     * @return bool
+     */
+    public function getCardRequiredAttribute()
+    {
+        return !empty($this->getParam('cardRequired'));
     }
 
     /**
