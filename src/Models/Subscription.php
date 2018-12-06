@@ -629,6 +629,7 @@ class Subscription extends Model
                 $plan->features = $this->features;
                 $plan->agreementText = $this->agreementText;
             }
+            $plan->cardRequired = true;
             $plan->host = $this->purchase->host;
             $plan->price = currency($this->price, $this->currency, Currency::getUserCurrency(), false);
             $plan->trialDays = 0;
@@ -834,9 +835,6 @@ class Subscription extends Model
 
             // Set currency
             Currency::setUserCurrency($subscription->currency);
-
-            // Check if user has payment method
-            $subscription->user->hasPaymentMethod;
 
             // Trigger reminder event
             Event::subscriptionExpirationReminder($subscription);
