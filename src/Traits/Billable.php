@@ -6,7 +6,9 @@ use Auth;
 use Currency;
 use Illuminate\Http\RedirectResponse;
 use Omnipay\Common\Message\ResponseInterface;
+use Ptuchik\Billing\Constants\TransactionStatus;
 use Ptuchik\Billing\Factory;
+use Ptuchik\Billing\Models\Invoice;
 use Ptuchik\Billing\Models\Order;
 use Ptuchik\Billing\Models\Subscription;
 use Ptuchik\Billing\Models\Transaction;
@@ -239,5 +241,55 @@ trait Billable
                 $transaction->purchase->append('identifier');
             }
         });
+    }
+
+    /**
+     * Create transaction
+     *
+     * @param \Omnipay\Common\Message\ResponseInterface $purchase
+     * @param \Ptuchik\Billing\Models\Order             $order
+     *
+     * @return mixed|\Ptuchik\Billing\Models\Invoice
+     */
+    public function createTransaction(ResponseInterface $purchase, Order $order)
+    {
+        // Create a new transaction with collected data
+        $transaction = Factory::get(Transaction::class, true);
+        $transaction->setRawAttribute('name', trans('general.'.$order->action));
+        $transaction->user()->associate($this);
+        $transaction->gateway = $order->getParam('gateway');
+        $transaction->discount = $order->getParam('discount', 0);
+        $transaction->summary = $order->getParam('amount', 0);
+        $transaction->price = $transaction->summary + $transaction->discount;
+        $transaction->currency = $order->getParam('currency');
+
+        $transactionStatus = Factory::getClass(TransactionStatus::class);
+
+        $transaction->data = serialize($purchase->getData() ?? '');
+        $transaction->reference = $purchase->getTransactionReference();
+        if ($purchase->isPending()) {
+            $transaction->status = $transactionStatus::PENDING;
+        } elseif ($purchase->isSuccessful()) {
+            $transaction->status = $transactionStatus::SUCCESS;
+            $this->balance = $this->balance + $transaction->summary;
+            $this->save();
+        } else {
+            $transaction->status = $transactionStatus::FAILED;
+        }
+        $transaction->message = $purchase->getMessage();
+        $transaction->save();
+
+        // Get plan from order reference
+        if ($reference = $order->reference) {
+            if ($reference instanceof Subscription) {
+                $plan = $reference->plan;
+            } else {
+                $plan = $reference;
+            }
+        } else {
+            $plan = null;
+        }
+
+        return Factory::get(Invoice::class, true, $plan, $transaction);
     }
 }

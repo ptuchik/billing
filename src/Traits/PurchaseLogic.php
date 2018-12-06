@@ -260,6 +260,11 @@ trait PurchaseLogic
             // If plan has trial, no charge required
             $price = $this->hasTrial ? 0 : $summary;
 
+            // If there is order, set trial status
+            if ($order) {
+                $order->setParam('trial', $this->hasTrial);
+            }
+
             // Make payment and set the result as plan's payment
             $this->payment = $this->user->purchase($price, $this->package->descriptor, $order);
         } else {
