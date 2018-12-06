@@ -82,7 +82,7 @@ class Coupon extends Model
      */
     public function getNumberOfCouponsAttribute()
     {
-        return $this->getParam('numberOfCoupons') ;
+        return $this->getParam('numberOfCoupons');
     }
 
     /**
@@ -101,7 +101,7 @@ class Coupon extends Model
      */
     public function getUsedCouponsAttribute()
     {
-        return $this->getParam('usedCoupons', 0) ;
+        return $this->getParam('usedCoupons', 0);
     }
 
     /** Used Coupons attribute setter
