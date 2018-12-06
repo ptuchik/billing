@@ -436,7 +436,7 @@ class Plan extends Model
 
         // Check if the coupon exists in the plan coupons
         if (($code = Request::input('coupon')) && !$this->coupons->contains('code', $code)) {
-            throw new Exception(trans('general.coupon_is_invalid'));
+            throw new Exception(trans(config('ptuchik-billing.translation_prefixes.general').'.coupon_is_invalid'));
         }
 
         foreach ($this->coupons as $coupon) {

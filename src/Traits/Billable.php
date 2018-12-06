@@ -255,7 +255,8 @@ trait Billable
     {
         // Create a new transaction with collected data
         $transaction = Factory::get(Transaction::class, true);
-        $transaction->setRawAttribute('name', trans('general.'.$order->action));
+        $transaction->setRawAttribute('name',
+            trans(config('ptuchik-billing.translation_prefixes.general').'.'.$order->action));
         $transaction->user()->associate($this);
         $transaction->gateway = $order->getParam('gateway');
         $transaction->discount = $order->getParam('discount', 0);
