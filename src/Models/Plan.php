@@ -609,6 +609,9 @@ class Plan extends Model
             // Add coupons as discount
             $this->calculatedDiscount += $this->couponDiscount;
 
+            // Add balace as discount
+            $this->calculatedDiscount += $this->userBalanceDiscount;
+
             if ($this->calculatedDiscount > $this->price) {
                 $this->calculatedDiscount = $this->price;
             }
@@ -623,7 +626,7 @@ class Plan extends Model
      */
     public function getSummaryAttribute()
     {
-        $summary = $this->price - $this->discount - $this->userBalanceDiscount;
+        $summary = $this->price - $this->discount;
         if ($summary < 0) {
             $summary = 0;
         }
