@@ -308,14 +308,29 @@ class Subscription extends Model
 
     /**
      * Currency symbol attribute getter
-     *
-     * @param $value
-     *
      * @return \Illuminate\Config\Repository|mixed
      */
     public function getCurrencySymbolAttribute()
     {
         return array_get(Currency::getCurrency($this->currency), 'symbol');
+    }
+
+    /**
+     * User currency attribute getter
+     * @return \Illuminate\Config\Repository|mixed
+     */
+    public function getUserCurrencyAttribute()
+    {
+        return Currency::getUserCurrency();
+    }
+
+    /**
+     * User currency symbol attribute getter
+     * @return mixed
+     */
+    public function getUserCurrencySymbolAttribute()
+    {
+        return array_get(Currency::getCurrency($this->userCurrency), 'symbol');
     }
 
     /**
