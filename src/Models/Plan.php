@@ -88,8 +88,15 @@ class Plan extends Model
         'moneyback',
         'recommended',
         'popular',
-        'cardRequired'
+        'cardRequired',
+        'error'
     ];
+
+    /**
+     * Current error container
+     * @var
+     */
+    protected $currentError;
 
     /**
      * Eager load coupons
@@ -201,6 +208,25 @@ class Plan extends Model
     {
         return $this->belongsToMany(Factory::getClass(Coupon::class), 'plan_addons')
             ->where('coupons.redeem', Factory::getClass(CouponRedeemType::class)::INTERNAL);
+    }
+
+    /**
+     * Error attribute setter
+     *
+     * @param $value
+     */
+    public function setErrorAttribute($value)
+    {
+        $this->currentError = $value;
+    }
+
+    /**
+     * Error attribute getter
+     * @return mixed
+     */
+    public function getErrorAttribute()
+    {
+        return $this->currentError;
     }
 
     /**
@@ -436,7 +462,7 @@ class Plan extends Model
 
         // Check if the coupon exists in the plan coupons
         if (($code = Request::input('coupon')) && !$this->coupons->contains('code', $code)) {
-            throw new Exception(trans(config('ptuchik-billing.translation_prefixes.general').'.coupon_is_invalid'));
+            $this->error = trans(config('ptuchik-billing.translation_prefixes.general').'.coupon_is_invalid');
         }
 
         foreach ($this->coupons as $coupon) {

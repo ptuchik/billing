@@ -45,11 +45,6 @@ trait HasPaymentGateway
     {
         if (is_null($this->gatewayName)) {
 
-            // Try to get payment gateway from default payment method
-            if (empty($value) && $paymentMethod = $this->getDefaultPaymentMethod()) {
-                $value = $paymentMethod->gateway;
-            }
-
             // If user has no gateway, get default gateway
             $value = empty($value) ? config('ptuchik-billing.default_gateway') : $value;
 
