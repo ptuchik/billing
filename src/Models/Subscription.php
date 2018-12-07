@@ -273,6 +273,28 @@ class Subscription extends Model
     }
 
     /**
+     * Price attribute setter
+     *
+     * @param $value
+     */
+    public function setPriceAttribute($value)
+    {
+        $this->attributes['price'] = currency($value ?? 0, Currency::getUserCurrency(), $this->currency, false);
+    }
+
+    /**
+     * Price attribute getter
+     *
+     * @param $value
+     *
+     * @return mixed
+     */
+    public function getPriceAttribute($value)
+    {
+        return currency($value ?? 0, $this->currency, null, false);
+    }
+
+    /**
      * Currency attribute getter
      *
      * @param $value
@@ -631,7 +653,7 @@ class Subscription extends Model
             }
             $plan->cardRequired = true;
             $plan->host = $this->purchase->host;
-            $plan->price = currency($this->price, $this->currency, Currency::getUserCurrency(), false);
+            $plan->price = $this->price;
             $plan->trialDays = 0;
             $plan->billingFrequency = $this->billingFrequency;
             $plan->package = $this->package;
