@@ -672,10 +672,10 @@ abstract class PackageModel extends Model
     {
         // Define replacements and return
         return [
-            'host'      => $this->purchase->host ? $this->purchase->host->getRouteKey() : $this->name,
+            'host'      => $this->purchase && $this->purchase->host ? $this->purchase->host->getRouteKey() : $this->name,
             'amount'    => $transaction->amount,
             'package'   => $this->name,
-            'reference' => $this->purchase->reference ? $this->purchase->reference->getRouteKey() : $this->name,
+            'reference' => $this->purchase && $this->purchase->reference ? $this->purchase->reference->getRouteKey() : $this->name,
             'days'      => $trialDays
         ];
     }
