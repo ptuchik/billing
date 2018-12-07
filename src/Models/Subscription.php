@@ -316,24 +316,6 @@ class Subscription extends Model
     }
 
     /**
-     * User currency attribute getter
-     * @return \Illuminate\Config\Repository|mixed
-     */
-    public function getUserCurrencyAttribute()
-    {
-        return Currency::getUserCurrency();
-    }
-
-    /**
-     * User currency symbol attribute getter
-     * @return mixed
-     */
-    public function getUserCurrencySymbolAttribute()
-    {
-        return array_get(Currency::getCurrency($this->userCurrency), 'symbol');
-    }
-
-    /**
      * Transactions relation
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */

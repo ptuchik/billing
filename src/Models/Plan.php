@@ -320,8 +320,7 @@ class Plan extends Model
      */
     public function allFeatures()
     {
-        return $this->hasMany(Factory::getClass(Feature::class), 'package_type', 'package_type')
-            ->orderBy('ordering');
+        return $this->hasMany(Factory::getClass(Feature::class), 'package_type', 'package_type')->orderBy('ordering');
     }
 
     /**
@@ -338,8 +337,7 @@ class Plan extends Model
 
         // If user currency has no value, try to get default currency value, convert and return,
         // if it also does not exist, return 0
-        return $price[Currency::getUserCurrency()] ??
-            currency($price[config('currency.default')] ?? 0, null, null, false);
+        return $price[Currency::getUserCurrency()] ??currency($price[config('currency.default')] ?? 0, null, null, false);
     }
 
     /**
