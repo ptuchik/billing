@@ -84,7 +84,7 @@ trait PurchaseLogic
             foreach ($this->discounts as $discount) {
                 if ($discount->redeem == $redeemTypes::MANUAL && !empty($discount->numberOfCoupons)) {
                     $discount->usedCoupons = $discount->usedCoupons + 1;
-                    $discount->save;
+                    $discount->save();
                 }
             }
         }
