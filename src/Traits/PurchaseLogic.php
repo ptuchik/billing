@@ -56,7 +56,7 @@ trait PurchaseLogic
 
                 // If redeem type is manual, check if coupon code provided by user, return it
                 if ($coupon->code == Request::input('coupon')) {
-                    if (!is_null($coupon->numberOfCoupons) && $coupon->numberOfCoupons <= $coupon->usedCoupons) {
+                    if (!empty($coupon->numberOfCoupons) && $coupon->numberOfCoupons <= $coupon->usedCoupons) {
                         $this->error = trans(config('ptuchik-billing.translation_prefixes.general').'.coupon_limit_reached');
                     } else {
                         return $coupon;
@@ -82,7 +82,7 @@ trait PurchaseLogic
 
         if (!$this->inRenewMode) {
             foreach ($this->discounts as $discount) {
-                if ($discount->redeem == $redeemTypes::MANUAL && is_null($discount->numberOfCoupons)) {
+                if ($discount->redeem == $redeemTypes::MANUAL && !empty($discount->numberOfCoupons)) {
                     $discount->usedCoupons = $discount->usedCoupons + 1;
                     $discount->save;
                 }
