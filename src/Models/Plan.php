@@ -337,7 +337,7 @@ class Plan extends Model
 
         // If user currency has no value, try to get default currency value, convert and return,
         // if it also does not exist, return 0
-        return $price[Currency::getUserCurrency()] ??currency($price[config('currency.default')] ?? 0, null, null, false);
+        return $price[Currency::getUserCurrency()] ?? currency($price[config('currency.default')] ?? 0, null, null, false);
     }
 
     /**

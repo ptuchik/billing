@@ -308,12 +308,23 @@ class Braintree implements PaymentGateway
     {
         if (!empty($paymentData->paymentMethod)) {
             $paymentMethod = $paymentData->paymentMethod;
-        } elseif (!empty($paymentData->creditCardDetails)) {
-            $paymentMethod = $paymentData->creditCardDetails;
-        } elseif (!empty($paymentData->paypalDetails)) {
-            $paymentMethod = $paymentData->paypalDetails;
         } else {
-            return;
+            switch ($paymentData->paymentInstrumentType ?? '') {
+                case PaymentMethods::PAYPAL_ACCOUNT;
+                    if (!empty($paymentData->paypalDetails)) {
+                        $paymentMethod = $paymentData->paypalDetails;
+                        break;
+                    } else {
+                        return Factory::get(PaymentMethod::class, true);
+                    }
+                default;
+                    if (!empty($paymentData->creditCardDetails)) {
+                        $paymentMethod = $paymentData->creditCardDetails;
+                        break;
+                    } else {
+                        return Factory::get(PaymentMethod::class, true);
+                    }
+            }
         }
 
         // Define payment method parser
@@ -371,7 +382,7 @@ class Braintree implements PaymentGateway
         $paymentMethod->token = $payPalAccount->token;
         $paymentMethod->type = Factory::getClass(PaymentMethods::class)::PAYPAL_ACCOUNT;
         $paymentMethod->gateway = $this->name;
-        $paymentMethod->holder = $payPalAccount->email;
+        $paymentMethod->holder = $payPalAccount->payerEmail ?? $payPalAccount->email;
 
         return $paymentMethod;
     }
