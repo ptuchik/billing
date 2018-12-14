@@ -14,8 +14,6 @@ use Ptuchik\Billing\Models\Subscription;
 use Ptuchik\Billing\Models\Transaction;
 use Ptuchik\Billing\src\Traits\HasCoupons;
 use Ptuchik\Billing\src\Traits\HasPaymentGateway;
-use Ptuchik\Billing\src\Traits\HasPaymentMethods;
-use Ptuchik\Billing\src\Traits\HasPaymentProfiles;
 use Ptuchik\CoreUtilities\Traits\HasParams;
 use Request;
 use Response;
@@ -26,7 +24,7 @@ use Response;
  */
 trait Billable
 {
-    use HasParams, HasPaymentGateway, HasPaymentProfiles, HasPaymentMethods, HasCoupons;
+    use HasParams, HasPaymentGateway, HasCoupons;
 
     /**
      * Balance attribute getter

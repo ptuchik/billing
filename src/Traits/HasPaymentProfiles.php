@@ -91,4 +91,20 @@ trait HasPaymentProfiles
 
         return $this->paymentProfiles;
     }
+
+    /**
+     * Refresh user's payment profile on for given gateway
+     *
+     * @param $gateway
+     *
+     * @return mixed
+     */
+    public function refreshPaymentProfile($gateway)
+    {
+        $this->paymentGateway = $gateway;
+        $this->removePaymentProfile();
+        $this->removePaymentMethods();
+
+        return $this->createPaymentProfile();
+    }
 }

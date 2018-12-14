@@ -12,6 +12,8 @@ use Request;
  */
 trait HasPaymentGateway
 {
+    use HasPaymentProfiles, HasPaymentMethods;
+
     /**
      * Payment gateway
      * @var \Ptuchik\Billing\Contracts\PaymentGateway

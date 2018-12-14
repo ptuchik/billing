@@ -221,6 +221,32 @@ trait HasPaymentMethods
     }
 
     /**
+     * Remove payment methods
+     *
+     * @param null $gateway
+     */
+    public function removePaymentMethods($gateway = null)
+    {
+        if (!$gateway) {
+            $gateway = $this->paymentGateway;
+        }
+
+        $paymentMethods = [];
+        foreach ($this->getPaymentMethods() as $method) {
+            if ($method->gateway != $gateway) {
+                $paymentMethods[] = $method;
+            }
+        }
+
+        if (empty($paymentMethods)) {
+            $this->defaultToken = null;
+        }
+
+        $this->paymentMethods = $paymentMethods;
+        $this->save();
+    }
+
+    /**
      * Parse payment method
      *
      * @param \Ptuchik\Billing\Models\PaymentMethod $method

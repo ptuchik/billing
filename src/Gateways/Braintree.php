@@ -18,6 +18,7 @@ use Ptuchik\Billing\Factory;
 use Ptuchik\Billing\Models\Order;
 use Ptuchik\Billing\Models\PaymentMethod;
 use Request;
+use Throwable;
 
 /**
  * Class Braintree
@@ -100,9 +101,7 @@ class Braintree implements PaymentGateway
         try {
             return $this->gateway->findCustomer($this->user->paymentProfile)->send()->getData();
         } catch (NotFound $exception) {
-            $this->user->removePaymentProfile();
-
-            return $this->gateway->findCustomer($this->user->paymentProfile)->send()->getData();
+            return $this->gateway->findCustomer($this->user->refreshPaymentProfile($this->name))->send()->getData();
         }
     }
 
@@ -188,7 +187,14 @@ class Braintree implements PaymentGateway
     public function getPaymentToken()
     {
         // Get and return payment token for user's payment profile
-        return $this->gateway->clientToken()->setCustomerId($this->user->paymentProfile)->send()->getToken();
+        try {
+            return $this->gateway->clientToken()->setCustomerId($this->user->paymentProfile)->send()->getToken();
+
+            // In case the customer ID is not valid anymore, regenerate a new one
+        } catch (Throwable $exception) {
+            return $this->gateway->clientToken()
+                ->setCustomerId($this->user->refreshPaymentProfile($this->name))->send()->getToken();
+        }
     }
 
     /**
