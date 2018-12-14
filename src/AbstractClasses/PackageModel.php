@@ -661,6 +661,17 @@ abstract class PackageModel extends Model
     }
 
     /**
+     * Get pending confirmation for package
+     *
+     * @param \Ptuchik\Billing\Models\Transaction $transaction
+     *
+     * @return \Ptuchik\Billing\AbstractClassess\PackageModel
+     */
+    public function getPendingConfirmation(Transaction $transaction)
+    {
+        return $this->getConfirmation($transaction, Factory::getClass(ConfirmationType::class)::PENDING);
+    }
+    /**
      * Get variables key => value pair array for confirmation to be replaced before rendering
      *
      * @param \Ptuchik\Billing\Models\Transaction $transaction

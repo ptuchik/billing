@@ -5,6 +5,7 @@ namespace Ptuchik\Billing\Models;
 use Auth;
 use Carbon\Carbon;
 use Currency;
+use Ptuchik\Billing\Constants\SubscriptionActiveType;
 use Ptuchik\Billing\Factory;
 use Ptuchik\CoreUtilities\Models\Model;
 
@@ -146,6 +147,25 @@ class Purchase extends Model
             $date = Carbon::createFromFormat('Y-m-d H:i:s', $subscription->nextBillingDate);
         }
 
+        if ($plan->previousSubscription) {
+            $subscription = Factory::get(Subscription::class, true);
+            $subscription->purchase()->associate($this);
+            $subscription->user()->associate(Auth::user() ?: $plan->user);
+            $subscription->setParamsFromPlan($plan);
+
+            if ($plan->previousSubscription->onTrial()) {
+                $date = Carbon::today()->endOfDay();
+
+            } elseif ($plan->previousSubscription->isActive()) {
+                $date = Carbon::createFromFormat('Y-m-d H:i:s', $plan->previousSubscription->nextBillingDate);
+                $subscription->active = Factory::getClass(SubscriptionActiveType::class)::PENDING;
+
+            } else {
+                $date = Carbon::createFromFormat('Y-m-d H:i:s', $plan->previousSubscription->nextBillingDate);
+            }
+
+        }
+
         $subscription->setRawAttribute('name', $plan->package->getRawAttribute('name'));
         $subscription->alias = $plan->alias;
         $subscription->user()->associate(Auth::user() ?: $subscription->user);
@@ -183,6 +203,11 @@ class Purchase extends Model
 
         // Save and return subscription instance
         $subscription->save();
+
+        if ($plan->previousSubscription && $plan->previousSubscription->isActive() && !$plan->previousSubscription->onTrial()) {
+            $plan->previousSubscription->setParam('pending_subscription_id', $subscription->id);
+            $plan->previousSubscription->save();
+        }
 
         return $subscription;
     }

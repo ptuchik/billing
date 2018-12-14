@@ -8,6 +8,7 @@ use Currency;
 use Exception;
 use Omnipay\Common\Message\ResponseInterface;
 use Ptuchik\Billing\Constants\PlanVisibility;
+use Ptuchik\Billing\Constants\SubscriptionActiveType;
 use Ptuchik\Billing\Constants\SubscriptionStatus;
 use Ptuchik\Billing\Constants\TransactionStatus;
 use Ptuchik\Billing\Event;
@@ -435,6 +436,14 @@ class Subscription extends Model
     }
 
     /**
+     * Determine if the subscription is pending
+     * @return bool
+     */
+    public function isPending()
+    {
+        return $this->active == SubscriptionActiveType::PENDING;
+    }
+    /**
      * Status attribute getter
      * @return mixed
      */
@@ -762,9 +771,17 @@ class Subscription extends Model
             // If subscription has no active user or it is not in use just deactivate package and continue
             if (!$subscription->hasActiveUser() || !$subscription->package->isInUse($subscription->host)) {
 
-                $subscription->package->deactivate($subscription->host);
-                continue;
+                if ($id = $subscription->getParam('pending_subscription_id')) {
 
+                    $pendingSubscription = static::with(['user', 'purchase.package', 'purchase.host'])->where('id', $id)->first();
+
+                    $subscription->package->deactivate($subscription->host);
+
+                    $pendingSubscription->markAsActive();
+
+                    $pendingSubscription->package->activate($pendingSubscription->host, $pendingSubscription->plan);
+                }
+                continue;
             }
 
             // Set currency

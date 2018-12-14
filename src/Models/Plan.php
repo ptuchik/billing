@@ -643,4 +643,14 @@ class Plan extends Model
         // If plan is recurring, return trial days, otherwise return 0
         return $this->isRecurring ? $value : 0;
     }
+
+    /**
+     * return previous subscription
+     *
+     * @return mixed
+     */
+    public function getPreviousSubscriptionAttribute()
+    {
+        return $this->getPreviousSubscription();
+    }
 }

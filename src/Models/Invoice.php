@@ -35,6 +35,11 @@ class Invoice
 
         if ($plan) {
             $this->old = !empty($plan->old);
+
+            if($plan->subscription->isPending()){
+                $this->confirmation = $plan->package->getPendingConfirmation($transaction);
+            }
+
             if ($this->summary > 0) {
                 $this->confirmation = $plan->package->getPaidConfirmation($transaction);
             } elseif ($plan->hasTrial) {
