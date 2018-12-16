@@ -176,11 +176,13 @@ class Coupon extends Model
      */
     public function markAsUsed(Plan $plan, Hostable $host)
     {
-        $used = Factory::get(UsedCoupon::class, true);
-        $used->couponId = $this->id;
-        $used->couponCode = $this->code;
-        $used->planAlias = $plan->alias;
-        $used->host()->associate($host);
+        $used = Factory::getClass(UsedCoupon::class, true)::firstOrNew([
+            'coupon_id'   => $this->id,
+            'coupon_code' => $this->code,
+            'plan_alias'  => $plan->alias,
+            'host_type'   => $host->getMorphClass(),
+            'host_id'     => $host->getKey()
+        ]);
         $used->save();
     }
 
@@ -216,11 +218,13 @@ class Coupon extends Model
     public function markAsGifted(Plan $plan, Hostable $host)
     {
         if ($this->redeem == Factory::getClass(CouponRedeemType::class)::INTERNAL) {
-            $gifted = Factory::get(GiftedCoupon::class, true);
-            $gifted->couponId = $this->id;
-            $gifted->couponCode = $this->code;
-            $gifted->planAlias = $plan->alias;
-            $gifted->host()->associate($host);
+            $gifted = Factory::getClass(GiftedCoupon::class, true)::firstOrNew([
+                'coupon_id'   => $this->id,
+                'coupon_code' => $this->code,
+                'plan_alias'  => $plan->alias,
+                'host_type'   => $host->getMorphClass(),
+                'host_id'     => $host->getKey()
+            ]);
             $gifted->save();
         }
     }

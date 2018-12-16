@@ -11,6 +11,14 @@ use Ptuchik\CoreUtilities\Models\Model;
  */
 class UsedCoupon extends Model
 {
+    protected $fillable = [
+        'coupon_id',
+        'coupon_code',
+        'plan_alias',
+        'host_type',
+        'host_id'
+    ];
+
     /**
      * Coupon relation
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
