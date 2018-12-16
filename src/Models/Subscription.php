@@ -620,8 +620,7 @@ class Subscription extends Model
      */
     public function originalPlan()
     {
-        return $this->belongsTo(Factory::getClass(Plan::class), 'alias', 'alias')
-            ->where('plans.visibility', '<>', Factory::getClass(PlanVisibility::class)::DISABLED);
+        return $this->belongsTo(Factory::getClass(Plan::class), 'alias', 'alias');
     }
 
     /**
@@ -642,6 +641,7 @@ class Subscription extends Model
                 $plan->alias = $originalPlan->alias;
                 $plan->features = $originalPlan->features;
                 $plan->agreementText = $originalPlan->agreementText;
+                $plan->setRelation('coupons', $originalPlan->coupons);
             } else {
                 $plan->setRawAttribute('name', $this->getRawAttribute('name'));
                 $plan->alias = $this->alias;

@@ -337,7 +337,8 @@ class Plan extends Model
 
         // If user currency has no value, try to get default currency value, convert and return,
         // if it also does not exist, return 0
-        return $price[Currency::getUserCurrency()] ?? currency($price[config('currency.default')] ?? 0, null, null, false);
+        return $price[Currency::getUserCurrency()] ?? currency($price[config('currency.default')] ?? 0, null, null,
+                false);
     }
 
     /**
@@ -452,11 +453,16 @@ class Plan extends Model
     {
         // If discounts already collected, just return
         if ($this->currentDiscounts) {
-            return $this->currentDiscounts;
-        }
 
-        // Create an empty discounts collection, loop throught available coupons and add to discounts
-        $this->currentDiscounts = collect([]);
+            // If there is no additional coupon input, return current discounts
+            if (!Request::input('coupon')) {
+                return $this->currentDiscounts;
+            }
+
+            // Create an empty discounts collection
+        } else {
+            $this->currentDiscounts = collect([]);
+        }
 
         // Check if the coupon exists in the plan coupons
         if (($code = Request::input('coupon')) && !$this->coupons->contains('code', $code)) {

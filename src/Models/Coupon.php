@@ -124,6 +124,17 @@ class Coupon extends Model
     }
 
     /**
+     * Used coupons relation
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function usedCoupons()
+    {
+        $checkCouponsBy = config('ptuchik-billing.check_used_coupons.by');
+
+        return $this->hasMany(Factory::getClass(UsedCoupon::class), 'coupon_'.$checkCouponsBy, $checkCouponsBy);
+    }
+
+    /**
      * Gifted coupons relation
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
@@ -132,6 +143,45 @@ class Coupon extends Model
         $checkCouponsBy = config('ptuchik-billing.check_gifted_coupons.by');
 
         return $this->hasMany(Factory::getClass(GiftedCoupon::class), 'coupon_'.$checkCouponsBy, $checkCouponsBy);
+    }
+
+    /**
+     * Check if coupon is already used for host
+     *
+     * @param \Ptuchik\Billing\Models\Plan        $plan
+     * @param \Ptuchik\Billing\Contracts\Hostable $host
+     *
+     * @return bool
+     */
+    public function isUsed(Plan $plan, Hostable $host)
+    {
+        // Build query for used coupons for provided host
+        $query = $this->usedCoupons()->where('used_coupons.host_id', $host->id)
+            ->where('used_coupons.host_type', $host->getMorphClass());
+
+        // If set to check with plan, add plan condition
+        if (config('ptuchik-billing.check_used_coupons.with') == 'plan') {
+            $query->where('used_coupons.plan_alias', $plan->alias);
+        }
+
+        // Check for existance and return
+        return !empty($query->first());
+    }
+
+    /**
+     * Mark coupon as used for given plan and host
+     *
+     * @param \Ptuchik\Billing\Models\Plan        $plan
+     * @param \Ptuchik\Billing\Contracts\Hostable $host
+     */
+    public function markAsUsed(Plan $plan, Hostable $host)
+    {
+        $used = Factory::get(UsedCoupon::class, true);
+        $used->couponId = $this->id;
+        $used->couponCode = $this->code;
+        $used->planAlias = $plan->alias;
+        $used->host()->associate($host);
+        $used->save();
     }
 
     /**

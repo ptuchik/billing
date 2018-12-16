@@ -3,6 +3,18 @@
 return [
 
     /**
+     * Check used coupons
+     */
+    'check_used_coupons'                  => [
+
+        // Indicates by which column to check coupon, available values are 'code', 'id'
+        'by'   => env('CHECK_USED_COUPONS_BY', 'code'),
+
+        // Indicates by which entity to check coupon, available values are 'coupon', 'plan'
+        'with' => env('CHECK_USED_COUPONS_WITH', 'plan'),
+    ],
+
+    /**
      * Check gifted coupons
      */
     'check_gifted_coupons'                  => [

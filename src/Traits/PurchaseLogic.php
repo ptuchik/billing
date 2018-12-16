@@ -56,8 +56,16 @@ trait PurchaseLogic
 
                 // If redeem type is manual, check if coupon code provided by user, return it
                 if ($coupon->code == Request::input('coupon')) {
-                    if (!empty($coupon->numberOfCoupons) && $coupon->numberOfCoupons <= $coupon->usedCoupons) {
+
+                    // Check if it is already used on same host for same plan
+                    if ($coupon->isUsed($this, $this->host)) {
+                        $this->error = trans(config('ptuchik-billing.translation_prefixes.general').'.coupon_used');
+
+                        // Check if coupon has limit and limit reached
+                    } elseif (!empty($coupon->numberOfCoupons) && $coupon->numberOfCoupons <= $coupon->usedCoupons) {
                         $this->error = trans(config('ptuchik-billing.translation_prefixes.general').'.coupon_limit_reached');
+
+                        // Otherwise return coupon
                     } else {
                         return $coupon;
                     }
@@ -80,13 +88,17 @@ trait PurchaseLogic
         // Define redeem types
         $redeemTypes = Factory::getClass(CouponRedeemType::class);
 
-        if (!$this->inRenewMode) {
-            foreach ($this->discounts as $discount) {
-                if ($discount->redeem == $redeemTypes::MANUAL && !empty($discount->numberOfCoupons)) {
-                    $discount->usedCoupons = $discount->usedCoupons + 1;
-                    $discount->save();
-                }
+        // Loop through each discount and calculate usage
+        foreach ($this->discounts as $discount) {
+
+            // If plan is not in renew mode, coupon redeem type is manual and it has limit, increment usage
+            if (!$this->inRenewMode && $discount->redeem == $redeemTypes::MANUAL && $discount->numberOfCoupons) {
+                $discount->usedCoupons = $discount->usedCoupons + 1;
+                $discount->save();
             }
+
+            // Mark coupon as used
+            $discount->markAsUsed($this, $this->host);
         }
     }
 
