@@ -670,12 +670,15 @@ abstract class PackageModel extends Model
      */
     public function getConfirmationReplacements(Transaction $transaction, $trialDays = 0)
     {
+        // Get purchase
+        $purchase = $this->purchase ?? $transaction->purchase;
+
         // Define replacements and return
         return [
-            'host'      => $this->purchase && $this->purchase->host ? $this->purchase->host->getRouteKey() : $this->name,
+            'host'      => $purchase && $purchase->host ? $purchase->host->getRouteKey() : $this->name,
             'amount'    => $transaction->amount,
             'package'   => $this->name,
-            'reference' => $this->purchase && $this->purchase->reference ? $this->purchase->reference->getRouteKey() : $this->name,
+            'reference' => $purchase && $purchase->reference ? $purchase->reference->getRouteKey() : $this->name,
             'days'      => $trialDays
         ];
     }
