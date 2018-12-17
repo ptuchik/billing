@@ -106,6 +106,7 @@ trait Billable
             $order->setParam('currency', Currency::getUserCurrency());
             $order->setParam('gateway', $paymentGateway->name ?? $gateway ?? Request::input('gateway'));
             $order->setParam('request', Request::except(['nonce', 'token']));
+            $order->save();
         }
 
         // If amount is empty, interrupt payment
