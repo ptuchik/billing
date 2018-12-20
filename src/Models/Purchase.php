@@ -149,8 +149,8 @@ class Purchase extends Model
         $subscription->setRawAttribute('name', $plan->package->getRawAttribute('name'));
         $subscription->alias = $plan->alias;
         $subscription->user()->associate(Auth::user() ?: $subscription->user);
-        $subscription->price = $plan->price;
         $subscription->currency = Currency::getUserCurrency();
+        $subscription->price = $plan->price;
         $subscription->coupons = $plan->discounts;
         $subscription->billingFrequency = $plan->billingFrequency;
 
