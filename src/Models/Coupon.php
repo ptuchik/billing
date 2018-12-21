@@ -148,13 +148,17 @@ class Coupon extends Model
     /**
      * Check if coupon is already used for host
      *
-     * @param \Ptuchik\Billing\Models\Plan        $plan
-     * @param \Ptuchik\Billing\Contracts\Hostable $host
+     * @param \Ptuchik\Billing\Models\Plan             $plan
+     * @param \Ptuchik\Billing\Contracts\Hostable|null $host
      *
      * @return bool
      */
-    public function isUsed(Plan $plan, Hostable $host)
+    public function isUsed(Plan $plan, Hostable $host = null)
     {
+        if (empty($host)) {
+            return false;
+        }
+
         // Build query for used coupons for provided host
         $query = $this->usedCoupons()->where('used_coupons.host_id', $host->id)
             ->where('used_coupons.host_type', $host->getMorphClass());
