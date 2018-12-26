@@ -5,6 +5,7 @@ namespace Ptuchik\Billing\AbstractClassess;
 use Agent;
 use Ptuchik\Billing\Constants\ConfirmationType;
 use Ptuchik\Billing\Constants\PlanVisibility;
+use Ptuchik\Billing\Contracts\Billable;
 use Ptuchik\Billing\Contracts\Hostable;
 use Ptuchik\Billing\Factory;
 use Ptuchik\Billing\Models\Confirmation;
@@ -148,12 +149,13 @@ abstract class PackageModel extends Model
     /**
      * Validate requested package against host to process
      *
-     * @param \Ptuchik\Billing\Contracts\Hostable $host
-     * @param bool                                $forPurchase
+     * @param \Ptuchik\Billing\Contracts\Hostable      $host
+     * @param \Ptuchik\Billing\Contracts\Billable|null $user
+     * @param bool                                     $forPurchase
      *
      * @return \Ptuchik\Billing\Contracts\Hostable
      */
-    public function validate(Hostable $host, $forPurchase = false)
+    public function validate(Hostable $host, Billable $user = null, $forPurchase = false)
     {
         return $host;
     }
