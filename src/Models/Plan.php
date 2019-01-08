@@ -39,6 +39,7 @@ class Plan extends Model
      */
     protected $unsanitized = [
         'agreement',
+        'features_header',
         'features',
         'description',
     ];
@@ -51,6 +52,7 @@ class Plan extends Model
         'name',
         'agreement',
         'description',
+        'features_header',
         'features'
     ];
 
@@ -468,7 +470,7 @@ class Plan extends Model
         if (($code = Request::input('coupon')) && !$this->coupons
                 ->where('redeem', Factory::getClass(CouponRedeemType::class)::MANUAL)
                 ->contains('code', $code)) {
-            
+
             $this->error = trans(config('ptuchik-billing.translation_prefixes.general').'.coupon_is_invalid');
         }
 
