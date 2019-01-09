@@ -77,6 +77,7 @@ class Plan extends Model
      */
     protected $appends = [
         'discount',
+        'userBalanceDiscount',
         'summary',
         'currency',
         'currencySymbol',
@@ -618,7 +619,7 @@ class Plan extends Model
             // Add coupons as discount
             $this->calculatedDiscount += $this->couponDiscount;
 
-            // Add balace as discount
+            // Add balance as discount
             $this->calculatedDiscount += $this->userBalanceDiscount;
 
             if ($this->calculatedDiscount > $this->price) {

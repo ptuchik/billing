@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Currency;
 use Exception;
 use Omnipay\Common\Message\ResponseInterface;
+use Ptuchik\Billing\Constants\OrderAction;
 use Ptuchik\Billing\Constants\PlanVisibility;
 use Ptuchik\Billing\Constants\SubscriptionStatus;
 use Ptuchik\Billing\Constants\TransactionStatus;
@@ -679,6 +680,17 @@ class Subscription extends Model
      */
     public function renew(ResponseInterface $payment = null, Order $order = null)
     {
+        if (!$order) {
+            
+            // Create an order to pass to purchase process
+            $order = Factory::get(Order::class, true);
+            $order->user()->associate($this->user);
+            $order->host()->associate($this->host ?? Auth::user());
+            $order->reference()->associate($this);
+            $order->action = Factory::getClass(OrderAction::class)::CHECKOUT;
+            $order->save();
+        }
+
         // Call plan's purchase to renew
         return $this->plan->purchase($this->plan->host, $payment, $order);
     }
