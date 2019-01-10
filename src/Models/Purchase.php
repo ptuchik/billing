@@ -149,8 +149,8 @@ class Purchase extends Model
         $subscription->setRawAttribute('name', $plan->package->getRawAttribute('name'));
         $subscription->alias = $plan->alias;
         $subscription->user()->associate(Auth::user() ?: $subscription->user);
-        $subscription->price = $plan->price;
         $subscription->currency = Currency::getUserCurrency();
+        $subscription->price = $plan->price;
         $subscription->coupons = $plan->discounts;
         $subscription->billingFrequency = $plan->billingFrequency;
 
@@ -174,7 +174,12 @@ class Purchase extends Model
         }
 
         $subscription->endsAt = $subscription->endsAt ? $subscription->nextBillingDate : null;
-        $subscription->addons = $plan->payment && $plan->payment->isSuccessful() ? [] : $plan->addonCoupons;
+
+        if (!$plan->isFree && !$plan->hasTrial && (!$plan->payment || $plan->payment->isSuccessful())) {
+            $subscription->addons = [];
+        } else {
+            $subscription->addons = $plan->addonCoupons;
+        }
 
         // Save and return subscription instance
         $subscription->save();

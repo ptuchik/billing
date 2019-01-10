@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Currency;
 use Exception;
 use Omnipay\Common\Message\ResponseInterface;
+use Ptuchik\Billing\Constants\OrderAction;
 use Ptuchik\Billing\Constants\PlanVisibility;
 use Ptuchik\Billing\Constants\SubscriptionStatus;
 use Ptuchik\Billing\Constants\TransactionStatus;
@@ -273,6 +274,28 @@ class Subscription extends Model
     }
 
     /**
+     * Price attribute setter
+     *
+     * @param $value
+     */
+    public function setPriceAttribute($value)
+    {
+        $this->attributes['price'] = currency($value ?? 0, Currency::getUserCurrency(), $this->currency, false);
+    }
+
+    /**
+     * Price attribute getter
+     *
+     * @param $value
+     *
+     * @return mixed
+     */
+    public function getPriceAttribute($value)
+    {
+        return currency($value ?? 0, $this->currency, null, false);
+    }
+
+    /**
      * Currency attribute getter
      *
      * @param $value
@@ -286,9 +309,6 @@ class Subscription extends Model
 
     /**
      * Currency symbol attribute getter
-     *
-     * @param $value
-     *
      * @return \Illuminate\Config\Repository|mixed
      */
     public function getCurrencySymbolAttribute()
@@ -601,8 +621,7 @@ class Subscription extends Model
      */
     public function originalPlan()
     {
-        return $this->belongsTo(Factory::getClass(Plan::class), 'alias', 'alias')
-            ->where('plans.visibility', '<>', Factory::getClass(PlanVisibility::class)::DISABLED);
+        return $this->belongsTo(Factory::getClass(Plan::class), 'alias', 'alias');
     }
 
     /**
@@ -623,14 +642,16 @@ class Subscription extends Model
                 $plan->alias = $originalPlan->alias;
                 $plan->features = $originalPlan->features;
                 $plan->agreementText = $originalPlan->agreementText;
+                $plan->setRelation('coupons', $originalPlan->coupons);
             } else {
                 $plan->setRawAttribute('name', $this->getRawAttribute('name'));
                 $plan->alias = $this->alias;
                 $plan->features = $this->features;
                 $plan->agreementText = $this->agreementText;
             }
+            $plan->cardRequired = true;
             $plan->host = $this->purchase->host;
-            $plan->price = currency($this->price, $this->currency, Currency::getUserCurrency(), false);
+            $plan->price = $this->price;
             $plan->trialDays = 0;
             $plan->billingFrequency = $this->billingFrequency;
             $plan->package = $this->package;
@@ -659,6 +680,17 @@ class Subscription extends Model
      */
     public function renew(ResponseInterface $payment = null, Order $order = null)
     {
+        if (!$order) {
+            
+            // Create an order to pass to purchase process
+            $order = Factory::get(Order::class, true);
+            $order->user()->associate($this->user);
+            $order->host()->associate($this->host ?? Auth::user());
+            $order->reference()->associate($this);
+            $order->action = Factory::getClass(OrderAction::class)::CHECKOUT;
+            $order->save();
+        }
+
         // Call plan's purchase to renew
         return $this->plan->purchase($this->plan->host, $payment, $order);
     }
@@ -834,9 +866,6 @@ class Subscription extends Model
 
             // Set currency
             Currency::setUserCurrency($subscription->currency);
-
-            // Check if user has payment method
-            $subscription->user->checkPaymentMethod();
 
             // Trigger reminder event
             Event::subscriptionExpirationReminder($subscription);

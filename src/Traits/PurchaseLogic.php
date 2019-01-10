@@ -30,6 +30,7 @@ trait PurchaseLogic
      * @param \Ptuchik\Billing\Models\Coupon $coupon
      *
      * @return \Ptuchik\Billing\Models\Coupon|void
+     * @throws \Exception
      */
     protected function analizeCoupon(Coupon $coupon)
     {
@@ -55,7 +56,19 @@ trait PurchaseLogic
 
                 // If redeem type is manual, check if coupon code provided by user, return it
                 if ($coupon->code == Request::input('coupon')) {
-                    return $coupon;
+
+                    // Check if it is already used on same host for same plan
+                    if ($coupon->isUsed($this, $this->host)) {
+                        $this->error = trans(config('ptuchik-billing.translation_prefixes.general').'.coupon_used');
+
+                        // Check if coupon has limit and limit reached
+                    } elseif (!empty($coupon->numberOfCoupons) && $coupon->numberOfCoupons <= $coupon->usedCoupons) {
+                        $this->error = trans(config('ptuchik-billing.translation_prefixes.general').'.coupon_limit_reached');
+
+                        // Otherwise return coupon
+                    } else {
+                        return $coupon;
+                    }
                 }
                 break;
             case $redeemTypes::AUTOREDEEM:
@@ -64,6 +77,28 @@ trait PurchaseLogic
                 return $coupon;
             default:
                 return;
+        }
+    }
+
+    /**
+     * Caclculate coupon usage
+     */
+    protected function calculateCouponUsage()
+    {
+        // Define redeem types
+        $redeemTypes = Factory::getClass(CouponRedeemType::class);
+
+        // Loop through each discount and calculate usage
+        foreach ($this->discounts as $discount) {
+
+            // If plan is not in renew mode, coupon redeem type is manual and it has limit, increment usage
+            if (!$this->inRenewMode && $discount->redeem == $redeemTypes::MANUAL && $discount->numberOfCoupons) {
+                $discount->usedCoupons = $discount->usedCoupons + 1;
+                $discount->save();
+            }
+
+            // Mark coupon as used
+            $discount->markAsUsed($this, $this->host);
         }
     }
 
@@ -112,7 +147,7 @@ trait PurchaseLogic
         $this->calculateTrial();
 
         // Set purchase for current package on current host and try to get latest subscription
-        $subscription = $this->package->setPurchase($this->host, $forPurchase)->subscription;
+        $subscription = $this->package->setPurchase($this->host)->subscription;
 
         // Get previous subscription
         $this->getPreviousSubscription();
@@ -223,6 +258,9 @@ trait PurchaseLogic
      */
     protected function makePurchase(ResponseInterface $payment = null, Order $order = null)
     {
+        // Get summary to calculate discounts and summary
+        $summary = $this->summary;
+
         // If no payment provided, charge user
         if (!$payment) {
 
@@ -232,7 +270,12 @@ trait PurchaseLogic
             }
 
             // If plan has trial, no charge required
-            $price = $this->hasTrial ? 0 : $this->summary;
+            $price = $this->hasTrial ? 0 : $summary;
+
+            // If there is order, set trial status
+            if ($order) {
+                $order->setParam('trial', $this->hasTrial);
+            }
 
             // Make payment and set the result as plan's payment
             $this->payment = $this->user->purchase($price, $this->package->descriptor, $order);
@@ -240,21 +283,7 @@ trait PurchaseLogic
             $this->payment = $payment;
         }
 
-        // If response is redirect, interrupt the process
-        if ($this->payment && Auth::user() && $this->payment->isRedirect()) {
-
-            return $this->payment->getRedirectMethod() != 'GET' ? $this->payment->redirect() : [
-                'redirect_url' => $this->payment->getRedirectUrl()
-            ];
-
-            // Otherwise continue
-        } else {
-
-            // Get summary to calculate discounts and summary
-            $this->summary;
-
-            return $this->processPurchase();
-        }
+        return $this->processPurchase();
 
     }
 
@@ -275,6 +304,9 @@ trait PurchaseLogic
 
             // Remove user's coupons if needed
             $this->user->removeCoupons($this->discounts);
+
+            // Increment coupon usage
+            $this->calculateCouponUsage();
         }
 
         // If there is a successful payment, add plan's addon coupons to user coupons
@@ -378,13 +410,13 @@ trait PurchaseLogic
         $transaction->user()->associate($this->user);
         $transaction->gateway = $this->user->paymentGateway;
         $transaction->price = $this->price;
-        $transaction->discount = $this->discount;
+        $transaction->discount = ($discount = $this->discount) > $this->price ? $this->price : $discount;
         $transaction->summary = 0;
         $transaction->currency = Currency::getUserCurrency();
         $transaction->coupons = $this->discounts;
 
-        // If there is no payment, fire an event and return empty invoice
-        if (!$this->payment) {
+        // If plan is free or it is in trial, fire an event and return empty invoice
+        if ($this->isFree || $this->hasTrial) {
             return Factory::get(Invoice::class, true, $this, $transaction);
         }
 
@@ -392,12 +424,10 @@ trait PurchaseLogic
 
         $transaction->data = serialize($this->payment->getData()->transaction ?? '');
         $transaction->reference = $this->payment->getTransactionReference();
-        if ($this->payment->isSuccessful()) {
-            if (!empty(config('ptuchik-billing.gateways.'.$transaction->gateway.'.cash'))) {
-                $transaction->status = $transactionStatus::PENDING;
-            } else {
-                $transaction->status = $transactionStatus::SUCCESS;
-            }
+        if ($this->payment->isPending()) {
+            $transaction->status = $transactionStatus::PENDING;
+        } elseif ($this->payment->isSuccessful()) {
+            $transaction->status = $transactionStatus::SUCCESS;
         } else {
             $transaction->status = $transactionStatus::FAILED;
         }

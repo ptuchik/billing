@@ -21,6 +21,7 @@ class Plans extends Migration
                 $table->integer('ordering')->default(1);
                 $table->text('agreement')->nullable();
                 $table->text('description')->nullable();
+                $table->text('features_header')->nullable();
                 $table->text('features')->nullable();
                 $table->text('price')->nullable();
                 $table->integer('trial_days')->default(0);

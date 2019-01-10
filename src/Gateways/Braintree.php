@@ -2,19 +2,23 @@
 
 namespace Ptuchik\Billing\Gateways;
 
-use App\User;
 use Braintree\CreditCard;
+use Braintree\Exception\NotFound;
 use Braintree\PayPalAccount;
+use Braintree\Transaction\CreditCardDetails;
+use Braintree\Transaction\PayPalDetails;
 use Currency;
 use Exception;
 use Omnipay\Common\Message\ResponseInterface;
 use Omnipay\Omnipay;
+use Ptuchik\Billing\Constants\PaymentMethods;
+use Ptuchik\Billing\Contracts\Billable;
 use Ptuchik\Billing\Contracts\PaymentGateway;
 use Ptuchik\Billing\Factory;
 use Ptuchik\Billing\Models\Order;
 use Ptuchik\Billing\Models\PaymentMethod;
 use Request;
-use Omnipay\Common\Message\RequestInterface;
+use Throwable;
 
 /**
  * Class Braintree
@@ -22,6 +26,8 @@ use Omnipay\Common\Message\RequestInterface;
  */
 class Braintree implements PaymentGateway
 {
+    public $name = 'braintree';
+
     /**
      * @var \Omnipay\Common\GatewayInterface
      */
@@ -41,10 +47,10 @@ class Braintree implements PaymentGateway
     /**
      * Braintree constructor.
      *
-     * @param \App\User $user
-     * @param array     $config
+     * @param \Ptuchik\Billing\Contracts\Billable $user
+     * @param array                               $config
      */
-    public function __construct(User $user, array $config = [])
+    public function __construct(Billable $user, array $config = [])
     {
         $this->config = $config;
         $this->user = $user;
@@ -92,22 +98,27 @@ class Braintree implements PaymentGateway
      */
     public function findCustomer()
     {
-        return $this->gateway->findCustomer($this->user->paymentProfile)->send()->getData();
+        try {
+            return $this->gateway->findCustomer($this->user->paymentProfile)->send()->getData();
+        } catch (NotFound $exception) {
+            return $this->gateway->findCustomer($this->user->refreshPaymentProfile($this->name))->send()->getData();
+        }
     }
 
     /**
      * Create payment method
      *
-     * @param string $token
+     * @param string                             $nonce
+     * @param \Ptuchik\Billing\Models\Order|null $order
      *
      * @return mixed
      * @throws \Exception
      */
-    public function createPaymentMethod(string $token)
+    public function createPaymentMethod(string $nonce, Order $order = null)
     {
         // Create a payment method on remote gateway
         $paymentMethod = $this->gateway->createPaymentMethod()
-            ->setToken($token)
+            ->setToken($nonce)
             ->setMakeDefault(true)
             ->setCustomerId($this->user->paymentProfile)
             ->send();
@@ -117,7 +128,7 @@ class Braintree implements PaymentGateway
         }
 
         // Parse the result and return the payment method instance
-        return $this->parsePaymentMethod($paymentMethod->getData()->paymentMethod);
+        return $this->parsePaymentMethod($paymentMethod->getData());
     }
 
     /**
@@ -130,7 +141,7 @@ class Braintree implements PaymentGateway
 
         // Get user's all payment methods from gateway and parse the needed data to return
         foreach ($this->findCustomer()->paymentMethods as $gatewayPaymentMethod) {
-            $paymentMethods[] = $this->parsePaymentMethod($gatewayPaymentMethod);
+            $paymentMethods[] = $this->parsePaymentMethod((object) ['paymentMethod' => $gatewayPaymentMethod]);
         }
 
         return $paymentMethods;
@@ -153,7 +164,7 @@ class Braintree implements PaymentGateway
         }
 
         // Parse the result and return the payment method instance
-        return $this->parsePaymentMethod($setDefault->getData()->paymentMethod);
+        return $this->parsePaymentMethod($setDefault->getData());
     }
 
     /**
@@ -176,7 +187,14 @@ class Braintree implements PaymentGateway
     public function getPaymentToken()
     {
         // Get and return payment token for user's payment profile
-        return $this->gateway->clientToken()->setCustomerId($this->user->paymentProfile)->send()->getToken();
+        try {
+            return $this->gateway->clientToken()->setCustomerId($this->user->paymentProfile)->send()->getToken();
+
+            // In case the customer ID is not valid anymore, regenerate a new one
+        } catch (Throwable $exception) {
+            return $this->gateway->clientToken()
+                ->setCustomerId($this->user->refreshPaymentProfile($this->name))->send()->getToken();
+        }
     }
 
     /**
@@ -192,7 +210,7 @@ class Braintree implements PaymentGateway
     {
         // If nonce is provided, create payment method and unset nonce
         if (Request::filled('nonce')) {
-            $this->createPaymentMethod(Request::input('nonce'));
+            $this->user->createPaymentMethod(Request::input('nonce'));
             Request::offsetUnset('nonce');
         }
 
@@ -288,17 +306,40 @@ class Braintree implements PaymentGateway
     /**
      * Parse payment method from gateways
      *
-     * @param $paymentMethod
+     * @param $paymentData
      *
      * @return mixed
      */
-    protected function parsePaymentMethod($paymentMethod)
+    public function parsePaymentMethod($paymentData)
     {
+        if (!empty($paymentData->paymentMethod)) {
+            $paymentMethod = $paymentData->paymentMethod;
+        } else {
+            switch ($paymentData->paymentInstrumentType ?? '') {
+                case PaymentMethods::PAYPAL_ACCOUNT;
+                    if (!empty($paymentData->paypalDetails)) {
+                        $paymentMethod = $paymentData->paypalDetails;
+                        break;
+                    } else {
+                        return Factory::get(PaymentMethod::class, true);
+                    }
+                default;
+                    if (!empty($paymentData->creditCardDetails)) {
+                        $paymentMethod = $paymentData->creditCardDetails;
+                        break;
+                    } else {
+                        return Factory::get(PaymentMethod::class, true);
+                    }
+            }
+        }
+
         // Define payment method parser
         switch (get_class($paymentMethod)) {
+            case CreditCardDetails::class:
             case CreditCard::class:
                 $parser = 'parseBraintreeCreditCard';
                 break;
+            case PayPalDetails::class:
             case PayPalAccount::class:
                 $parser = 'parseBraintreePayPalAccount';
                 break;
@@ -315,17 +356,20 @@ class Braintree implements PaymentGateway
      *
      * @param $creditCard
      *
-     * @return object
+     * @return array
      */
     protected function parseBraintreeCreditCard($creditCard)
     {
         $paymentMethod = Factory::get(PaymentMethod::class, true);
         $paymentMethod->token = $creditCard->token;
-        $paymentMethod->type = 'credit_card';
-        $paymentMethod->default = $creditCard->default;
-        $paymentMethod->gateway = 'braintree';
-        $paymentMethod->description = $creditCard->cardType.' '.trans(config('ptuchik-billing.translation_prefixes.general').'.ending_in').' '.$creditCard->last4;
-        $paymentMethod->imageUrl = $creditCard->imageUrl;
+        if (in_array($type = strtolower($creditCard->cardType),
+            Factory::getClass(PaymentMethods::class)::all('array'))) {
+            $paymentMethod->type = $type;
+        } else {
+            $paymentMethod->type = Factory::getClass(PaymentMethods::class)::CREDIT_CARD;
+        }
+        $paymentMethod->last4 = $creditCard->last4;
+        $paymentMethod->gateway = $this->name;
         $paymentMethod->holder = $creditCard->cardholderName;
 
         return $paymentMethod;
@@ -336,18 +380,15 @@ class Braintree implements PaymentGateway
      *
      * @param $payPalAccount
      *
-     * @return object
+     * @return array
      */
     protected function parseBraintreePayPalAccount($payPalAccount)
     {
         $paymentMethod = Factory::get(PaymentMethod::class, true);
         $paymentMethod->token = $payPalAccount->token;
-        $paymentMethod->type = 'paypal_account';
-        $paymentMethod->default = $payPalAccount->default;
-        $paymentMethod->gateway = 'braintree';
-        $paymentMethod->description = $payPalAccount->email;
-        $paymentMethod->imageUrl = $payPalAccount->imageUrl;
-        $paymentMethod->holder = $payPalAccount->email;
+        $paymentMethod->type = Factory::getClass(PaymentMethods::class)::PAYPAL_ACCOUNT;
+        $paymentMethod->gateway = $this->name;
+        $paymentMethod->holder = $payPalAccount->payerEmail ?? $payPalAccount->email;
 
         return $paymentMethod;
     }
@@ -356,6 +397,8 @@ class Braintree implements PaymentGateway
      * Create address
      *
      * @param array $billingDetails
+     *
+     * @return mixed
      */
     protected function createAddress(array $billingDetails)
     {

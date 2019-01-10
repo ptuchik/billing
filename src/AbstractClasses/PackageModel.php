@@ -5,6 +5,7 @@ namespace Ptuchik\Billing\AbstractClassess;
 use Agent;
 use Ptuchik\Billing\Constants\ConfirmationType;
 use Ptuchik\Billing\Constants\PlanVisibility;
+use Ptuchik\Billing\Contracts\Billable;
 use Ptuchik\Billing\Contracts\Hostable;
 use Ptuchik\Billing\Factory;
 use Ptuchik\Billing\Models\Confirmation;
@@ -148,12 +149,13 @@ abstract class PackageModel extends Model
     /**
      * Validate requested package against host to process
      *
-     * @param \Ptuchik\Billing\Contracts\Hostable $host
-     * @param bool                                $forPurchase
+     * @param \Ptuchik\Billing\Contracts\Hostable      $host
+     * @param \Ptuchik\Billing\Contracts\Billable|null $user
+     * @param bool                                     $forPurchase
      *
      * @return \Ptuchik\Billing\Contracts\Hostable
      */
-    public function validate(Hostable $host, $forPurchase = false)
+    public function validate(Hostable $host, Billable $user = null, $forPurchase = false)
     {
         return $host;
     }
@@ -670,12 +672,15 @@ abstract class PackageModel extends Model
      */
     public function getConfirmationReplacements(Transaction $transaction, $trialDays = 0)
     {
+        // Get purchase
+        $purchase = $this->purchase ?? $transaction->purchase;
+
         // Define replacements and return
         return [
-            'host'      => $this->purchase->host ? $this->purchase->host->getRouteKey() : $this->name,
+            'host'      => $purchase && $purchase->host ? $purchase->host->getRouteKey() : $this->name,
             'amount'    => $transaction->amount,
             'package'   => $this->name,
-            'reference' => $this->purchase->reference ? $this->purchase->reference->getRouteKey() : $this->name,
+            'reference' => $purchase && $purchase->reference ? $purchase->reference->getRouteKey() : $this->name,
             'days'      => $trialDays
         ];
     }

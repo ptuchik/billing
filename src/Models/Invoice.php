@@ -22,32 +22,31 @@ class Invoice
     /**
      * Invoice constructor.
      *
-     * @param Plan        $plan
-     * @param Transaction $transaction
-     *
-     * @throws \Exception
+     * @param \Ptuchik\Billing\Models\Plan|null   $plan
+     * @param \Ptuchik\Billing\Models\Transaction $transaction
      */
-    public function __construct(Plan $plan, Transaction $transaction)
+    public function __construct(Plan $plan = null, Transaction $transaction)
     {
-        $this->old = !empty($plan->old);
-
         $this->id = $transaction->reference;
         $this->price = $transaction->price;
         $this->discount = $transaction->discount;
         $this->summary = $transaction->summary;
         $this->transactionId = $transaction->id;
 
-        if ($this->summary > 0) {
-            $this->confirmation = $plan->package->getPaidConfirmation($transaction);
-        } elseif ($plan->hasTrial) {
-            $this->confirmation = $plan->package->getTrialConfirmation($transaction, $plan->trialDays);
-        } else {
-            $this->confirmation = $plan->package->getFreeConfirmation($transaction);
-        }
+        if ($plan) {
+            $this->old = !empty($plan->old);
+            if ($this->summary > 0) {
+                $this->confirmation = $plan->package->getPaidConfirmation($transaction);
+            } elseif ($plan->hasTrial) {
+                $this->confirmation = $plan->package->getTrialConfirmation($transaction, $plan->trialDays);
+            } else {
+                $this->confirmation = $plan->package->getFreeConfirmation($transaction);
+            }
 
-        // If it was not an old invoice, fire new successful purchase event
-        if (!$this->old) {
-            Event::purchaseSuccess($plan, $transaction);
+            // If it was not an old invoice, fire new successful purchase event
+            if (!$this->old) {
+                Event::purchaseSuccess($plan, $transaction);
+            }
         }
     }
 }
