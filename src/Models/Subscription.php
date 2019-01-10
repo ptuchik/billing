@@ -657,7 +657,7 @@ class Subscription extends Model
             $plan->package = $this->package;
             $plan->discounts = $this->discounts;
             $plan->addonCoupons = $this->addonCoupons;
-            $plan->user = Auth::check() ? Auth::user() : $this->user;
+            $plan->user = $this->user ?: Auth::user();
             $plan->subscription = $this;
 
             // Prepare package to process
@@ -730,7 +730,7 @@ class Subscription extends Model
         $subscription = new static();
         $subscription->setRawAttribute('name', $this->getRawAttribute('name'));
         $subscription->purchase()->associate($this->purchase);
-        $subscription->user()->associate(Auth::user() ?: $this->user);
+        $subscription->user()->associate($this->user ?: Auth::user());
         $subscription->setParamsFromPlan($plan);
         $subscription->active = $this->active;
         $subscription->alias = $plan->alias;
