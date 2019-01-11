@@ -130,7 +130,7 @@ class Purchase extends Model
         if (!$subscription) {
             $subscription = Factory::get(Subscription::class, true);
             $subscription->purchase()->associate($this);
-            $subscription->user()->associate($plan->user ?: Auth::user());
+            $subscription->user()->associate($plan->billingAdmin ?: $plan->user ?: Auth::user());
             $subscription->setParamsFromPlan($plan);
             $subscription->active = true;
             $date = Carbon::today()->endOfDay();

@@ -146,6 +146,12 @@ class Plan extends Model
     public $user;
 
     /**
+     * Optional billing admin, who will be set to subscriptions' bill to
+     * @var
+     */
+    public $billingAdmin;
+
+    /**
      * Current host, for which this plan is being purchased
      * @var
      */
