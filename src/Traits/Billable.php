@@ -4,7 +4,7 @@ namespace Ptuchik\Billing\Traits;
 
 use Auth;
 use Currency;
-use Illuminate\Http\RedirectResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Omnipay\Common\Message\ResponseInterface;
 use Ptuchik\Billing\Constants\TransactionStatus;
 use Ptuchik\Billing\Factory;

@@ -657,7 +657,8 @@ class Subscription extends Model
             $plan->package = $this->package;
             $plan->discounts = $this->discounts;
             $plan->addonCoupons = $this->addonCoupons;
-            $plan->user = $this->user ?: Auth::user();
+            $plan->user = Auth::user() ?? $this->user;
+            $plan->billingAdmin = $this->user ?? Auth::user();
             $plan->subscription = $this;
 
             // Prepare package to process
@@ -681,10 +682,10 @@ class Subscription extends Model
     public function renew(ResponseInterface $payment = null, Order $order = null)
     {
         if (!$order) {
-            
+
             // Create an order to pass to purchase process
             $order = Factory::get(Order::class, true);
-            $order->user()->associate($this->user);
+            $order->user()->associate(Auth::user() ?? $this->user);
             $order->host()->associate($this->host ?? Auth::user());
             $order->reference()->associate($this);
             $order->action = Factory::getClass(OrderAction::class)::CHECKOUT;

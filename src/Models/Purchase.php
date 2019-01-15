@@ -130,7 +130,7 @@ class Purchase extends Model
         if (!$subscription) {
             $subscription = Factory::get(Subscription::class, true);
             $subscription->purchase()->associate($this);
-            $subscription->user()->associate($plan->billingAdmin ?: $plan->user ?: Auth::user());
+            $subscription->user()->associate($plan->billingAdmin ?? $plan->user ?? Auth::user());
             $subscription->setParamsFromPlan($plan);
             $subscription->active = true;
             $date = Carbon::today()->endOfDay();
@@ -148,7 +148,7 @@ class Purchase extends Model
 
         $subscription->setRawAttribute('name', $plan->package->getRawAttribute('name'));
         $subscription->alias = $plan->alias;
-        $subscription->user()->associate($subscription->user ?: Auth::user());
+        $subscription->user()->associate($subscription->user ?? Auth::user());
         $subscription->currency = Currency::getUserCurrency();
         $subscription->price = $plan->price;
         $subscription->coupons = $plan->discounts;
