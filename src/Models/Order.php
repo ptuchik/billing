@@ -26,6 +26,14 @@ class Order extends Model
     ];
 
     /**
+     * Unsanitize params
+     * @var array
+     */
+    protected $unsanitized = [
+        'params'
+    ];
+
+    /**
      * Reference relation
      * @return \Illuminate\Database\Eloquent\Relations\MorphTo
      */
