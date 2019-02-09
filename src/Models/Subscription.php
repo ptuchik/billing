@@ -5,10 +5,8 @@ namespace Ptuchik\Billing\Models;
 use Auth;
 use Carbon\Carbon;
 use Currency;
-use Exception;
 use Omnipay\Common\Message\ResponseInterface;
 use Ptuchik\Billing\Constants\OrderAction;
-use Ptuchik\Billing\Constants\PlanVisibility;
 use Ptuchik\Billing\Constants\SubscriptionStatus;
 use Ptuchik\Billing\Constants\TransactionStatus;
 use Ptuchik\Billing\Event;
@@ -16,6 +14,7 @@ use Ptuchik\Billing\Factory;
 use Ptuchik\Billing\Traits\HasFrequency;
 use Ptuchik\CoreUtilities\Models\Model;
 use Ptuchik\CoreUtilities\Traits\HasParams;
+use Throwable;
 
 /**
  * Class Subscription
@@ -239,7 +238,6 @@ class Subscription extends Model
     /**
      * Purchase relation
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     * @throws Exception
      */
     public function purchase()
     {
@@ -681,7 +679,7 @@ class Subscription extends Model
     public function renew(ResponseInterface $payment = null, Order $order = null)
     {
         if (!$order) {
-            
+
             // Create an order to pass to purchase process
             $order = Factory::get(Order::class, true);
             $order->user()->associate($this->user);
@@ -791,24 +789,23 @@ class Subscription extends Model
         // Loop through each active subscription and try to renew
         foreach ($query->get() as $subscription) {
 
-            // If subscription has no active user or it is not in use just deactivate package and continue
-            if (!$subscription->hasActiveUser() || !$subscription->package->isInUse($subscription->host)) {
-
-                $subscription->package->deactivate($subscription->host);
-                continue;
-
-            }
-
-            // Set currency
-            Currency::setUserCurrency($subscription->currency);
-
-            // Set subscription's attempt and last attempt indicators
-            $subscription->attempt = $attempt;
-            $subscription->lastAttempt = $lastAttempt;
-
             try {
+
+                // If subscription has no active user or it is not in use just deactivate package and continue
+                if (!$subscription->hasActiveUser() || !$subscription->package->isInUse($subscription->host)) {
+                    $subscription->package->deactivate($subscription->host);
+                    continue;
+                }
+
+                // Set currency
+                Currency::setUserCurrency($subscription->currency);
+
+                // Set subscription's attempt and last attempt indicators
+                $subscription->attempt = $attempt;
+                $subscription->lastAttempt = $lastAttempt;
                 $subscription->renew();
-            } catch (Exception $e) {
+
+            } catch (Throwable $exception) {
                 continue;
             }
         }
@@ -824,22 +821,27 @@ class Subscription extends Model
         // Loop through each subscription and deactivate it
         foreach (static::with(['user', 'purchase.package', 'purchase.host'])->where('active', 1)
                      ->whereNotNull('ends_at')->whereDate('ends_at', '<=', $date)->get() as $subscription) {
+            try {
 
-            // If subscription has no active user or it is not in use, just deactivate package and continue
-            if (!$subscription->hasActiveUser() || !$subscription->package->isInUse($subscription->host)) {
-                $subscription->package->deactivate($subscription->host);
+                // If subscription has no active user or it is not in use, just deactivate package and continue
+                if (!$subscription->hasActiveUser() || !$subscription->package->isInUse($subscription->host)) {
+                    $subscription->package->deactivate($subscription->host);
+                    continue;
+                }
+
+                // Set currency
+                Currency::setUserCurrency($subscription->currency);
+
+                // Set subscription's last attempt, to expire it
+                $subscription->lastAttempt = true;
+
+                // Create fake transaction from subscription and trigger event
+                Event::purchaseFailed($subscription->plan,
+                    Factory::get(Transaction::class)->fillFromSubscription($subscription));
+
+            } catch (Throwable $exception) {
                 continue;
             }
-
-            // Set currency
-            Currency::setUserCurrency($subscription->currency);
-
-            // Set subscription's last attempt, to expire it
-            $subscription->lastAttempt = true;
-
-            // Create fake transaction from subscription and trigger event
-            Event::purchaseFailed($subscription->plan,
-                Factory::get(Transaction::class)->fillFromSubscription($subscription));
         }
     }
 
@@ -856,19 +858,24 @@ class Subscription extends Model
                      ->whereDate('next_billing_date', '>', $fromDate)
                      ->whereDate('next_billing_date', '<=', $toDate)
                      ->get() as $subscription) {
+            try {
 
-            // If subscription has no active user or it is free or it is not in use, ignore it
-            if (!$subscription->hasActiveUser() ||
-                empty((float) $subscription->summary) ||
-                !$subscription->package->isInUse($subscription->host)) {
+                // If subscription has no active user or it is free or it is not in use, ignore it
+                if (!$subscription->hasActiveUser() ||
+                    empty((float) $subscription->summary) ||
+                    !$subscription->package->isInUse($subscription->host)) {
+                    continue;
+                }
+
+                // Set currency
+                Currency::setUserCurrency($subscription->currency);
+
+                // Trigger reminder event
+                Event::subscriptionExpirationReminder($subscription);
+
+            } catch (Throwable $exception) {
                 continue;
             }
-
-            // Set currency
-            Currency::setUserCurrency($subscription->currency);
-
-            // Trigger reminder event
-            Event::subscriptionExpirationReminder($subscription);
         }
     }
 }
