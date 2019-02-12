@@ -77,7 +77,7 @@ class Plan extends Model
      */
     protected $appends = [
         'discount',
-        'userBalanceDiscount',
+        'deductedFromBalance',
         'summary',
         'currency',
         'currencySymbol',
@@ -582,6 +582,16 @@ class Plan extends Model
     public function getUserBalanceDiscountAttribute()
     {
         return $this->user->balance ?? 0;
+    }
+
+    /**
+     * Deducted from balance attribute getter
+     * Calculates how much deducted from user's balance
+     * @return mixed
+     */
+    public function getDeductedFromBalanceAttribute()
+    {
+        return $this->discount - $this->couponDiscount;
     }
 
     /**
