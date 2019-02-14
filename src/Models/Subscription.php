@@ -732,8 +732,8 @@ class Subscription extends Model
         $subscription->setParamsFromPlan($plan);
         $subscription->active = $this->active;
         $subscription->alias = $plan->alias;
-        $subscription->price = $plan->price;
         $subscription->currency = Currency::getUserCurrency();
+        $subscription->price = $plan->price;
         $subscription->coupons = $plan->discounts;
         $subscription->addons = $plan->addonCoupons;
         $subscription->billingFrequency = $plan->billingFrequency;
