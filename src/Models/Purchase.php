@@ -167,13 +167,8 @@ class Purchase extends Model
             $subscription->trialEndsAt = null;
             $subscription->nextBillingDate = $date->addMonths($subscription->billingFrequency);
         }
-
-        // If user has no payment methods, start non-recurring subscription
-        if (!$subscription->exists && $plan->price > 0 && !$subscription->user->hasPaymentMethod) {
-            $subscription->endsAt = $subscription->nextBillingDate;
-        }
-
-        $subscription->endsAt = $subscription->endsAt ? $subscription->nextBillingDate : null;
+        
+        $subscription->endsAt = null;
 
         if (!$plan->isFree && !$plan->hasTrial && (!$plan->payment || $plan->payment->isSuccessful())) {
             $subscription->addons = [];
