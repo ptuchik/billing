@@ -492,31 +492,6 @@ abstract class PackageModel extends Model
     }
 
     /**
-     * If there is a payment, refund the user
-     *
-     * @param \Ptuchik\Billing\Models\Plan $plan
-     *
-     * @return mixed
-     */
-    protected function refund(Plan $plan)
-    {
-        if ($plan->payment) {
-            switch ($plan->payment->getCode()) {
-                case 'authorized':
-                case 'submitted_for_settlement':
-                case 'settlement_pending':
-                    try {
-                        return $plan->user->void($plan->payment->getTransactionReference());
-                    } catch (Throwable $exception) {
-                        return $plan->user->refund($plan->payment->getTransactionReference());
-                    }
-                default:
-                    return $plan->user->refund($plan->payment->getTransactionReference());
-            }
-        }
-    }
-
-    /**
      * Activate package
      *
      * @param \Ptuchik\Billing\Contracts\Hostable $host

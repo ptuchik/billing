@@ -290,6 +290,7 @@ trait PurchaseLogic
     /**
      * Process purchase
      * @return mixed|\Ptuchik\Billing\Models\Invoice
+     * @throws \Exception
      */
     protected function processPurchase()
     {
@@ -300,7 +301,12 @@ trait PurchaseLogic
         if (!$this->payment || $this->payment->isSuccessful()) {
 
             // Activate package
-            $this->package->activate($this->host, $this);
+            try {
+                $this->package->activate($this->host, $this);
+            } catch (Exception $exception) {
+                $this->refund();
+                throw new Exception($exception->getMessage());
+            }
 
             // Remove user's coupons if needed
             $this->user->removeCoupons($this->discounts);
@@ -370,6 +376,22 @@ trait PurchaseLogic
     }
 
     /**
+     * If there is a payment, refund the user
+     * @return mixed
+     */
+    protected function refund()
+    {
+        if ($this->payment) {
+            try {
+                $this->user->void($this->payment->getTransactionReference());
+            } catch (Throwable $exception) {
+                $this->user->refund($this->payment->getTransactionReference());
+            }
+            $this->createTransaction(true);
+        }
+    }
+
+    /**
      * Refund left amount to user's balance
      */
     protected function refundToUserBalance()
@@ -397,10 +419,13 @@ trait PurchaseLogic
 
     /**
      * Create transaction
-     * @return mixed
+     *
+     * @param bool $refund
+     *
+     * @return mixed|\Ptuchik\Billing\Models\Invoice
      * @throws \Exception
      */
-    protected function createTransaction()
+    protected function createTransaction($refund = false)
     {
         // Create a new transaction with collected data
         $transaction = Factory::get(Transaction::class, true);
@@ -424,7 +449,9 @@ trait PurchaseLogic
 
         $transaction->data = serialize($this->payment->getData()->transaction ?? '');
         $transaction->reference = $this->payment->getTransactionReference();
-        if ($this->payment->isPending()) {
+        if ($refund) {
+            $transaction->status = $transactionStatus::REFUNDED;
+        } elseif ($this->payment->isPending()) {
             $transaction->status = $transactionStatus::PENDING;
         } elseif ($this->payment->isSuccessful()) {
             $transaction->status = $transactionStatus::SUCCESS;
