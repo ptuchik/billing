@@ -34,6 +34,15 @@ class Purchase extends Model
     ];
 
     /**
+     * TODO added because of Eloquent's latest issue with nullable polymorphic relations
+     * @var array
+     */
+    protected $with = [
+        'reference',
+        'host'
+    ];
+
+    /**
      * Get name attribute
      *
      * @param $value
@@ -167,7 +176,7 @@ class Purchase extends Model
             $subscription->trialEndsAt = null;
             $subscription->nextBillingDate = $date->addMonths($subscription->billingFrequency);
         }
-        
+
         $subscription->endsAt = null;
 
         if (!$plan->isFree && !$plan->hasTrial && (!$plan->payment || $plan->payment->isSuccessful())) {
