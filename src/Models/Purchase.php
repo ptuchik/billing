@@ -136,7 +136,7 @@ class Purchase extends Model
         $subscription = $plan->subscription ?: $this->subscription;
 
         // If there was no active subscription start a new one
-        if (!$subscription) {
+        if (!$subscription || !$subscription->isActive()) {
             $subscription = Factory::get(Subscription::class, true);
             $subscription->purchase()->associate($this);
             $subscription->user()->associate($plan->billingAdmin ?? $plan->user ?? Auth::user());
