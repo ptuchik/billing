@@ -136,12 +136,11 @@ class Purchase extends Model
         $subscription = $plan->subscription ?: $this->subscription;
 
         // If there was no active subscription start a new one
-        if (!$subscription || !$subscription->isActive()) {
+        if (!$subscription) {
             $subscription = Factory::get(Subscription::class, true);
             $subscription->purchase()->associate($this);
             $subscription->user()->associate($plan->billingAdmin ?? $plan->user ?? Auth::user());
             $subscription->setParamsFromPlan($plan);
-            $subscription->active = true;
             $date = Carbon::today()->endOfDay();
 
             // Else if there is a subscription but it is on trial set the starting date
@@ -152,7 +151,8 @@ class Purchase extends Model
             // If there is an active subscription, set the starting date to it's next
             // billing date
         } else {
-            $date = Carbon::createFromFormat('Y-m-d H:i:s', $subscription->nextBillingDate);
+            $date = $subscription->isActive() ? Carbon::createFromFormat('Y-m-d H:i:s', $subscription->nextBillingDate)
+                : Carbon::today()->endOfDay();
         }
 
         $subscription->setRawAttribute('name', $plan->package->getRawAttribute('name'));
@@ -177,6 +177,7 @@ class Purchase extends Model
             $subscription->nextBillingDate = $date->addMonths($subscription->billingFrequency);
         }
 
+        $subscription->active = true;
         $subscription->endsAt = null;
 
         if (!$plan->isFree && !$plan->hasTrial && (!$plan->payment || $plan->payment->isSuccessful())) {
