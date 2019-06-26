@@ -26,6 +26,15 @@ class Order extends Model
     ];
 
     /**
+     * TODO added because of Eloquent's latest issue with nullable polymorphic relations
+     * @var array
+     */
+    protected $with = [
+        'reference',
+        'host'
+    ];
+
+    /**
      * Unsanitize params
      * @var array
      */
