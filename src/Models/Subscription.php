@@ -520,14 +520,8 @@ class Subscription extends Model
      */
     public function getPricePerDayAttribute()
     {
-        // Get next payment date from subscription
-        $nextPaymentDate = Carbon::createFromFormat('Y-m-d H:i:s', $this->nextBillingDate);
-
-        // Get previous payment date based on billing frequency
-        $previousPaymentDate = (clone $nextPaymentDate)->subMonths($this->billingFrequency);
-
         // Calculate price per day and return
-        return $this->summary / $nextPaymentDate->diffInDays($previousPaymentDate);
+        return $this->summary / Carbon::today()->addMonths($this->billingFrequency)->diffInDays(Carbon::today());
     }
 
     /**
