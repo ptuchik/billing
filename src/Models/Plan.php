@@ -27,6 +27,12 @@ class Plan extends Model
     use HasIcon, HasParams, PurchaseLogic, HasFrequency;
 
     /**
+     * Indicates if the plan is upgradable or not
+     * @var bool
+     */
+    protected $isUpgradable = true;
+
+    /**
      * @var array
      */
     protected $fillable = [
@@ -92,7 +98,8 @@ class Plan extends Model
         'recommended',
         'popular',
         'cardRequired',
-        'error'
+        'error',
+        'upgradable'
     ];
 
     /**
@@ -255,6 +262,25 @@ class Plan extends Model
     public function getCardRequiredAttribute()
     {
         return !empty($this->getParam('cardRequired'));
+    }
+
+    /**
+     * Upgradable attribute setter
+     *
+     * @param $value
+     */
+    public function setUpgradableAttribute($value)
+    {
+        $this->isUpgradable = !empty($value);
+    }
+
+    /**
+     * Upgradable attribute getter
+     * @return bool
+     */
+    public function getUpgradableAttribute()
+    {
+        return $this->isUpgradable;
     }
 
     /**
