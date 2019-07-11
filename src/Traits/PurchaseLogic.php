@@ -447,7 +447,7 @@ trait PurchaseLogic
 
         $transactionStatus = Factory::getClass(TransactionStatus::class);
 
-        $transaction->data = serialize($this->payment->getData()->transaction ?? '');
+        $transaction->data = serialize($this->payment->getData()->transaction ?? $this->payment->getData());
         $transaction->reference = $this->payment->getTransactionReference();
         if ($refund) {
             $transaction->status = $transactionStatus::REFUNDED;
