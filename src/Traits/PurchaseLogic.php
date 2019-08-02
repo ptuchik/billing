@@ -305,7 +305,7 @@ trait PurchaseLogic
                 $this->package->activate($this->host, $this);
             } catch (Exception $exception) {
                 $this->refund();
-                throw new Exception($exception->getMessage());
+                throw $exception;
             }
 
             // Remove user's coupons if needed
