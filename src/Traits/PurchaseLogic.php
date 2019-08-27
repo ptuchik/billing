@@ -294,11 +294,11 @@ trait PurchaseLogic
      */
     protected function processPurchase()
     {
-        // Refund left amount to previous user's balance if needed
-        $this->refundToUserBalance();
-
         // If there is no payment needed or the payment is successful activate the package
         if (!$this->payment || $this->payment->isSuccessful()) {
+
+            // Refund left amount to previous user's balance if needed
+            $this->refundToUserBalance();
 
             // Activate package
             try {
