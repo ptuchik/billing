@@ -5,7 +5,7 @@ return [
     /**
      * Check used coupons
      */
-    'check_used_coupons'                  => [
+    'check_used_coupons'                    => [
 
         // Indicates by which column to check coupon, available values are 'code', 'id'
         'by'   => env('CHECK_USED_COUPONS_BY', 'code'),
@@ -13,6 +13,11 @@ return [
         // Indicates by which entity to check coupon, available values are 'coupon', 'plan'
         'with' => env('CHECK_USED_COUPONS_WITH', 'plan'),
     ],
+
+    /**
+     * Redeemable packages
+     */
+    'redeemable_packages'                   => explode(',', env('REFERRAL_MONTHS_REDEEMABLE_PACKAGE')),
 
     /**
      * Check gifted coupons
