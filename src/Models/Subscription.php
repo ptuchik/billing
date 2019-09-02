@@ -698,7 +698,7 @@ class Subscription extends Model
     public function prolong($months = 0)
     {
         // If subscription is not active, return false
-        if (!$this->isActive()) {
+        if (!$this->isActive() || !in_array($this->package->alias, config('ptuchik-billing.redeemable_packages'))) {
             return false;
         }
 
