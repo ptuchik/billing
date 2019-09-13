@@ -362,12 +362,7 @@ class Braintree implements PaymentGateway
     {
         $paymentMethod = Factory::get(PaymentMethod::class, true);
         $paymentMethod->token = $creditCard->token;
-        if (in_array($type = strtolower($creditCard->cardType),
-            Factory::getClass(PaymentMethods::class)::all('array'))) {
-            $paymentMethod->type = $type;
-        } else {
-            $paymentMethod->type = Factory::getClass(PaymentMethods::class)::CREDIT_CARD;
-        }
+        $paymentMethod->type = $this->parseType(strtolower($creditCard->cardType));
         $paymentMethod->last4 = $creditCard->last4;
         $paymentMethod->gateway = $this->name;
         $paymentMethod->holder = $creditCard->cardholderName;
@@ -473,5 +468,34 @@ class Braintree implements PaymentGateway
         }
 
         return $data;
+    }
+
+    /**
+     * @param $type
+     *
+     * @return mixed
+     * @throws \Exception
+     */
+    protected function parseType($type)
+    {
+        switch ($type) {
+            case 'visa':
+                return BillingFactory::getClass(PaymentMethods::class)::VISA;
+                break;
+            case 'mastercard':
+                return BillingFactory::getClass(PaymentMethods::class)::MASTER_CARD;
+                break;
+            case 'american express':
+                return BillingFactory::getClass(PaymentMethods::class)::AMEX;
+                break;
+            case 'discover':
+                return BillingFactory::getClass(PaymentMethods::class)::DISCOVER;
+                break;
+            case 'diners club':
+                return BillingFactory::getClass(PaymentMethods::class)::DINERS_CLUB;
+                break;
+            default:
+                return BillingFactory::getClass(PaymentMethods::class)::CREDIT_CARD;
+        }
     }
 }

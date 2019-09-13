@@ -16,4 +16,6 @@ class PaymentMethods extends AbstractTypes
     const MASTER_CARD = 'master_card';
     const AMEX = 'amex';
     const ARCA = 'arca';
+    const DISCOVER = 'discover';
+    const DINERS_CLUB = 'diners_club';
 }
