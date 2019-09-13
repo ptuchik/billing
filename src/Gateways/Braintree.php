@@ -480,22 +480,22 @@ class Braintree implements PaymentGateway
     {
         switch ($type) {
             case 'visa':
-                return BillingFactory::getClass(PaymentMethods::class)::VISA;
+                return Factory::getClass(PaymentMethods::class)::VISA;
                 break;
             case 'mastercard':
-                return BillingFactory::getClass(PaymentMethods::class)::MASTER_CARD;
+                return Factory::getClass(PaymentMethods::class)::MASTER_CARD;
                 break;
             case 'american express':
-                return BillingFactory::getClass(PaymentMethods::class)::AMEX;
+                return Factory::getClass(PaymentMethods::class)::AMEX;
                 break;
             case 'discover':
-                return BillingFactory::getClass(PaymentMethods::class)::DISCOVER;
+                return Factory::getClass(PaymentMethods::class)::DISCOVER;
                 break;
             case 'diners club':
-                return BillingFactory::getClass(PaymentMethods::class)::DINERS_CLUB;
+                return Factory::getClass(PaymentMethods::class)::DINERS_CLUB;
                 break;
             default:
-                return BillingFactory::getClass(PaymentMethods::class)::CREDIT_CARD;
+                return Factory::getClass(PaymentMethods::class)::CREDIT_CARD;
         }
     }
 }
