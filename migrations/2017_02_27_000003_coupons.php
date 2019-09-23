@@ -2,6 +2,8 @@
 
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Ptuchik\Billing\Constants\CouponRedeemType;
+use Ptuchik\Billing\Factory;
 
 class Coupons extends Migration
 {
@@ -18,8 +20,7 @@ class Coupons extends Migration
                 $table->string('code');
                 $table->text('amount')->nullable();
                 $table->boolean('percent')->default(false);
-                $table->integer('redeem')
-                    ->default(\Ptuchik\Billing\Factory::getClass(\Ptuchik\Billing\Constants\CouponRedeemType::class)::INTERNAL);
+                $table->integer('redeem')->default(Factory::getClass(CouponRedeemType::class)::INTERNAL);
                 $table->boolean('prorate')->default(false);
                 $table->longText('params')->nullable();
                 $table->timestamps();

@@ -34,6 +34,15 @@ class Purchase extends Model
     ];
 
     /**
+     * TODO added because of Eloquent's latest issue with nullable polymorphic relations
+     * @var array
+     */
+    protected $with = [
+        'reference',
+        'host'
+    ];
+
+    /**
      * Get name attribute
      *
      * @param $value
@@ -130,27 +139,27 @@ class Purchase extends Model
         if (!$subscription) {
             $subscription = Factory::get(Subscription::class, true);
             $subscription->purchase()->associate($this);
-            $subscription->user()->associate(Auth::user() ?: $plan->user);
+            $subscription->user()->associate($plan->billingAdmin ?? $plan->user ?? Auth::user());
             $subscription->setParamsFromPlan($plan);
-            $subscription->active = true;
-            $date = Carbon::today();
+            $date = Carbon::today()->endOfDay();
 
             // Else if there is a subscription but it is on trial set the starting date
             // today to count the next billing date
         } elseif ($subscription->onTrial()) {
-            $date = Carbon::today();
+            $date = Carbon::today()->endOfDay();
 
             // If there is an active subscription, set the starting date to it's next
             // billing date
         } else {
-            $date = Carbon::createFromFormat('Y-m-d H:i:s', $subscription->nextBillingDate);
+            $date = $subscription->isActive() ? Carbon::createFromFormat('Y-m-d H:i:s', $subscription->nextBillingDate)
+                : Carbon::today()->endOfDay();
         }
 
         $subscription->setRawAttribute('name', $plan->package->getRawAttribute('name'));
         $subscription->alias = $plan->alias;
-        $subscription->user()->associate(Auth::user() ?: $subscription->user);
-        $subscription->price = $plan->price;
+        $subscription->user()->associate($subscription->user ?? Auth::user());
         $subscription->currency = Currency::getUserCurrency();
+        $subscription->price = $plan->price;
         $subscription->coupons = $plan->discounts;
         $subscription->billingFrequency = $plan->billingFrequency;
 
@@ -168,13 +177,14 @@ class Purchase extends Model
             $subscription->nextBillingDate = $date->addMonths($subscription->billingFrequency);
         }
 
-        // If user has no payment methods, start non-recurring subscription
-        if (!$subscription->exists && $plan->price > 0 && !$subscription->user->hasPaymentMethod) {
-            $subscription->endsAt = $subscription->nextBillingDate;
-        }
+        $subscription->active = true;
+        $subscription->endsAt = null;
 
-        $subscription->endsAt = $subscription->endsAt ? $subscription->nextBillingDate : null;
-        $subscription->addons = $plan->payment && $plan->payment->isSuccessful() ? [] : $plan->addonCoupons;
+        if (!$plan->isFree && !$plan->hasTrial && (!$plan->payment || $plan->payment->isSuccessful())) {
+            $subscription->addons = [];
+        } else {
+            $subscription->addons = $plan->addonCoupons;
+        }
 
         // Save and return subscription instance
         $subscription->save();

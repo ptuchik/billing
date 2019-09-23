@@ -2,6 +2,7 @@
 
 namespace Ptuchik\Billing\Traits;
 
+use Auth;
 use Currency;
 use Exception;
 use Omnipay\Common\Message\ResponseInterface;
@@ -12,6 +13,7 @@ use Ptuchik\Billing\Event;
 use Ptuchik\Billing\Factory;
 use Ptuchik\Billing\Models\Coupon;
 use Ptuchik\Billing\Models\Invoice;
+use Ptuchik\Billing\Models\Order;
 use Ptuchik\Billing\Models\Transaction;
 use Request;
 use Throwable;
@@ -28,6 +30,7 @@ trait PurchaseLogic
      * @param \Ptuchik\Billing\Models\Coupon $coupon
      *
      * @return \Ptuchik\Billing\Models\Coupon|void
+     * @throws \Exception
      */
     protected function analizeCoupon(Coupon $coupon)
     {
@@ -53,7 +56,19 @@ trait PurchaseLogic
 
                 // If redeem type is manual, check if coupon code provided by user, return it
                 if ($coupon->code == Request::input('coupon')) {
-                    return $coupon;
+
+                    // Check if it is already used on same host for same plan
+                    if ($coupon->isUsed($this, $this->host)) {
+                        $this->error = trans(config('ptuchik-billing.translation_prefixes.general').'.coupon_used');
+
+                        // Check if coupon has limit and limit reached
+                    } elseif (!empty($coupon->numberOfCoupons) && $coupon->numberOfCoupons <= $coupon->usedCoupons) {
+                        $this->error = trans(config('ptuchik-billing.translation_prefixes.general').'.coupon_limit_reached');
+
+                        // Otherwise return coupon
+                    } else {
+                        return $coupon;
+                    }
                 }
                 break;
             case $redeemTypes::AUTOREDEEM:
@@ -62,6 +77,28 @@ trait PurchaseLogic
                 return $coupon;
             default:
                 return;
+        }
+    }
+
+    /**
+     * Caclculate coupon usage
+     */
+    protected function calculateCouponUsage()
+    {
+        // Define redeem types
+        $redeemTypes = Factory::getClass(CouponRedeemType::class);
+
+        // Loop through each discount and calculate usage
+        foreach ($this->discounts as $discount) {
+
+            // If plan is not in renew mode, coupon redeem type is manual and it has limit, increment usage
+            if (!$this->inRenewMode && $discount->redeem == $redeemTypes::MANUAL && $discount->numberOfCoupons) {
+                $discount->usedCoupons = $discount->usedCoupons + 1;
+                $discount->save();
+            }
+
+            // Mark coupon as used
+            $discount->markAsUsed($this, $this->host);
         }
     }
 
@@ -110,7 +147,7 @@ trait PurchaseLogic
         $this->calculateTrial();
 
         // Set purchase for current package on current host and try to get latest subscription
-        $subscription = $this->package->setPurchase($this->host, $forPurchase)->subscription;
+        $subscription = $this->package->setPurchase($this->host)->subscription;
 
         // Get previous subscription
         $this->getPreviousSubscription();
@@ -134,15 +171,16 @@ trait PurchaseLogic
      *
      * @param \Ptuchik\Billing\Contracts\Hostable            $host
      * @param \Omnipay\Common\Message\ResponseInterface|null $payment
+     * @param \Ptuchik\Billing\Models\Order|null             $order
      *
      * @return bool|mixed|\Ptuchik\Billing\Models\Invoice
      * @throws \Exception
      */
-    public function purchase(Hostable $host, ResponseInterface $payment = null)
+    public function purchase(Hostable $host, ResponseInterface $payment = null, Order $order = null)
     {
         // If plan is in renew mode, jump to make purchase
         if ($this->inRenewMode) {
-            return $this->makePurchase($payment);
+            return $this->makePurchase($payment, $order);
         }
 
         // If there is an active subscription
@@ -158,7 +196,7 @@ trait PurchaseLogic
                     if ($subscription->billingFrequency == $this->billingFrequency) {
 
                         // Call subscription's renew
-                        return $subscription->renew();
+                        return $subscription->renew($payment, $order);
                     } else {
 
                         // Otherwise switch subscriptions billing frequency and price
@@ -182,7 +220,7 @@ trait PurchaseLogic
         }
 
         // Purchase plan, purchase additional plans and get invoice
-        return $this->purchaseAdditionalPlans($this->makePurchase($payment));
+        return $this->purchaseAdditionalPlans($this->makePurchase($payment, $order), $payment);
     }
 
     /**
@@ -214,11 +252,15 @@ trait PurchaseLogic
      * Make a purchase
      *
      * @param \Omnipay\Common\Message\ResponseInterface|null $payment
+     * @param \Ptuchik\Billing\Models\Order|null             $order
      *
      * @return bool|mixed|\Ptuchik\Billing\Models\Invoice
      */
-    protected function makePurchase(ResponseInterface $payment = null)
+    protected function makePurchase(ResponseInterface $payment = null, Order $order = null)
     {
+        // Get summary to calculate discounts and summary
+        $summary = $this->summary;
+
         // If no payment provided, charge user
         if (!$payment) {
 
@@ -228,44 +270,49 @@ trait PurchaseLogic
             }
 
             // If plan has trial, no charge required
-            $price = $this->hasTrial ? 0 : $this->summary;
+            $price = $this->hasTrial ? 0 : $summary;
+
+            // If there is order, set trial status
+            if ($order) {
+                $order->setParam('trial', $this->hasTrial);
+            }
 
             // Make payment and set the result as plan's payment
-            $this->payment = $this->user->purchase($price, $this->package->descriptor);
+            $this->payment = $this->user->purchase($price, $this->package->descriptor, $order);
         } else {
             $this->payment = $payment;
         }
 
-        // If response is redirect, interrupt the process
-        if ($this->payment && $this->payment->isRedirect()) {
-
-            // TODO handle this part
-            $this->payment->redirect();
-
-            // Otherwise continue
-        } else {
-            return $this->processPurchase();
-        }
+        return $this->processPurchase();
 
     }
 
     /**
      * Process purchase
      * @return mixed|\Ptuchik\Billing\Models\Invoice
+     * @throws \Exception
      */
     protected function processPurchase()
     {
-        // Refund left amount to previous user's balance if needed
-        $this->refundToUserBalance();
-
         // If there is no payment needed or the payment is successful activate the package
         if (!$this->payment || $this->payment->isSuccessful()) {
 
+            // Refund left amount to previous user's balance if needed
+            $this->refundToUserBalance();
+
             // Activate package
-            $this->package->activate($this->host, $this);
+            try {
+                $this->package->activate($this->host, $this);
+            } catch (Exception $exception) {
+                $this->refund();
+                throw $exception;
+            }
 
             // Remove user's coupons if needed
             $this->user->removeCoupons($this->discounts);
+
+            // Increment coupon usage
+            $this->calculateCouponUsage();
         }
 
         // If there is a successful payment, add plan's addon coupons to user coupons
@@ -329,6 +376,22 @@ trait PurchaseLogic
     }
 
     /**
+     * If there is a payment, refund the user
+     * @return mixed
+     */
+    protected function refund()
+    {
+        if ($this->payment) {
+            try {
+                $this->user->void($this->payment->getTransactionReference());
+            } catch (Throwable $exception) {
+                $this->user->refund($this->payment->getTransactionReference());
+            }
+            $this->createTransaction(true);
+        }
+    }
+
+    /**
      * Refund left amount to user's balance
      */
     protected function refundToUserBalance()
@@ -356,10 +419,13 @@ trait PurchaseLogic
 
     /**
      * Create transaction
-     * @return mixed
+     *
+     * @param bool $refund
+     *
+     * @return mixed|\Ptuchik\Billing\Models\Invoice
      * @throws \Exception
      */
-    protected function createTransaction()
+    protected function createTransaction($refund = false)
     {
         // Create a new transaction with collected data
         $transaction = Factory::get(Transaction::class, true);
@@ -369,23 +435,31 @@ trait PurchaseLogic
         $transaction->user()->associate($this->user);
         $transaction->gateway = $this->user->paymentGateway;
         $transaction->price = $this->price;
-        $transaction->discount = $this->discount;
+        $transaction->discount = ($discount = $this->discount) > $this->price ? $this->price : $discount;
         $transaction->summary = 0;
         $transaction->currency = Currency::getUserCurrency();
         $transaction->coupons = $this->discounts;
 
-        // If there is no payment, fire an event and return empty invoice
-        if (!$this->payment) {
+        // If plan is free or it is in trial, fire an event and return empty invoice
+        if ($this->isFree || $this->hasTrial) {
             return Factory::get(Invoice::class, true, $this, $transaction);
         }
 
         $transactionStatus = Factory::getClass(TransactionStatus::class);
 
-        $transaction->data = serialize($this->payment->getData()->transaction);
+        $transaction->data = serialize($this->payment->getData()->transaction ?? $this->payment->getData());
         $transaction->reference = $this->payment->getTransactionReference();
-        $transaction->status = $this->payment->isSuccessful() ? $transactionStatus::SUCCESS : $transactionStatus::FAILED;
+        if ($refund) {
+            $transaction->status = $transactionStatus::REFUNDED;
+        } elseif ($this->payment->isPending()) {
+            $transaction->status = $transactionStatus::PENDING;
+        } elseif ($this->payment->isSuccessful()) {
+            $transaction->status = $transactionStatus::SUCCESS;
+        } else {
+            $transaction->status = $transactionStatus::FAILED;
+        }
         $transaction->message = $this->payment->getMessage();
-        $transaction->summary = $this->payment->isSuccessful() ? $this->payment->getAmount() : $this->summary;
+        $transaction->summary = $this->summary;
         $transaction->save();
 
         // Finally if payment was not successful throw an exception with error message
@@ -414,7 +488,7 @@ trait PurchaseLogic
 
         // If there is a previous subscription, cancel and refund user
         if ($this->previousSubscription) {
-            $this->previousSubscription->cancelAndRefund($this, 0);
+            $this->previousSubscription->cancelAndRefund($this);
         }
 
         // Try to get the last successful transaction for current purchase

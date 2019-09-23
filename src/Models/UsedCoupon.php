@@ -6,10 +6,10 @@ use Ptuchik\Billing\Factory;
 use Ptuchik\CoreUtilities\Models\Model;
 
 /**
- * Class GiftedCoupon
+ * Class UsedCoupon
  * @package Ptuchik\Billing\Models
  */
-class GiftedCoupon extends Model
+class UsedCoupon extends Model
 {
     protected $fillable = [
         'coupon_id',
@@ -25,7 +25,7 @@ class GiftedCoupon extends Model
      */
     public function coupon()
     {
-        $checkCouponsBy = config('ptuchik-billing.check_gifted_coupons.by');
+        $checkCouponsBy = config('ptuchik-billing.check_used_coupons.by');
 
         return $this->belongsTo(Factory::getClass(Coupon::class), 'coupon_'.$checkCouponsBy, $checkCouponsBy);
     }

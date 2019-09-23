@@ -5,6 +5,7 @@ namespace Ptuchik\Billing\Models;
 use Currency;
 use Ptuchik\Billing\Factory;
 use Ptuchik\CoreUtilities\Models\Model;
+use Throwable;
 
 /**
  * Class Transaction
@@ -155,50 +156,14 @@ class Transaction extends Model
     public function getPaymentMethodAttribute()
     {
         $paymentData = $this->getData();
+        if ($user = $this->user) {
+            $gateway = $user->getPaymentGateway($this->gateway, false);
+            try {
+                return $user->parsePaymentMethod($gateway->parsePaymentMethod($paymentData));
+            } catch (Throwable $exception) {
 
-        if (!empty($paymentData->paypalDetails)) {
-            return $this->parseBraintreePayPalAccount($paymentData->paypalDetails);
-        } elseif (!empty($paymentData->creditCardDetails)) {
-            return $this->parseBraintreeCreditCard($paymentData->creditCardDetails);
+            }
         }
-    }
-
-    /**
-     * Parse Braintree PayPal Account
-     *
-     * @param $payPalAccount
-     *
-     * @return object
-     */
-    public function parseBraintreePayPalAccount($payPalAccount)
-    {
-        return (object) [
-            'type'        => 'paypal_account',
-            'imageUrl'    => $payPalAccount->imageUrl,
-            'email'       => $payPalAccount->payerEmail,
-            'description' => $payPalAccount->payerEmail
-        ];
-    }
-
-    /**
-     * Parse Braintree Credit Card Details
-     *
-     * @param $creditCard
-     *
-     * @return object
-     */
-    public function parseBraintreeCreditCard($creditCard)
-    {
-        return (object) [
-            'type'            => 'credit_card',
-            'imageUrl'        => $creditCard->imageUrl,
-            'bin'             => $creditCard->bin,
-            'last4'           => $creditCard->last4,
-            'cardType'        => $creditCard->cardType,
-            'expirationMonth' => $creditCard->expirationMonth,
-            'expirationYear'  => $creditCard->expirationYear,
-            'description'     => $creditCard->cardType.' '.trans(config('ptuchik-billing.translation_prefixes.general').'.ending_in').' '.$creditCard->last4
-        ];
     }
 
     /**

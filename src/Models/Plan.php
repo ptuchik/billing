@@ -12,6 +12,8 @@ use Ptuchik\Billing\Traits\HasFrequency;
 use Ptuchik\Billing\Traits\PurchaseLogic;
 use Ptuchik\CoreUtilities\Models\Model;
 use Ptuchik\CoreUtilities\Traits\HasIcon;
+use Ptuchik\CoreUtilities\Traits\HasParams;
+use Request;
 
 /**
  * Class Plan
@@ -22,7 +24,20 @@ class Plan extends Model
     /**
      * Use icon and add purchase logic to model
      */
-    use HasIcon, PurchaseLogic, HasFrequency;
+    use HasIcon, HasParams, PurchaseLogic, HasFrequency;
+
+    /**
+     * Indicates if the plan is upgradable or not
+     * @var bool
+     */
+    protected $isUpgradable = true;
+
+    /**
+     * @var array
+     */
+    protected $fillable = [
+        'ordering'
+    ];
 
     /**
      * Exclude following attributes from sanitizing
@@ -30,6 +45,7 @@ class Plan extends Model
      */
     protected $unsanitized = [
         'agreement',
+        'features_header',
         'features',
         'description',
     ];
@@ -42,6 +58,7 @@ class Plan extends Model
         'name',
         'agreement',
         'description',
+        'features_header',
         'features'
     ];
 
@@ -55,10 +72,9 @@ class Plan extends Model
         'ordering'          => 'integer',
         'trial_days'        => 'integer',
         'billing_frequency' => 'integer',
-        'moneyback'         => 'boolean',
-        'recommended'       => 'boolean',
         'package_id'        => 'integer',
-        'features'          => 'array'
+        'features'          => 'array',
+        'params'            => 'array'
     ];
 
     /**
@@ -67,6 +83,7 @@ class Plan extends Model
      */
     protected $appends = [
         'discount',
+        'deductedFromBalance',
         'summary',
         'currency',
         'currencySymbol',
@@ -76,8 +93,20 @@ class Plan extends Model
         'hasTrial',
         'isRecurring',
         'agreementText',
-        'hasCoupons'
+        'hasCoupons',
+        'moneyback',
+        'recommended',
+        'popular',
+        'cardRequired',
+        'error',
+        'upgradable'
     ];
+
+    /**
+     * Current error container
+     * @var
+     */
+    protected $currentError;
 
     /**
      * Eager load coupons
@@ -89,7 +118,9 @@ class Plan extends Model
      * Hide coupons
      * @var array
      */
-    protected $hidden = ['coupons'];
+    protected $hidden = [
+        'coupons',
+    ];
 
     /**
      * Discounts collection, which still needs to be calculated
@@ -113,13 +144,19 @@ class Plan extends Model
      * The fallback subscription, who's owner will get the price difference on his balance
      * @var
      */
-    protected $previousSubscription;
+    protected $previousSubscription = false;
 
     /**
      * Current user, who is going to purchase this plan
      * @var
      */
     public $user;
+
+    /**
+     * Optional billing admin, who will be set to subscriptions' bill to
+     * @var
+     */
+    public $billingAdmin;
 
     /**
      * Current host, for which this plan is being purchased
@@ -190,6 +227,138 @@ class Plan extends Model
     }
 
     /**
+     * Error attribute setter
+     *
+     * @param $value
+     */
+    public function setErrorAttribute($value)
+    {
+        $this->currentError = $value;
+    }
+
+    /**
+     * Error attribute getter
+     * @return mixed
+     */
+    public function getErrorAttribute()
+    {
+        return $this->currentError;
+    }
+
+    /**
+     * Card required attribute setter
+     *
+     * @param $value
+     */
+    public function setCardRequiredAttribute($value)
+    {
+        $this->setParam('cardRequired', !empty($value));
+    }
+
+    /**
+     * Card required attribute getter
+     * @return bool
+     */
+    public function getCardRequiredAttribute()
+    {
+        return !empty($this->getParam('cardRequired'));
+    }
+
+    /**
+     * Upgradable attribute setter
+     *
+     * @param $value
+     */
+    public function setUpgradableAttribute($value)
+    {
+        $this->isUpgradable = !empty($value);
+    }
+
+    /**
+     * Upgradable attribute getter
+     * @return bool
+     */
+    public function getUpgradableAttribute()
+    {
+        return $this->isUpgradable;
+    }
+
+    /**
+     * Recommended attribute setter
+     *
+     * @param $value
+     */
+    public function setRecommendedAttribute($value)
+    {
+        $this->setParam('recommended', !empty($value));
+    }
+
+    /**
+     * Recommended attribute getter
+     * @return bool
+     */
+    public function getRecommendedAttribute()
+    {
+        return $this->getParam('recommended', false);
+    }
+
+    /**
+     * Popular attribute setter
+     *
+     * @param $value
+     */
+    public function setPopularAttribute($value)
+    {
+        $this->setParam('popular', !empty($value));
+    }
+
+    /**
+     * Popular attribute getter
+     * @return bool
+     */
+    public function getPopularAttribute()
+    {
+        return $this->getParam('popular', false);
+    }
+
+    /**
+     * Moneyback attribute setter
+     *
+     * @param $value
+     */
+    public function setMoneybackAttribute($value)
+    {
+        $this->setParam('moneyback', !empty($value));
+    }
+
+    /**
+     * Moneyback attribute setter
+     * @return bool
+     */
+    public function getMoneybackAttribute()
+    {
+        return $this->getParam('moneyback', false);
+    }
+
+    /**
+     * Active features relation
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function activeFeatures()
+    {
+        return $this->belongsToMany(Factory::getClass(Feature::class), 'plan_features');
+    }
+
+    /**
+     * All features relation
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function allFeatures()
+    {
+        return $this->hasMany(Factory::getClass(Feature::class), 'package_type', 'package_type')->orderBy('ordering');
+    }
+
+    /**
      * Price attribute getter
      *
      * @param $value
@@ -203,8 +372,8 @@ class Plan extends Model
 
         // If user currency has no value, try to get default currency value, convert and return,
         // if it also does not exist, return 0
-        return $price[Currency::getUserCurrency()] ??
-            currency($price[config('currency.default')] ?? 0, null, null, false);
+        return $price[Currency::getUserCurrency()] ?? currency($price[config('currency.default')] ?? 0, null, null,
+                false);
     }
 
     /**
@@ -313,16 +482,31 @@ class Plan extends Model
      * Discount attribute getter, collecting all possible discounts,
      * calculating and setting as current discount
      * @return \Illuminate\Support\Collection
+     * @throws \Exception
      */
     public function getDiscountsAttribute()
     {
         // If discounts already collected, just return
         if ($this->currentDiscounts) {
-            return $this->currentDiscounts;
+
+            // If there is no additional coupon input, return current discounts
+            if (!Request::input('coupon')) {
+                return $this->currentDiscounts;
+            }
+
+            // Create an empty discounts collection
+        } else {
+            $this->currentDiscounts = collect([]);
         }
 
-        // Create an empty discounts collection, loop throught available coupons and add to discounts
-        $this->currentDiscounts = collect([]);
+        // Check if the coupon exists in the plan coupons
+        if (($code = Request::input('coupon')) && !$this->coupons
+                ->where('redeem', Factory::getClass(CouponRedeemType::class)::MANUAL)
+                ->contains('code', $code)) {
+
+            $this->error = trans(config('ptuchik-billing.translation_prefixes.general').'.coupon_is_invalid');
+        }
+
         foreach ($this->coupons as $coupon) {
 
             // If coupon is not added to discounts collection yet and is applicate, add to collection
@@ -366,7 +550,7 @@ class Plan extends Model
      */
     public function getPreviousSubscription()
     {
-        if (is_null($this->previousSubscription)) {
+        if ($this->previousSubscription === false) {
 
             // If there is a previous subscription and the current plan is recurring,
             // calculate the monthly price difference and determine
@@ -393,12 +577,6 @@ class Plan extends Model
                 }
 
             } elseif (!$this->isRecurring) {
-                $this->previousSubscription = $this->package->setPurchase($this->host)->subscription;
-            }
-
-            // If there is no previous subscription and current plan is not recurring,
-            // try to get current subscription as previous if any
-            if (!($this->previousSubscription = $this->package->getPreviousSubscription($this->host)) && !$this->isRecurring) {
                 $this->previousSubscription = $this->package->setPurchase($this->host)->subscription;
             }
         }
@@ -439,6 +617,16 @@ class Plan extends Model
     }
 
     /**
+     * Deducted from balance attribute getter
+     * Calculates how much deducted from user's balance
+     * @return mixed
+     */
+    public function getDeductedFromBalanceAttribute()
+    {
+        return $this->discount - $this->couponDiscount;
+    }
+
+    /**
      * Coupon discount attribute getter
      * Getting discount from coupons
      * @return float|int
@@ -470,11 +658,11 @@ class Plan extends Model
             // Get previous subscription balance as discount
             $this->calculatedDiscount = $this->subscriptionBalanceDiscount;
 
-            // Add user's balance as discount
-            $this->calculatedDiscount += $this->userBalanceDiscount;
-
             // Add coupons as discount
             $this->calculatedDiscount += $this->couponDiscount;
+
+            // Add balance as discount
+            $this->calculatedDiscount += $this->userBalanceDiscount;
 
             if ($this->calculatedDiscount > $this->price) {
                 $this->calculatedDiscount = $this->price;
@@ -522,7 +710,7 @@ class Plan extends Model
      */
     public function getIsFreeAttribute()
     {
-        return empty((float) $this->summary);
+        return ($this->price - $this->discount) <= 0;
     }
 
     /**

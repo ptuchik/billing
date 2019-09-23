@@ -5,9 +5,11 @@ namespace Ptuchik\Billing\AbstractClassess;
 use Agent;
 use Ptuchik\Billing\Constants\ConfirmationType;
 use Ptuchik\Billing\Constants\PlanVisibility;
+use Ptuchik\Billing\Contracts\Billable;
 use Ptuchik\Billing\Contracts\Hostable;
 use Ptuchik\Billing\Factory;
 use Ptuchik\Billing\Models\Confirmation;
+use Ptuchik\Billing\Models\Feature;
 use Ptuchik\Billing\Models\Plan;
 use Ptuchik\Billing\Models\Purchase;
 use Ptuchik\Billing\Models\Subscription;
@@ -17,6 +19,7 @@ use Ptuchik\CoreUtilities\Models\Model;
 use Ptuchik\CoreUtilities\Traits\HasIcon;
 use Ptuchik\CoreUtilities\Traits\HasParams;
 use Request;
+use Throwable;
 
 /**
  * Class PackageModel - all package models have to extend this model
@@ -146,12 +149,13 @@ abstract class PackageModel extends Model
     /**
      * Validate requested package against host to process
      *
-     * @param \Ptuchik\Billing\Contracts\Hostable $host
-     * @param bool                                $forPurchase
+     * @param \Ptuchik\Billing\Contracts\Hostable      $host
+     * @param \Ptuchik\Billing\Contracts\Billable|null $user
+     * @param bool                                     $forPurchase
      *
      * @return \Ptuchik\Billing\Contracts\Hostable
      */
-    public function validate(Hostable $host, $forPurchase = false)
+    public function validate(Hostable $host, Billable $user = null, $forPurchase = false)
     {
         return $host;
     }
@@ -170,24 +174,33 @@ abstract class PackageModel extends Model
     }
 
     /**
+     * All plans relation
+     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     */
+    public function allPlans()
+    {
+        return $this->morphMany(Factory::getClass(Plan::class), 'package')
+            ->orderBy('plans.id', 'asc');
+    }
+
+    /**
      * Plans relation
      * @return \Illuminate\Database\Eloquent\Relations\MorphMany
      */
     public function plans()
     {
         // Get all visible plans for package
-        $query = $this->morphMany(Factory::getClass(Plan::class), 'package')
-            ->where(function ($query) {
-                $query->where('plans.visibility', Factory::getClass(PlanVisibility::class)::VISIBLE);
+        $query = $this->allPlans()->where(function ($query) {
+            $query->where('plans.visibility', Factory::getClass(PlanVisibility::class)::VISIBLE);
 
-                // If additional plans are requested, include them also
-                if (Request::filled('additional')) {
-                    $query->orWhere(function ($query) {
-                        $query->whereIn('plans.alias', explode(',', Request::input('additional')));
-                        $query->where('plans.visibility', Factory::getClass(PlanVisibility::class)::HIDDEN);
-                    });
-                }
-            });
+            // If additional plans are requested, include them also
+            if (Request::filled('additional')) {
+                $query->orWhere(function ($query) {
+                    $query->whereIn('plans.alias', explode(',', Request::input('additional')));
+                    $query->where('plans.visibility', Factory::getClass(PlanVisibility::class)::HIDDEN);
+                });
+            }
+        });
 
         // If frequncy is requested, get only plans with matching frequencies
         if (Request::filled('frequency')) {
@@ -196,8 +209,7 @@ abstract class PackageModel extends Model
 
         // Order by ordering and return result query
         return $query->orderBy('plans.ordering', 'asc')
-            ->orderBy('plans.billing_frequency', 'desc')
-            ->orderBy('plans.id', 'asc');
+            ->orderBy('plans.billing_frequency', 'desc');
     }
 
     /**
@@ -209,7 +221,7 @@ abstract class PackageModel extends Model
      */
     public function getPurchaseIdentifier(Purchase $purchase)
     {
-        return $purchase->host->getRouteKey();
+        return $purchase->host ? $purchase->host->getRouteKey() : $this->name;
     }
 
     /**
@@ -399,8 +411,8 @@ abstract class PackageModel extends Model
     {
         // Try to get an existing purchase for current package on current host,
         // and if not found create one
-        if (!$purchase = $host->purchases()->where('package_id', $this->id)
-            ->where('package_type', $this->getMorphClass())->first()) {
+        if (!$host || !$purchase = $host->purchases()->where('package_id', $this->id)
+                ->where('package_type', $this->getMorphClass())->first()) {
 
             $purchase = Factory::get(Purchase::class, true);
             $purchase->setRawAttribute('name', $this->getRawAttribute('name'));
@@ -477,26 +489,6 @@ abstract class PackageModel extends Model
         }
 
         return $this->purchase;
-    }
-
-    /**
-     * If there is a payment, refund the user
-     *
-     * @param \Ptuchik\Billing\Models\Plan $plan
-     *
-     * @return mixed
-     */
-    protected function refund(Plan $plan)
-    {
-        if ($plan->payment) {
-            switch ($plan->payment->getCode()) {
-                case 'settling':
-                case 'settled':
-                    return $plan->user->refund($plan->payment->getTransactionReference());
-                default:
-                    return $plan->user->void($plan->payment->getTransactionReference());
-            }
-        }
     }
 
     /**
@@ -655,12 +647,15 @@ abstract class PackageModel extends Model
      */
     public function getConfirmationReplacements(Transaction $transaction, $trialDays = 0)
     {
+        // Get purchase
+        $purchase = $this->purchase ?? $transaction->purchase;
+
         // Define replacements and return
         return [
-            'host'      => $this->purchase->host ? $this->purchase->host->getRouteKey() : $this->name,
+            'host'      => $purchase && $purchase->host ? $purchase->host->getRouteKey() : $this->name,
             'amount'    => $transaction->amount,
             'package'   => $this->name,
-            'reference' => $this->purchase->reference ? $this->purchase->reference->getRouteKey() : $this->name,
+            'reference' => $purchase && $purchase->reference ? $purchase->reference->getRouteKey() : $this->name,
             'days'      => $trialDays
         ];
     }
@@ -680,5 +675,14 @@ abstract class PackageModel extends Model
             ->where('package_type', $this->getMorphClass())->delete();
 
         return parent::delete();
+    }
+
+    /**
+     * Package Features relation
+     * @return \Illuminate\Database\Eloquent\Relations\morphToMany
+     */
+    public function features()
+    {
+        return $this->morphToMany(Factory::getClass(Feature::class), 'package', 'package_features');
     }
 }

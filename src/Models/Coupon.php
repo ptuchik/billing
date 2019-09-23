@@ -43,7 +43,9 @@ class Coupon extends Model
     ];
 
     protected $appends = [
-        'connectedToReferralSystem'
+        'connectedToReferralSystem',
+        'numberOfCoupons',
+        'usedCoupons'
     ];
 
     /**
@@ -61,7 +63,7 @@ class Coupon extends Model
      */
     public function getConnectedToReferralSystemAttribute()
     {
-        return !empty($this->params['connectedToReferralSystem']);
+        return !empty($this->getParam('connectedToReferralSystem'));
     }
 
     /**
@@ -75,6 +77,43 @@ class Coupon extends Model
     }
 
     /**
+     * Number Of Coupons attribute getter
+     * @return null|int
+     */
+    public function getNumberOfCouponsAttribute()
+    {
+        return $this->getParam('numberOfCoupons');
+    }
+
+    /**
+     * Number Of Coupons attribute setter
+     *
+     * @param $value
+     */
+    public function setNumberOfCouponsAttribute($value)
+    {
+        $this->setParam('numberOfCoupons', $value);
+    }
+
+    /**
+     * Used Coupons attribute getter
+     * @return int
+     */
+    public function getUsedCouponsAttribute()
+    {
+        return $this->getParam('usedCoupons', 0);
+    }
+
+    /** Used Coupons attribute setter
+     *
+     * @param $value
+     */
+    public function setUsedCouponsAttribute($value)
+    {
+        $this->setParam('usedCoupons', $value);
+    }
+
+    /**
      * Plan relations
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      * @throws \Exception
@@ -82,6 +121,17 @@ class Coupon extends Model
     public function plans()
     {
         return $this->belongsToMany(Factory::getClass(Plan::class), 'plan_coupons');
+    }
+
+    /**
+     * Used coupons relation
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function usedCoupons()
+    {
+        $checkCouponsBy = config('ptuchik-billing.check_used_coupons.by');
+
+        return $this->hasMany(Factory::getClass(UsedCoupon::class), 'coupon_'.$checkCouponsBy, $checkCouponsBy);
     }
 
     /**
@@ -93,6 +143,51 @@ class Coupon extends Model
         $checkCouponsBy = config('ptuchik-billing.check_gifted_coupons.by');
 
         return $this->hasMany(Factory::getClass(GiftedCoupon::class), 'coupon_'.$checkCouponsBy, $checkCouponsBy);
+    }
+
+    /**
+     * Check if coupon is already used for host
+     *
+     * @param \Ptuchik\Billing\Models\Plan             $plan
+     * @param \Ptuchik\Billing\Contracts\Hostable|null $host
+     *
+     * @return bool
+     */
+    public function isUsed(Plan $plan, Hostable $host = null)
+    {
+        if (empty($host)) {
+            return false;
+        }
+
+        // Build query for used coupons for provided host
+        $query = $this->usedCoupons()->where('used_coupons.host_id', $host->id)
+            ->where('used_coupons.host_type', $host->getMorphClass());
+
+        // If set to check with plan, add plan condition
+        if (config('ptuchik-billing.check_used_coupons.with') == 'plan') {
+            $query->where('used_coupons.plan_alias', $plan->alias);
+        }
+
+        // Check for existance and return
+        return !empty($query->first());
+    }
+
+    /**
+     * Mark coupon as used for given plan and host
+     *
+     * @param \Ptuchik\Billing\Models\Plan        $plan
+     * @param \Ptuchik\Billing\Contracts\Hostable $host
+     */
+    public function markAsUsed(Plan $plan, Hostable $host)
+    {
+        $used = Factory::getClass(UsedCoupon::class, true)::firstOrNew([
+            'coupon_id'   => $this->id,
+            'coupon_code' => $this->code,
+            'plan_alias'  => $plan->alias,
+            'host_type'   => $host->getMorphClass(),
+            'host_id'     => $host->getKey()
+        ]);
+        $used->save();
     }
 
     /**
@@ -127,11 +222,13 @@ class Coupon extends Model
     public function markAsGifted(Plan $plan, Hostable $host)
     {
         if ($this->redeem == Factory::getClass(CouponRedeemType::class)::INTERNAL) {
-            $gifted = Factory::get(GiftedCoupon::class, true);
-            $gifted->couponId = $this->id;
-            $gifted->couponCode = $this->code;
-            $gifted->planAlias = $plan->alias;
-            $gifted->host()->associate($host);
+            $gifted = Factory::getClass(GiftedCoupon::class, true)::firstOrNew([
+                'coupon_id'   => $this->id,
+                'coupon_code' => $this->code,
+                'plan_alias'  => $plan->alias,
+                'host_type'   => $host->getMorphClass(),
+                'host_id'     => $host->getKey()
+            ]);
             $gifted->save();
         }
     }

@@ -1,4 +1,7 @@
 # Billing
+
+``WARNING!!! If you are already using v1.x version, please stay on it, v2.x may have some backward incompatibilities...``
+
 ## Sell anything for everything...
 
 [![Latest Stable Version](https://poser.pugx.org/ptuchik/billing/version.png)](https://packagist.org/packages/ptuchik/billing)
@@ -21,7 +24,7 @@ The structure is the following:
 
 ### Concept
 The concept is the following:
-To be able to use this package, firstly you need to add `Billable` trait to your billable model (usually it is *User* model).
+To be able to use this package, firstly you need to add `Billable` trait to your billable model and implement `Billable` interface (usually it is *User* model).
 Hostable models have to implement `Hostable` interface and use `Hostable` trait, which will add *Purchases* relation to model.
 All packages have to be extended from *PackageModel* abstract class.
 That's it!

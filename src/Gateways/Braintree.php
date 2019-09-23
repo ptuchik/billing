@@ -2,15 +2,23 @@
 
 namespace Ptuchik\Billing\Gateways;
 
-use App\User;
 use Braintree\CreditCard;
+use Braintree\Exception\NotFound;
 use Braintree\PayPalAccount;
+use Braintree\Transaction\CreditCardDetails;
+use Braintree\Transaction\PayPalDetails;
 use Currency;
 use Exception;
+use Omnipay\Common\Message\ResponseInterface;
 use Omnipay\Omnipay;
+use Ptuchik\Billing\Constants\PaymentMethods;
+use Ptuchik\Billing\Contracts\Billable;
 use Ptuchik\Billing\Contracts\PaymentGateway;
+use Ptuchik\Billing\Factory;
+use Ptuchik\Billing\Models\Order;
+use Ptuchik\Billing\Models\PaymentMethod;
 use Request;
-use Omnipay\Common\Message\RequestInterface;
+use Throwable;
 
 /**
  * Class Braintree
@@ -18,6 +26,8 @@ use Omnipay\Common\Message\RequestInterface;
  */
 class Braintree implements PaymentGateway
 {
+    public $name = 'braintree';
+
     /**
      * @var \Omnipay\Common\GatewayInterface
      */
@@ -29,16 +39,23 @@ class Braintree implements PaymentGateway
     protected $config;
 
     /**
+     * App\User
+     * @var
+     */
+    protected $user;
+
+    /**
      * Braintree constructor.
      *
-     * @param array $config
-     * @param bool  $forceTestMode
+     * @param \Ptuchik\Billing\Contracts\Billable $user
+     * @param array                               $config
      */
-    public function __construct(array $config = [], bool $forceTestMode = false)
+    public function __construct(Billable $user, array $config = [])
     {
         $this->config = $config;
+        $this->user = $user;
         $this->gateway = Omnipay::create(array_get($this->config, 'driver'));
-        $this->setCredentials($forceTestMode ?: !empty(array_get($this->config, 'testMode')));
+        $this->setCredentials($user->isTester() ?: !empty(array_get($this->config, 'testMode')));
     }
 
     /**
@@ -56,71 +73,75 @@ class Braintree implements PaymentGateway
 
     /**
      * Create payment profile
-     *
-     * @param \App\User $user
-     *
      * @return mixed
      */
-    public function createPaymentProfile(User $user)
+    public function createPaymentProfile()
     {
-        $profile = $this->gateway->createCustomer()->setCustomerData([
-            'firstName' => $user->firstName,
-            'lastName'  => $user->lastName,
-            'email'     => $user->email
-        ])->send()->getData();
+        $profile = $this->gateway->createCustomer()->setCustomerData($this->getCustomerData(false))->send()->getData();
 
         return $profile->customer->id;
     }
 
     /**
-     * Find customer by profile
-     *
-     * @param $paymentProfile
-     *
+     * Update payment profile
      * @return mixed
      */
-    public function findCustomer($paymentProfile)
+    public function updatePaymentProfile()
     {
-        return $this->gateway->findCustomer($paymentProfile)->send()->getData();
+        return $this->gateway->updateCustomer()->setCustomerId($this->user->paymentProfile)
+            ->setCustomerData($this->getCustomerData())->send()->getData();
+    }
+
+    /**
+     * Find customer by profile
+     * @return mixed
+     */
+    public function findCustomer()
+    {
+        try {
+            return $this->gateway->findCustomer($this->user->paymentProfile)->send()->getData();
+        } catch (NotFound $exception) {
+            return $this->gateway->findCustomer($this->user->refreshPaymentProfile($this->name))->send()->getData();
+        }
     }
 
     /**
      * Create payment method
      *
-     * @param        $paymentProfile
-     * @param string $token
+     * @param string                             $nonce
+     * @param \Ptuchik\Billing\Models\Order|null $order
      *
      * @return mixed
      * @throws \Exception
      */
-    public function createPaymentMethod($paymentProfile, string $token)
+    public function createPaymentMethod(string $nonce, Order $order = null)
     {
         // Create a payment method on remote gateway
-        $paymentMethod = $this->gateway->createPaymentMethod()->setToken($token)
-            ->setMakeDefault(true)->setCustomerId($paymentProfile)->send();
+        $paymentMethod = $this->gateway->createPaymentMethod()
+            ->setToken($nonce)
+            ->setMakeDefault(true)
+            ->setCustomerId($this->user->paymentProfile)
+            ->send();
 
         if (!$paymentMethod->isSuccessful()) {
             throw new Exception($paymentMethod->getMessage());
         }
 
         // Parse the result and return the payment method instance
-        return $this->parsePaymentMethod($paymentMethod->getData()->paymentMethod);
+        return $this->parsePaymentMethod($paymentMethod->getData());
     }
 
     /**
      * Get payment methods
-     *
-     * @param $paymentProfile
-     *
      * @return array
      */
-    public function getPaymentMethods($paymentProfile) : array
+    public function getPaymentMethods() : array
     {
         $paymentMethods = [];
 
         // Get user's all payment methods from gateway and parse the needed data to return
-        foreach ($this->findCustomer($paymentProfile)->paymentMethods as $gatewayPaymentMethod) {
-            $paymentMethods[] = $this->parsePaymentMethod($gatewayPaymentMethod);
+        foreach ($this->findCustomer()->paymentMethods as $gatewayPaymentMethod) {
+            $paymentMethods[] = $this->parsePaymentMethod((object) ['paymentMethod' => $gatewayPaymentMethod]);
         }
 
         return $paymentMethods;
@@ -143,7 +164,7 @@ class Braintree implements PaymentGateway
         }
 
         // Parse the result and return the payment method instance
-        return $this->parsePaymentMethod($setDefault->getData()->paymentMethod);
+        return $this->parsePaymentMethod($setDefault->getData());
     }
 
     /**
@@ -161,35 +182,43 @@ class Braintree implements PaymentGateway
 
     /**
      * Get payment token
-     *
-     * @param string|null $paymentProfile
-     *
      * @return mixed
      */
-    public function getPaymentToken($paymentProfile = null)
+    public function getPaymentToken()
     {
         // Get and return payment token for user's payment profile
-        return $this->gateway->clientToken()->setCustomerId($paymentProfile)->send()->getToken();
+        try {
+            return $this->gateway->clientToken()->setCustomerId($this->user->paymentProfile)->send()->getToken();
+
+            // In case the customer ID is not valid anymore, regenerate a new one
+        } catch (Throwable $exception) {
+            return $this->gateway->clientToken()
+                ->setCustomerId($this->user->refreshPaymentProfile($this->name))->send()->getToken();
+        }
     }
 
     /**
-     * Prepare purchase data
+     * Purchase
      *
-     * @param string      $paymentProfile
-     * @param string|null $description
+     * @param                                    $amount
+     * @param string|null                        $description
+     * @param \Ptuchik\Billing\Models\Order|null $order
      *
-     * @return \Omnipay\Common\Message\RequestInterface
+     * @return \Omnipay\Common\Message\ResponseInterface
      */
-    public function preparePurchaseData($paymentProfile, string $description = null) : RequestInterface
+    public function purchase($amount, string $description = null, Order $order = null) : ResponseInterface
     {
         // If nonce is provided, create payment method and unset nonce
         if (Request::filled('nonce')) {
-            $this->createPaymentMethod($paymentProfile, Request::input('nonce'));
+            $this->user->createPaymentMethod(Request::input('nonce'));
             Request::offsetUnset('nonce');
         }
 
+        // Update customer profile
+        $this->updatePaymentProfile();
+
         // Get payment gateway and set up purchase request with customer ID
-        $purchaseData = $this->gateway->purchase()->setCustomerId($paymentProfile);
+        $purchaseData = $this->gateway->purchase()->setCustomerId($this->user->paymentProfile);
 
         // If existing payment method's token is provided, add paymentMethodToken attribute
         // to request
@@ -198,15 +227,25 @@ class Braintree implements PaymentGateway
         }
 
         // Set purchase descriptor
-        $purchaseData->setDescriptor($this->generateDescriptor($description));
+        if ($description) {
+            $purchaseData->setDescriptor($this->generateDescriptor($description));
+        }
 
         // Set currency account if any
         if ($merchantId = array_get($this->config, 'currencies.'.Currency::getUserCurrency())) {
             $purchaseData->setMerchantAccountId($merchantId);
         }
 
-        // Return purchase data
-        return $purchaseData;
+        // Set transaction ID from $order if provided
+        if ($order) {
+            $purchaseData->setTransactionId($order->id);
+        }
+
+        // Set amount
+        $purchaseData->setAmount($amount);
+
+        // Finally charge user and return the gateway purchase response
+        return $purchaseData->send();
     }
 
     /**
@@ -267,17 +306,40 @@ class Braintree implements PaymentGateway
     /**
      * Parse payment method from gateways
      *
-     * @param $paymentMethod
+     * @param $paymentData
      *
      * @return mixed
      */
-    protected function parsePaymentMethod($paymentMethod)
+    public function parsePaymentMethod($paymentData)
     {
+        if (!empty($paymentData->paymentMethod)) {
+            $paymentMethod = $paymentData->paymentMethod;
+        } else {
+            switch ($paymentData->paymentInstrumentType ?? '') {
+                case PaymentMethods::PAYPAL_ACCOUNT;
+                    if (!empty($paymentData->paypalDetails)) {
+                        $paymentMethod = $paymentData->paypalDetails;
+                        break;
+                    } else {
+                        return Factory::get(PaymentMethod::class, true);
+                    }
+                default;
+                    if (!empty($paymentData->creditCardDetails)) {
+                        $paymentMethod = $paymentData->creditCardDetails;
+                        break;
+                    } else {
+                        return Factory::get(PaymentMethod::class, true);
+                    }
+            }
+        }
+
         // Define payment method parser
         switch (get_class($paymentMethod)) {
+            case CreditCardDetails::class:
             case CreditCard::class:
                 $parser = 'parseBraintreeCreditCard';
                 break;
+            case PayPalDetails::class:
             case PayPalAccount::class:
                 $parser = 'parseBraintreePayPalAccount';
                 break;
@@ -294,37 +356,18 @@ class Braintree implements PaymentGateway
      *
      * @param $creditCard
      *
-     * @return object
+     * @return array
      */
     protected function parseBraintreeCreditCard($creditCard)
     {
-        return (object) [
-            'token'                  => $creditCard->token,
-            'type'                   => 'credit_card',
-            'default'                => $creditCard->default,
-            'imageUrl'               => $creditCard->imageUrl,
-            'createdAt'              => $creditCard->createdAt,
-            'updatedAt'              => $creditCard->updatedAt,
-            'bin'                    => $creditCard->bin,
-            'last4'                  => $creditCard->last4,
-            'cardType'               => $creditCard->cardType,
-            'expirationMonth'        => $creditCard->expirationMonth,
-            'expirationYear'         => $creditCard->expirationYear,
-            'expired'                => $creditCard->expired,
-            'customerLocation'       => $creditCard->customerLocation,
-            'cardholderName'         => $creditCard->cardholderName,
-            'uniqueNumberIdentifier' => $creditCard->uniqueNumberIdentifier,
-            'prepaid'                => $creditCard->prepaid,
-            'healthcare'             => $creditCard->healthcare,
-            'debit'                  => $creditCard->debit,
-            'durbinRegulated'        => $creditCard->durbinRegulated,
-            'commercial'             => $creditCard->commercial,
-            'payroll'                => $creditCard->payroll,
-            'issuingBank'            => $creditCard->issuingBank,
-            'countryOfIssuance'      => $creditCard->countryOfIssuance,
-            'productId'              => $creditCard->productId,
-            'description'            => $creditCard->cardType.' '.trans(config('ptuchik-billing.translation_prefixes.general').'.ending_in').' '.$creditCard->last4
-        ];
+        $paymentMethod = Factory::get(PaymentMethod::class, true);
+        $paymentMethod->token = $creditCard->token;
+        $paymentMethod->type = $this->parseType(strtolower($creditCard->cardType));
+        $paymentMethod->last4 = $creditCard->last4;
+        $paymentMethod->gateway = $this->name;
+        $paymentMethod->holder = $creditCard->cardholderName;
+
+        return $paymentMethod;
     }
 
     /**
@@ -332,24 +375,127 @@ class Braintree implements PaymentGateway
      *
      * @param $payPalAccount
      *
-     * @return object
+     * @return array
      */
     protected function parseBraintreePayPalAccount($payPalAccount)
     {
-        return (object) [
-            'token'              => $payPalAccount->token,
-            'type'               => 'paypal_account',
-            'default'            => $payPalAccount->default,
-            'imageUrl'           => $payPalAccount->imageUrl,
-            'createdAt'          => $payPalAccount->createdAt,
-            'updatedAtAt'        => $payPalAccount->updatedAt,
-            'customerId'         => $payPalAccount->customerId,
-            'email'              => $payPalAccount->email,
-            'billingAgreementId' => $payPalAccount->billingAgreementId,
-            'isChannelInitiated' => $payPalAccount->isChannelInitiated,
-            'payerInfo'          => $payPalAccount->payerInfo,
-            'limitedUseOrderId'  => $payPalAccount->limitedUseOrderId,
-            'description'        => $payPalAccount->email
+        $paymentMethod = Factory::get(PaymentMethod::class, true);
+        $paymentMethod->token = $payPalAccount->token;
+        $paymentMethod->type = Factory::getClass(PaymentMethods::class)::PAYPAL_ACCOUNT;
+        $paymentMethod->gateway = $this->name;
+        $paymentMethod->holder = $payPalAccount->payerEmail ?? $payPalAccount->email;
+
+        return $paymentMethod;
+    }
+
+    /**
+     * Create address
+     *
+     * @param array $billingDetails
+     *
+     * @return mixed
+     */
+    protected function createAddress(array $billingDetails)
+    {
+        return $address = $this->gateway->createAddress()->setCustomerId($this->user->paymentProfile)
+            ->setCustomerData($this->getBillingData($billingDetails))->send();
+    }
+
+    /**
+     * Update address
+     *
+     * @param array $billingDetails
+     *
+     * @return mixed
+     */
+    protected function updateAddress($id, array $billingDetails)
+    {
+        return $address = $this->gateway->updateAddress()->setCustomerId($this->user->paymentProfile)
+            ->setBillingAddressId($id)->setCustomerData($this->getBillingData($billingDetails))->send();
+    }
+
+    /**
+     * Get customer data
+     * @return array
+     */
+    protected function getCustomerData($addAddress = true)
+    {
+        // Add billing details
+        $billingDetails = $this->user->billingDetails;
+
+        if ($addAddress) {
+
+            $customer = $this->findCustomer();
+            if (empty($customer->addresses)) {
+                $this->createAddress($billingDetails);
+            } elseif ($address = array_first($customer->addresses)) {
+                $this->updateAddress($address->id, $billingDetails);
+            }
+        }
+
+        return [
+            'firstName' => $this->user->firstName,
+            'lastName'  => $this->user->lastName,
+            'email'     => $this->user->email,
+            'company'   => $company = array_get($billingDetails, 'companyName', '')
         ];
+    }
+
+    /**
+     * Get billing data
+     *
+     * @param array $billingDetails
+     *
+     * @return array
+     */
+    protected function getBillingData(array $billingDetails)
+    {
+        $data = [
+            'firstName'     => $this->user->firstName,
+            'lastName'      => $this->user->lastName,
+            'company'       => array_get($billingDetails, 'companyName', ''),
+            'streetAddress' => array_get($billingDetails, 'street', ''),
+            'postalCode'    => array_get($billingDetails, 'zipCode', ''),
+            'locality'      => array_get($billingDetails, 'city', ''),
+        ];
+
+        if ($country = array_get($billingDetails, 'country')) {
+            if (strlen($country) == 2) {
+                $data['countryCodeAlpha2'] = strtoupper($country);
+            } else {
+                $data['countryName'] = $country;
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param $type
+     *
+     * @return mixed
+     * @throws \Exception
+     */
+    protected function parseType($type)
+    {
+        switch ($type) {
+            case 'visa':
+                return BillingFactory::getClass(PaymentMethods::class)::VISA;
+                break;
+            case 'mastercard':
+                return BillingFactory::getClass(PaymentMethods::class)::MASTER_CARD;
+                break;
+            case 'american express':
+                return BillingFactory::getClass(PaymentMethods::class)::AMEX;
+                break;
+            case 'discover':
+                return BillingFactory::getClass(PaymentMethods::class)::DISCOVER;
+                break;
+            case 'diners club':
+                return BillingFactory::getClass(PaymentMethods::class)::DINERS_CLUB;
+                break;
+            default:
+                return BillingFactory::getClass(PaymentMethods::class)::CREDIT_CARD;
+        }
     }
 }
