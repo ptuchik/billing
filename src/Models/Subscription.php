@@ -840,6 +840,32 @@ class Subscription extends Model
         }
     }
 
+    public static function autorenewReminder($date)
+    {
+        // Loop through each subscription and remind about autorenew
+        foreach (static::with(['user', 'purchase.package', 'purchase.host'])->where('active', 1)
+                     ->whereNull('ends_at')->whereDate('next_billing_date', $date)->get() as $subscription) {
+            try {
+
+                // If subscription has no active user or it is free or it is not in use, ignore it
+                if (!$subscription->hasActiveUser() ||
+                    empty((float) $subscription->summary) ||
+                    !$subscription->package->isInUse($subscription->host)) {
+                    continue;
+                }
+
+                // Set currency
+                Currency::setUserCurrency($subscription->currency);
+
+                // Trigger reminder event
+                Event::subscriptionAutorenewReminder($subscription);
+
+            } catch (Throwable $exception) {
+                continue;
+            }
+        }
+    }
+
     /**
      * Expiration reminder
      *
