@@ -40,7 +40,7 @@ class Event
      */
     public static function purchaseFailed(Plan $plan, Transaction $transaction)
     {
-        self::trigger('purchase_failed', $plan, $transaction);
+        static::trigger('purchase_failed', $plan, $transaction);
     }
 
     /**
@@ -51,7 +51,7 @@ class Event
      */
     public static function purchaseSuccess(Plan $plan, Transaction $transaction)
     {
-        self::trigger('purchase_success', $plan, $transaction);
+        static::trigger('purchase_success', $plan, $transaction);
     }
 
     /**
@@ -61,7 +61,17 @@ class Event
      */
     public static function subscriptionStatusChange(Subscription $subscription)
     {
-        self::trigger('subscription_status_change', $subscription);
+        static::trigger('subscription_status_change', $subscription);
+    }
+
+    /**
+     * Trigger subscription autorenew reminder event
+     *
+     * @param \Ptuchik\Billing\Models\Subscription $subscription
+     */
+    public static function subscriptionAutorenewReminder(Subscription $subscription)
+    {
+        static::trigger('subscription_autorenew_reminder', $subscription);
     }
 
     /**
@@ -71,6 +81,6 @@ class Event
      */
     public static function subscriptionExpirationReminder(Subscription $subscription)
     {
-        self::trigger('subscription_expiration_reminder', $subscription);
+        static::trigger('subscription_expiration_reminder', $subscription);
     }
 }

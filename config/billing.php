@@ -120,6 +120,9 @@ return [
         'subscription_status_change'       => null,
 
         // Will receive Subscription instance
+        'subscription_autorenew_reminder'  => null,
+
+        // Will receive Subscription instance
         'subscription_expiration_reminder' => null,
     ],
 
