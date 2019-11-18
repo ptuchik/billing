@@ -20,6 +20,11 @@ return [
     'redeemable_packages'                   => explode(',', env('REFERRAL_MONTHS_REDEEMABLE_PACKAGE')),
 
     /**
+     * Limit for adding payment methods per day for same user
+     */
+    'payment_methods_limit'                 => null,
+
+    /**
      * Check gifted coupons
      */
     'check_gifted_coupons'                  => [

@@ -116,6 +116,9 @@ class Braintree implements PaymentGateway
      */
     public function createPaymentMethod(string $nonce, Order $order = null)
     {
+        // Check if user can add payment method
+        $this->user->canAddPaymentMethod();
+
         // Create a payment method on remote gateway
         $paymentMethod = $this->gateway->createPaymentMethod()
             ->setToken($nonce)

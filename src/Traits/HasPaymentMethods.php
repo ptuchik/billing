@@ -2,6 +2,7 @@
 
 namespace Ptuchik\Billing\src\Traits;
 
+use Exception;
 use File;
 use Ptuchik\Billing\Constants\PaymentMethods;
 use Ptuchik\Billing\Factory;
@@ -263,6 +264,29 @@ trait HasPaymentMethods
         }
 
         return $method;
+    }
+
+    /**
+     * Check if user can add payment method
+     * @return bool
+     * @throws \Exception
+     */
+    public function canAddPaymentMethod()
+    {
+        if ($limit = config('ptuchik-billing.payment_methods_limit')) {
+
+            $retries = $this->getParam('retries.'.date('Ymd'), 0);
+
+            $this->setParam('retries', [date('Ymd') => $retries + 1]);
+
+            if ($retries >= $limit) {
+                throw new Exception(trans(config('ptuchik-billing.translation_prefixes.general').'.payment_methods_limit'));
+            }
+
+            $this->user->save();
+        }
+
+        return true;
     }
 
     /**
