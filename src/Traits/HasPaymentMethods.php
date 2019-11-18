@@ -283,7 +283,7 @@ trait HasPaymentMethods
                 throw new Exception(trans(config('ptuchik-billing.translation_prefixes.general').'.payment_methods_limit'));
             }
 
-            $this->user->save();
+            $this->save();
         }
 
         return true;
