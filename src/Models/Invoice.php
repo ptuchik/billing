@@ -46,7 +46,7 @@ class Invoice
         }
 
         $params["invoice"] = $data;
-        $transaction->params = json_encode($params);
+        $transaction->params = $params;
         $transaction->save();
 
         $this->id = $transaction->reference;

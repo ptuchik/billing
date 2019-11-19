@@ -41,7 +41,8 @@ class Transaction extends Model
         'subscription_id' => 'integer',
         'user_id'         => 'integer',
         'status'          => 'integer',
-        'coupons'         => 'array'
+        'coupons'         => 'array',
+        'params' => 'array',
     ];
 
     /**
