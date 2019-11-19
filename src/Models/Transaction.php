@@ -42,7 +42,7 @@ class Transaction extends Model
         'user_id'         => 'integer',
         'status'          => 'integer',
         'coupons'         => 'array',
-        'params' => 'array',
+        'params'          => 'array',
     ];
 
     /**
