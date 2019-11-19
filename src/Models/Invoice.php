@@ -27,6 +27,28 @@ class Invoice
      */
     public function __construct(Plan $plan = null, Transaction $transaction)
     {
+        if ($transaction->paymentMethod) {
+            $data['payment']['description'] = $transaction->paymentMethod->description;
+        }
+
+        if ($transaction->purchase) {
+            if ($transaction->purchase->reference) {
+                $data['purchase']['type'] = $transaction->purchase->referenceType;
+            } else {
+                $data['purchase']['type'] = $transaction->purchase->hostType;
+            }
+
+            $data['purchase']['identifier'] = $transaction->purchase->identifier;
+        }
+
+        if ($transaction->subscription) {
+            $data['subscription']['period'] = $transaction->subscription->period;
+        }
+
+        $params['invoice'] = $data;
+        $transaction->params = $params;
+        $transaction->save();
+
         $this->id = $transaction->reference;
         $this->price = $transaction->price;
         $this->discount = $transaction->discount;
