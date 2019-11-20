@@ -18,6 +18,7 @@ class Transactions extends Migration
                 $table->increments('id');
                 $table->text('name')->nullable();
                 $table->longText('data')->nullable();
+                $table->json('params')->nullable();
                 $table->unsignedInteger('purchase_id')->nullable();
                 $table->foreign('purchase_id')->references('id')->on('purchases')->onUpdate('cascade')
                     ->onDelete('set null');
