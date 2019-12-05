@@ -20,6 +20,7 @@ use Ptuchik\CoreUtilities\Traits\HasIcon;
 use Ptuchik\CoreUtilities\Traits\HasParams;
 use Request;
 use Throwable;
+use Validator;
 
 /**
  * Class PackageModel - all package models have to extend this model
@@ -157,6 +158,10 @@ abstract class PackageModel extends Model
      */
     public function validate(Hostable $host, Billable $user = null, $forPurchase = false)
     {
+        if ($this->validations) {
+            Validator::validate(request()->all(), $this->validations);
+        }
+
         return $host;
     }
 
