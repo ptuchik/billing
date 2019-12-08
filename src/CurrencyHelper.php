@@ -5,6 +5,7 @@ namespace Ptuchik\Billing;
 use Carbon\Carbon;
 use Currency;
 use Exception;
+use Illuminate\Support\Arr;
 use Throwable;
 
 /**
@@ -204,7 +205,7 @@ class CurrencyHelper
      */
     protected function getCurrency($currency)
     {
-        return array_get($this->currencies, $currency);
+        return Arr::get($this->currencies, $currency);
     }
 
     /**

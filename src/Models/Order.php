@@ -2,6 +2,7 @@
 
 namespace Ptuchik\Billing\Models;
 
+use Ptuchik\Billing\Factory;
 use Ptuchik\CoreUtilities\Models\Model;
 use Ptuchik\CoreUtilities\Traits\HasParams;
 
@@ -67,5 +68,23 @@ class Order extends Model
     public function host()
     {
         return $this->morphTo();
+    }
+
+    /**
+     * Get plan from reference
+     * @return \Ptuchik\Billing\Models\Plan|null
+     */
+    public function getPlan()
+    {
+        $reference = $this->reference;
+
+        switch (get_class($reference)) {
+            case Factory::getClass(Plan::class):
+                return $reference;
+            case Factory::getClass(Subscription::class):
+                return $reference->plan;
+            default:
+                return null;
+        }
     }
 }

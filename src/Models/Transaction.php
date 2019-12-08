@@ -3,6 +3,7 @@
 namespace Ptuchik\Billing\Models;
 
 use Currency;
+use Illuminate\Support\Arr;
 use Ptuchik\Billing\Factory;
 use Ptuchik\CoreUtilities\Models\Model;
 use Throwable;
@@ -147,7 +148,7 @@ class Transaction extends Model
      */
     public function getCurrencySymbolAttribute()
     {
-        return array_get(Currency::getCurrency($this->currency), 'symbol');
+        return Arr::get(Currency::getCurrency($this->currency), 'symbol');
     }
 
     /**

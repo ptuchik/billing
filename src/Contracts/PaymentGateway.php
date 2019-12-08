@@ -84,12 +84,12 @@ interface PaymentGateway
      * Purchase
      *
      * @param                                    $amount
-     * @param string|null                        $description
+     * @param string|null                        $descriptor
      * @param \Ptuchik\Billing\Models\Order|null $order
      *
      * @return \Omnipay\Common\Message\ResponseInterface
      */
-    public function purchase($amount, string $description = null, Order $order = null) : ResponseInterface;
+    public function purchase($amount, string $descriptor = null, Order $order = null) : ResponseInterface;
 
     /**
      * Void transaction

@@ -9,6 +9,7 @@ use Braintree\Transaction\CreditCardDetails;
 use Braintree\Transaction\PayPalDetails;
 use Currency;
 use Exception;
+use Illuminate\Support\Arr;
 use Omnipay\Common\Message\ResponseInterface;
 use Omnipay\Omnipay;
 use Ptuchik\Billing\Constants\PaymentMethods;
@@ -54,8 +55,8 @@ class Braintree implements PaymentGateway
     {
         $this->config = $config;
         $this->user = $user;
-        $this->gateway = Omnipay::create(array_get($this->config, 'driver'));
-        $this->setCredentials($user->isTester() ?: !empty(array_get($this->config, 'testMode')));
+        $this->gateway = Omnipay::create(Arr::get($this->config, 'driver'));
+        $this->setCredentials($user->isTester() ?: !empty(Arr::get($this->config, 'testMode')));
     }
 
     /**
@@ -65,9 +66,9 @@ class Braintree implements PaymentGateway
      */
     protected function setCredentials($testMode)
     {
-        $this->gateway->setMerchantId(array_get($this->config, $testMode ? 'sandboxMerchantId' : 'merchantId'));
-        $this->gateway->setPublicKey(array_get($this->config, $testMode ? 'sandboxPublicKey' : 'publicKey'));
-        $this->gateway->setPrivateKey(array_get($this->config, $testMode ? 'sandboxPrivateKey' : 'privateKey'));
+        $this->gateway->setMerchantId(Arr::get($this->config, $testMode ? 'sandboxMerchantId' : 'merchantId'));
+        $this->gateway->setPublicKey(Arr::get($this->config, $testMode ? 'sandboxPublicKey' : 'publicKey'));
+        $this->gateway->setPrivateKey(Arr::get($this->config, $testMode ? 'sandboxPrivateKey' : 'privateKey'));
         $this->gateway->setTestMode($testMode);
     }
 
@@ -204,12 +205,12 @@ class Braintree implements PaymentGateway
      * Purchase
      *
      * @param                                    $amount
-     * @param string|null                        $description
+     * @param string|null                        $descriptor
      * @param \Ptuchik\Billing\Models\Order|null $order
      *
      * @return \Omnipay\Common\Message\ResponseInterface
      */
-    public function purchase($amount, string $description = null, Order $order = null) : ResponseInterface
+    public function purchase($amount, string $descriptor = null, Order $order = null) : ResponseInterface
     {
         // If nonce is provided, create payment method and unset nonce
         if (Request::filled('nonce')) {
@@ -230,12 +231,12 @@ class Braintree implements PaymentGateway
         }
 
         // Set purchase descriptor
-        if ($description) {
-            $purchaseData->setDescriptor($this->generateDescriptor($description));
+        if ($descriptor) {
+            $purchaseData->setDescriptor($this->generateDescriptor($descriptor));
         }
 
         // Set currency account if any
-        if ($merchantId = array_get($this->config, 'currencies.'.Currency::getUserCurrency())) {
+        if ($merchantId = Arr::get($this->config, 'currencies.'.Currency::getUserCurrency())) {
             $purchaseData->setMerchantAccountId($merchantId);
         }
 
@@ -431,7 +432,7 @@ class Braintree implements PaymentGateway
             $customer = $this->findCustomer();
             if (empty($customer->addresses)) {
                 $this->createAddress($billingDetails);
-            } elseif ($address = array_first($customer->addresses)) {
+            } elseif ($address = Arr::first($customer->addresses)) {
                 $this->updateAddress($address->id, $billingDetails);
             }
         }
@@ -440,7 +441,7 @@ class Braintree implements PaymentGateway
             'firstName' => $this->user->firstName,
             'lastName'  => $this->user->lastName,
             'email'     => $this->user->email,
-            'company'   => $company = array_get($billingDetails, 'companyName', '')
+            'company'   => $company = Arr::get($billingDetails, 'companyName', '')
         ];
     }
 
@@ -456,13 +457,13 @@ class Braintree implements PaymentGateway
         $data = [
             'firstName'     => $this->user->firstName,
             'lastName'      => $this->user->lastName,
-            'company'       => array_get($billingDetails, 'companyName', ''),
-            'streetAddress' => array_get($billingDetails, 'street', ''),
-            'postalCode'    => array_get($billingDetails, 'zipCode', ''),
-            'locality'      => array_get($billingDetails, 'city', ''),
+            'company'       => Arr::get($billingDetails, 'companyName', ''),
+            'streetAddress' => Arr::get($billingDetails, 'street', ''),
+            'postalCode'    => Arr::get($billingDetails, 'zipCode', ''),
+            'locality'      => Arr::get($billingDetails, 'city', ''),
         ];
 
-        if ($country = array_get($billingDetails, 'country')) {
+        if ($country = Arr::get($billingDetails, 'country')) {
             if (strlen($country) == 2) {
                 $data['countryCodeAlpha2'] = strtoupper($country);
             } else {

@@ -4,6 +4,7 @@ namespace Ptuchik\Billing\src\Traits;
 
 use Currency;
 use Exception;
+use Illuminate\Support\Arr;
 use Request;
 
 /**
@@ -107,7 +108,7 @@ trait HasPaymentGateway
     protected function checkGatewayAvailability($gateway)
     {
         // If current currency has limited gateways
-        if ($gateways = array_wrap(config('ptuchik-billing.currency_limited_gateways.'.Currency::getUserCurrency()))) {
+        if ($gateways = explode(',', env(Currency::getUserCurrency().'_GATEWAYS', ''))) {
 
             // If user's gateway exists among currency limited gateways, return it
             if (in_array($gateway, $gateways)) {
@@ -115,7 +116,7 @@ trait HasPaymentGateway
 
                 // Otherwise return the first gateway from the list
             } else {
-                return array_first($gateways);
+                return Arr::first($gateways);
             }
 
             // Otherwise return user's gateway

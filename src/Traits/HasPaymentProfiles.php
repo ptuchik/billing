@@ -2,6 +2,8 @@
 
 namespace Ptuchik\Billing\src\Traits;
 
+use Illuminate\Support\Arr;
+
 /**
  * Trait HasPaymentProfiles
  * @package Ptuchik\Billing\src\Traits
@@ -46,11 +48,11 @@ trait HasPaymentProfiles
         $paymentProfiles = $this->paymentProfiles;
 
         // Try to get user's payment profile
-        if ($profile = array_get($paymentProfiles, 'profiles.'.$this->paymentGateway)) {
+        if ($profile = Arr::get($paymentProfiles, 'profiles.'.$this->paymentGateway)) {
             return $profile;
 
             // If user has payment profile with old method, upgrade it
-        } elseif ($profile = array_get($paymentProfiles, $this->paymentGateway)) {
+        } elseif ($profile = Arr::get($paymentProfiles, $this->paymentGateway)) {
             unset($paymentProfiles[$this->paymentGateway]);
             $this->paymentProfiles = $paymentProfiles;
             $this->paymentProfile = $profile;

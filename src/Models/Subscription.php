@@ -5,6 +5,7 @@ namespace Ptuchik\Billing\Models;
 use Auth;
 use Carbon\Carbon;
 use Currency;
+use Illuminate\Support\Arr;
 use Omnipay\Common\Message\ResponseInterface;
 use Ptuchik\Billing\Constants\OrderAction;
 use Ptuchik\Billing\Constants\SubscriptionStatus;
@@ -311,7 +312,7 @@ class Subscription extends Model
      */
     public function getCurrencySymbolAttribute()
     {
-        return array_get(Currency::getCurrency($this->currency), 'symbol');
+        return Arr::get(Currency::getCurrency($this->currency), 'symbol');
     }
 
     /**
