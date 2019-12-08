@@ -160,14 +160,13 @@ return [
                 'USD' => env('BRAINTREE_USD_MERCHANT_ID'),
             ]
         ],
-    ],
+    ]
 
     /**
-     * Here you can optionally add currency limited payment gateways
-     * to make them available only for given currency.
+     * You can optionally add comma separated currency limited
+     * payment gateways to your .env to make them available
+     * only for given currency. Example: 'USD_GATEWAYS=braintree,stripe'
      * If the key with current currency will be missing,
      * all payment gateways will be available
-     * Example: ['USD' => ['braintree']]
      */
-    'currency_limited_gateways'             => []
 ];

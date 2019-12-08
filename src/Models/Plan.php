@@ -5,6 +5,7 @@ namespace Ptuchik\Billing\Models;
 use Auth;
 use Currency;
 use Exception;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Ptuchik\Billing\Constants\CouponRedeemType;
 use Ptuchik\Billing\Factory;
@@ -403,7 +404,7 @@ class Plan extends Model
      */
     public function getCurrencyAttribute()
     {
-        return array_get(Currency::getCurrency(), 'code');
+        return Arr::get(Currency::getCurrency(), 'code');
     }
 
     /**
@@ -412,7 +413,7 @@ class Plan extends Model
      */
     public function getCurrencySymbolAttribute()
     {
-        return array_get(Currency::getCurrency(), 'symbol');
+        return Arr::get(Currency::getCurrency(), 'symbol');
     }
 
     /**

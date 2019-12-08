@@ -3,7 +3,7 @@
 namespace Ptuchik\Billing;
 
 use Exception;
-use Ptuchik\Billing\Models\Subscription;
+use Illuminate\Support\Arr;
 use ReflectionClass;
 
 /**
@@ -55,7 +55,7 @@ class Factory
      */
     public static function getClass(string $className) : string
     {
-        if ($class = array_get(static::$solvedClasses, $className)) {
+        if ($class = Arr::get(static::$solvedClasses, $className)) {
             return $class;
         }
 

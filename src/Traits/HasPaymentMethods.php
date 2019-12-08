@@ -4,6 +4,7 @@ namespace Ptuchik\Billing\src\Traits;
 
 use Exception;
 use File;
+use Illuminate\Support\Arr;
 use Ptuchik\Billing\Constants\PaymentMethods;
 use Ptuchik\Billing\Factory;
 use Ptuchik\Billing\Models\PaymentMethod;
@@ -41,7 +42,7 @@ trait HasPaymentMethods
      */
     public function getDefaultTokenAttribute()
     {
-        return array_get($this->paymentProfiles, 'default');
+        return Arr::get($this->paymentProfiles, 'default');
     }
 
     /**
@@ -82,7 +83,7 @@ trait HasPaymentMethods
         $paymentMethods = [];
 
         // If user has no saved payment methods
-        if ($methods = array_get($this->paymentProfiles, 'methods')) {
+        if ($methods = Arr::get($this->paymentProfiles, 'methods')) {
             foreach ($methods as $method) {
                 $paymentMethods[] = Factory::get(PaymentMethod::class, true, $method);
             }
@@ -94,7 +95,7 @@ trait HasPaymentMethods
             $this->paymentProfile;
 
             // Loop through each payment profile and get payment methods
-            foreach (array_get($this->paymentProfiles, 'profiles', []) as $gateway => $profile) {
+            foreach (Arr::get($this->paymentProfiles, 'profiles', []) as $gateway => $profile) {
 
                 // Get payment methods from gateway
                 try {
@@ -137,7 +138,7 @@ trait HasPaymentMethods
             }
         }
 
-        if ($paymentMethod = array_last($paymentMethods)) {
+        if ($paymentMethod = Arr::last($paymentMethods)) {
             return $this->parsePaymentMethod($paymentMethod, true);
         }
     }

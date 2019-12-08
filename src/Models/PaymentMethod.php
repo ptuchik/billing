@@ -2,6 +2,7 @@
 
 namespace Ptuchik\Billing\Models;
 
+use Illuminate\Support\Arr;
 use Ptuchik\Billing\Constants\PaymentMethods;
 use Ptuchik\Billing\Factory;
 
@@ -32,44 +33,44 @@ class PaymentMethod
     {
         $this->type = Factory::getClass(PaymentMethods::class)::CREDIT_CARD;
 
-        if (!is_null($token = array_get($data, 'token'))) {
+        if (!is_null($token = Arr::get($data, 'token'))) {
             $this->token = $token;
         }
 
-        if (!is_null($type = array_get($data, 'type'))) {
+        if (!is_null($type = Arr::get($data, 'type'))) {
             $this->type = $type;
         }
 
-        if (!is_null($last4 = array_get($data, 'last4'))) {
+        if (!is_null($last4 = Arr::get($data, 'last4'))) {
             $this->last4 = $last4;
         }
 
-        if (!is_null($default = array_get($data, 'default'))) {
+        if (!is_null($default = Arr::get($data, 'default'))) {
             $this->default = !empty($default);
         }
 
-        if (!is_null($gateway = array_get($data, 'gateway'))) {
+        if (!is_null($gateway = Arr::get($data, 'gateway'))) {
             $this->gateway = $gateway;
         }
 
-        if (!is_null($description = array_get($data, 'description'))) {
+        if (!is_null($description = Arr::get($data, 'description'))) {
             $this->description = $description;
         }
 
-        if (!is_null($holder = array_get($data, 'holder'))) {
+        if (!is_null($holder = Arr::get($data, 'holder'))) {
             $this->holder = $holder;
         }
 
-        if (!is_null($country = array_get($data, 'country'))) {
+        if (!is_null($country = Arr::get($data, 'country'))) {
             $this->country = $country;
         }
 
-        if (!is_null($zip = array_get($data, 'zip'))) {
+        if (!is_null($zip = Arr::get($data, 'zip'))) {
             $this->zip = $zip;
         }
 
-        if (!is_null($additional = array_get($data, 'additional'))) {
-            $this->additional = array_wrap($additional);
+        if (!is_null($additional = Arr::get($data, 'additional'))) {
+            $this->additional = Arr::wrap($additional);
         }
     }
 
