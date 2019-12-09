@@ -158,7 +158,7 @@ abstract class PackageModel extends Model
      */
     public function validate(Hostable $host, Billable $user = null, $forPurchase = false)
     {
-        if ($this->validations) {
+        if ($forPurchase && $this->validations) {
             Validator::validate(request()->all(), $this->validations);
         }
 
