@@ -655,13 +655,23 @@ abstract class PackageModel extends Model
         // Get purchase
         $purchase = $this->purchase ?? $transaction->purchase;
 
+        // Get user
+        $user = $transaction->user;
+
+        // Get subscription
+        $subscription = $transaction->subscription;
+
         // Define replacements and return
         return [
-            'host'      => $purchase && $purchase->host ? $purchase->host->getRouteKey() : $this->name,
-            'amount'    => $transaction->amount,
-            'package'   => $this->name,
-            'reference' => $purchase && $purchase->reference ? $purchase->reference->getRouteKey() : $this->name,
-            'days'      => $trialDays
+            'host'         => $purchase && $purchase->host ? $purchase->host->getRouteKey() : $this->name,
+            'amount'       => $transaction->amount,
+            'package'      => $this->name,
+            'reference'    => $purchase && $purchase->reference ? $purchase->reference->getRouteKey() : $this->name,
+            'days'         => $trialDays,
+            'firstname'    => $user ? $user->firstName : '',
+            'lastname'     => $user ? $user->lastName : '',
+            'email'        => $user ? $user->email : '',
+            'subscription' => $subscription ? $subscription->id : '',
         ];
     }
 
