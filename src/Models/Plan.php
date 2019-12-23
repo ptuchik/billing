@@ -90,6 +90,7 @@ class Plan extends Model
         'currencySymbol',
         'period',
         'duration',
+        'frequencyLabel',
         'isFree',
         'hasTrial',
         'isRecurring',
