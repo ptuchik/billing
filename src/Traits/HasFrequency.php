@@ -72,9 +72,9 @@ trait HasFrequency
             case $frequencyTypes::LIFETIME:
                 return trans(config('ptuchik-billing.translation_prefixes.general').'.lifetime');
             case $frequencyTypes::MONTHLY:
-                return trans(config('ptuchik-billing.translation_prefixes.general').'.duration.monthly');
+                return trans(config('ptuchik-billing.translation_prefixes.general').'.monthly');
             case $frequencyTypes::YEARLY:
-                return trans(config('ptuchik-billing.translation_prefixes.general').'.duration.yearly');
+                return trans(config('ptuchik-billing.translation_prefixes.general').'.yearly');
             case $frequencyTypes::YEARS:
                 return trans(config('ptuchik-billing.translation_prefixes.general').'.duration.years',
                     ['years' => $this->years]);
