@@ -65,6 +65,7 @@ class Subscription extends Model
         'status',
         'period',
         'duration',
+        'frequencyLabel',
         'daysLeft',
         'autoRenew',
         'expirationDateFormatted',
