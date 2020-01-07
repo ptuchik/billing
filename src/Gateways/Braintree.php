@@ -243,6 +243,11 @@ class Braintree implements PaymentGateway
         // Set transaction ID from $order if provided
         if ($order) {
             $purchaseData->setTransactionId($order->id);
+
+            // If there is a plan, use plan name as purchase description
+            if ($plan = $order->getPlan()) {
+                $purchaseData->setDescription($plan->name);
+            }
         }
 
         // Set amount
