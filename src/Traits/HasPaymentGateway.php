@@ -108,20 +108,14 @@ trait HasPaymentGateway
     protected function checkGatewayAvailability($gateway)
     {
         // If current currency has limited gateways
-        if ($gateways = explode(',', env(Currency::getUserCurrency().'_GATEWAYS', ''))) {
-
-            // If user's gateway exists among currency limited gateways, return it
-            if (in_array($gateway, $gateways)) {
-                return $gateway;
-
-                // Otherwise return the first gateway from the list
-            } else {
-                return Arr::first($gateways);
-            }
-
-            // Otherwise return user's gateway
+        if ($availableGateways = env(Currency::getUserCurrency().'_GATEWAYS')) {
+            $gateways = explode(',', $availableGateways);
         } else {
-            return $gateway;
+            $gateways = array_keys(config('ptuchik-billing.gateways'));
         }
+
+        // If user's gateway exists among currency limited gateways, return it,
+        // otherwise return the first gateway from the list
+        return in_array($gateway, $gateways) ? $gateway : Arr::first($gateways);
     }
 }
