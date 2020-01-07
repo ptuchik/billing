@@ -179,6 +179,12 @@ class Plan extends Model
     public $payment;
 
     /**
+     * Order of purchase
+     * @var
+     */
+    public $order;
+
+    /**
      * Plan constructor.
      *
      * @param array $attributes

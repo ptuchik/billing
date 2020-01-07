@@ -283,6 +283,9 @@ trait PurchaseLogic
             $this->payment = $payment;
         }
 
+        // Add order to plan
+        $this->order = $order;
+
         return $this->processPurchase();
 
     }
