@@ -7,6 +7,7 @@ use Currency;
 use Exception;
 use Omnipay\Common\Message\ResponseInterface;
 use Ptuchik\Billing\Constants\CouponRedeemType;
+use Ptuchik\Billing\Constants\OrderAction;
 use Ptuchik\Billing\Constants\TransactionStatus;
 use Ptuchik\Billing\Contracts\Hostable;
 use Ptuchik\Billing\Event;
@@ -180,6 +181,10 @@ trait PurchaseLogic
     {
         // If plan is in renew mode, jump to make purchase
         if ($this->inRenewMode) {
+            if ($order) {
+                $order->action = Factory::getClass(OrderAction::class)::RENEW;
+            }
+
             return $this->makePurchase($payment, $order);
         }
 
@@ -198,7 +203,6 @@ trait PurchaseLogic
                         // Call subscription's renew
                         return $subscription->renew($payment, $order);
                     } else {
-
                         // Otherwise switch subscriptions billing frequency and price
                         return $subscription->switchFrequency($this);
                     }
@@ -274,6 +278,9 @@ trait PurchaseLogic
 
             // If there is order, set trial status
             if ($order) {
+                if ($this->previousSubscription) {
+                    $order->action = Factory::getClass(OrderAction::class)::UPGRADE;
+                }
                 $order->setParam('trial', $this->hasTrial);
             }
 

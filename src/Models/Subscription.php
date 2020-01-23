@@ -682,7 +682,7 @@ class Subscription extends Model
             $order->user()->associate(Auth::user() ?? $this->user);
             $order->host()->associate($this->host ?? Auth::user());
             $order->reference()->associate($this);
-            $order->action = Factory::getClass(OrderAction::class)::CHECKOUT;
+            $order->action = Factory::getClass(OrderAction::class)::RENEW;
             $order->save();
         }
 
