@@ -181,10 +181,6 @@ trait PurchaseLogic
     {
         // If plan is in renew mode, jump to make purchase
         if ($this->inRenewMode) {
-            if ($order) {
-                $order->action = Factory::getClass(OrderAction::class)::RENEW;
-            }
-
             return $this->makePurchase($payment, $order);
         }
 
@@ -278,7 +274,9 @@ trait PurchaseLogic
 
             // If there is order, set trial status
             if ($order) {
-                if ($this->previousSubscription) {
+                if ($this->inRenewMode) {
+                    $order->action = Factory::getClass(OrderAction::class)::RENEW;
+                } elseif ($this->previousSubscription) {
                     $order->action = Factory::getClass(OrderAction::class)::UPGRADE;
                 }
                 $order->setParam('trial', $this->hasTrial);
