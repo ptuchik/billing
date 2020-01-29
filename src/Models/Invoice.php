@@ -28,6 +28,9 @@ class Invoice
     public function __construct(Plan $plan = null, Transaction $transaction)
     {
         if ($transaction->exists) {
+
+            $data = [];
+
             if ($transaction->paymentMethod) {
                 $data['payment']['description'] = $transaction->paymentMethod->description;
             }
