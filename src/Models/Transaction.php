@@ -124,7 +124,11 @@ class Transaction extends Model
             return null;
         }
 
-        return unserialize($this->data);
+        try {
+            return unserialize($this->data);
+        } catch (Throwable $exception) {
+            return null;
+        }
     }
 
     /**
