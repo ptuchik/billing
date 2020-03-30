@@ -98,7 +98,7 @@ trait Billable
      */
     public function purchase($amount, $description = null, Order $order = null, $gateway = null)
     {
-        $paymentGateway = $this->getPaymentGateway($gateway ?: Request::input('gateway'));
+        $paymentGateway = $this->getPaymentGateway($gateway);
 
         // Update purchase amount in order
         if ($order) {
@@ -116,7 +116,7 @@ trait Billable
 
             return $this->handleRedirect($purchase, $order);
         } elseif (Request::filled('nonce')) {
-            $paymentGateway->createPaymentMethod(Request::input('nonce'), $order);
+            $this->createPaymentMethod(Request::input('nonce'), $gateway);
         }
 
         return null;

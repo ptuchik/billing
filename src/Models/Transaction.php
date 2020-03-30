@@ -116,7 +116,7 @@ class Transaction extends Model
 
     /**
      * Get transaction data
-     * @return \Braintree\Transaction|mixed
+     * @return mixed
      */
     public function getData()
     {
