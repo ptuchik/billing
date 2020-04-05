@@ -644,6 +644,7 @@ class Subscription extends Model
                 $plan->agreementText = $this->agreementText;
             }
             $plan->cardRequired = true;
+            $plan->comingSoon = false;
             $plan->host = $this->purchase->host;
             $plan->price = $this->price;
             $plan->trialDays = 0;

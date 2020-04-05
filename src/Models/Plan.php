@@ -100,6 +100,7 @@ class Plan extends Model
         'recommended',
         'popular',
         'cardRequired',
+        'comingSoon',
         'error',
         'upgradable'
     ];
@@ -270,6 +271,25 @@ class Plan extends Model
     public function getCardRequiredAttribute()
     {
         return !empty($this->getParam('cardRequired'));
+    }
+
+    /**
+     * Coming soon attribute setter
+     *
+     * @param $value
+     */
+    public function setComingSoonAttribute($value)
+    {
+        $this->setParam('comingSoon', !empty($value));
+    }
+
+    /**
+     * Coming soon attribute getter
+     * @return bool
+     */
+    public function getComingSoonAttribute()
+    {
+        return !empty($this->getParam('comingSoon'));
     }
 
     /**
