@@ -3,6 +3,7 @@
 namespace Ptuchik\Billing\AbstractClassess;
 
 use Agent;
+use Illuminate\Support\Str;
 use Ptuchik\Billing\Constants\ConfirmationType;
 use Ptuchik\Billing\Constants\PlanVisibility;
 use Ptuchik\Billing\Contracts\Billable;
@@ -19,7 +20,6 @@ use Ptuchik\CoreUtilities\Models\Model;
 use Ptuchik\CoreUtilities\Traits\HasIcon;
 use Ptuchik\CoreUtilities\Traits\HasParams;
 use Request;
-use Throwable;
 use Validator;
 
 /**
@@ -275,7 +275,7 @@ abstract class PackageModel extends Model
      */
     public function getTypeAttribute()
     {
-        return snake_case(class_basename(static::class));
+        return Str::snake(class_basename(static::class));
     }
 
     /**
