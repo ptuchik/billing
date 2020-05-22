@@ -7,6 +7,7 @@ use Ptuchik\Billing\Factory;
 
 /**
  * Trait HasFrequency - adds period and duration to model
+ *
  * @package Ptuchik\Billing\Traits
  */
 trait HasFrequency
@@ -17,6 +18,7 @@ trait HasFrequency
 
     /**
      * Period attribute getter
+     *
      * @return array|\Illuminate\Contracts\Translation\Translator|null|string
      */
     public function getPeriodAttribute()
@@ -40,6 +42,7 @@ trait HasFrequency
 
     /**
      * Duration attribute getter
+     *
      * @return array|\Illuminate\Contracts\Translation\Translator|null|string
      */
     public function getDurationAttribute()
@@ -63,6 +66,7 @@ trait HasFrequency
 
     /**
      * Frequency label attribute getter
+     *
      * @return array|\Illuminate\Contracts\Translation\Translator|null|string
      */
     public function getFrequencyLabelAttribute()
@@ -86,6 +90,7 @@ trait HasFrequency
 
     /**
      * Parse billing frequency
+     *
      * @return mixed
      */
     protected function parseFrequency()

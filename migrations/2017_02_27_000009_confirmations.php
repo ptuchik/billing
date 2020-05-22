@@ -10,6 +10,7 @@ class Confirmations extends Migration
 {
     /**
      * Run the migrations.
+     *
      * @return void
      */
     public function up()
@@ -32,6 +33,7 @@ class Confirmations extends Migration
 
     /**
      * Reverse the migrations.
+     *
      * @return void
      */
     public function down()

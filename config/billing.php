@@ -136,6 +136,7 @@ return [
 
     /**
      * Add here gateway mappings to Omnipay gateways
+     *
      * @class  -   Payment Gateway class fully qualified name,
      *             which has to implement \Ptuchik\Billing\Contracts\PaymentGateway interface
      * @driver -   Omnipay driver class fully qualified name

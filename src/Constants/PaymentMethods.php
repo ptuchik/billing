@@ -6,6 +6,7 @@ use Ptuchik\CoreUtilities\AbstractClasses\AbstractTypes;
 
 /**
  * Class PaymentMethods
+ *
  * @package Ptuchik\Billing\Constants
  */
 class PaymentMethods extends AbstractTypes

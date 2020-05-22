@@ -6,6 +6,7 @@ use Ptuchik\CoreUtilities\AbstractClasses\AbstractTypes;
 
 /**
  * Class SubscriptionStatus
+ *
  * @package Ptuchik\Billing\Constants
  */
 class SubscriptionStatus extends AbstractTypes

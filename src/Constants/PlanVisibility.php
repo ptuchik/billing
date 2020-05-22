@@ -6,6 +6,7 @@ use Ptuchik\CoreUtilities\AbstractClasses\AbstractTypes;
 
 /**
  * Class PlanVisibility
+ *
  * @package App
  */
 class PlanVisibility extends AbstractTypes

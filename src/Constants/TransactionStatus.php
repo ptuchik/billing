@@ -6,6 +6,7 @@ use Ptuchik\CoreUtilities\AbstractClasses\AbstractTypes;
 
 /**
  * Class TransactionStatus
+ *
  * @package Ptuchik\Billing\Constants
  */
 class TransactionStatus extends AbstractTypes

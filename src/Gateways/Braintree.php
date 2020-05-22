@@ -23,6 +23,7 @@ use Throwable;
 
 /**
  * Class Braintree
+ *
  * @package Ptuchik\Billing\Gateways
  */
 class Braintree implements PaymentGateway
@@ -41,6 +42,7 @@ class Braintree implements PaymentGateway
 
     /**
      * App\User
+     *
      * @var
      */
     protected $user;
@@ -74,6 +76,7 @@ class Braintree implements PaymentGateway
 
     /**
      * Create payment profile
+     *
      * @return mixed
      */
     public function createPaymentProfile()
@@ -85,6 +88,7 @@ class Braintree implements PaymentGateway
 
     /**
      * Update payment profile
+     *
      * @return mixed
      */
     public function updatePaymentProfile()
@@ -95,6 +99,7 @@ class Braintree implements PaymentGateway
 
     /**
      * Find customer by profile
+     *
      * @return mixed
      */
     public function findCustomer()
@@ -137,6 +142,7 @@ class Braintree implements PaymentGateway
 
     /**
      * Get payment methods
+     *
      * @return array
      */
     public function getPaymentMethods() : array
@@ -186,6 +192,7 @@ class Braintree implements PaymentGateway
 
     /**
      * Get payment token
+     *
      * @return mixed
      */
     public function getPaymentToken()
@@ -425,6 +432,7 @@ class Braintree implements PaymentGateway
 
     /**
      * Get customer data
+     *
      * @return array
      */
     protected function getCustomerData($addAddress = true)

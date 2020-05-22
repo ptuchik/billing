@@ -7,6 +7,7 @@ class Features extends Migration
 {
     /**
      * Run the migrations.
+     *
      * @return void
      */
     public function up()
@@ -29,6 +30,7 @@ class Features extends Migration
 
     /**
      * Reverse the migrations.
+     *
      * @return void
      */
     public function down()

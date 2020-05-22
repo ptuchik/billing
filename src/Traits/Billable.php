@@ -20,6 +20,7 @@ use Response;
 
 /**
  * Trait Billable - Adds billing related methods
+ *
  * @package App\Traits
  */
 trait Billable
@@ -182,6 +183,7 @@ trait Billable
 
     /**
      * Subscriptions
+     *
      * @return mixed
      */
     public function subscriptions()
@@ -191,6 +193,7 @@ trait Billable
 
     /**
      * Get user subscriptions
+     *
      * @return mixed
      */
     public function getSubscriptions()
@@ -218,6 +221,7 @@ trait Billable
 
     /**
      * Transactions
+     *
      * @return mixed
      */
     public function transactions()

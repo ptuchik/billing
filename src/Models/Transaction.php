@@ -10,44 +10,48 @@ use Throwable;
 
 /**
  * Class Transaction
+ *
  * @package App
  */
 class Transaction extends Model
 {
     /**
      * Make transaction name translatable
+     *
      * @var array
      */
     public $translatable = ['name'];
 
     /**
      * Unsanitize following items
+     *
      * @var array
      */
     protected $unsanitized = ['name', 'data', 'message'];
 
     /**
      * Hide sensitive data
+     *
      * @var array
      */
     protected $hidden = ['data'];
 
     /**
      * Cast following attributes
+     *
      * @var array
      */
     protected $casts = [
-        'id'              => 'integer',
-        'purchase_id'     => 'integer',
-        'subscription_id' => 'integer',
-        'user_id'         => 'integer',
-        'status'          => 'integer',
-        'coupons'         => 'array',
-        'params'          => 'array',
+        'id'      => 'integer',
+        'user_id' => 'integer',
+        'status'  => 'integer',
+        'coupons' => 'array',
+        'params'  => 'array',
     ];
 
     /**
      * Append following attributes
+     *
      * @var array
      */
     protected $appends = [
@@ -73,6 +77,7 @@ class Transaction extends Model
 
     /**
      * Get discounts attribute
+     *
      * @return static
      */
     public function getDiscountsAttribute()
@@ -88,6 +93,7 @@ class Transaction extends Model
 
     /**
      * Purchase relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      * @throws \Exception
      */
@@ -98,6 +104,7 @@ class Transaction extends Model
 
     /**
      * User relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function user()
@@ -107,6 +114,7 @@ class Transaction extends Model
 
     /**
      * Subscription relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function subscription()
@@ -116,6 +124,7 @@ class Transaction extends Model
 
     /**
      * Get transaction data
+     *
      * @return mixed
      */
     public function getData()
@@ -157,6 +166,7 @@ class Transaction extends Model
 
     /**
      * Payment method attribute getter
+     *
      * @return object
      */
     public function getPaymentMethodAttribute()

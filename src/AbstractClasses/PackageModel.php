@@ -24,6 +24,7 @@ use Validator;
 
 /**
  * Class PackageModel - all package models have to extend this model
+ *
  * @package Ptuchik\Billing\Models
  */
 abstract class PackageModel extends Model
@@ -33,6 +34,7 @@ abstract class PackageModel extends Model
 
     /**
      * Exclude following attributes from sanitizing
+     *
      * @var array
      */
     protected $unsanitized = [
@@ -44,6 +46,7 @@ abstract class PackageModel extends Model
 
     /**
      * Make following attributes translatable
+     *
      * @var array
      */
     public $translatable = [
@@ -55,6 +58,7 @@ abstract class PackageModel extends Model
 
     /**
      * Cast following attributes
+     *
      * @var array
      */
     protected $casts = [
@@ -66,6 +70,7 @@ abstract class PackageModel extends Model
 
     /**
      * Append following attributes
+     *
      * @var array
      */
     protected $appends = [
@@ -75,6 +80,7 @@ abstract class PackageModel extends Model
 
     /**
      * Hide following attributes and relations
+     *
      * @var array
      */
     protected $hidden = [
@@ -86,30 +92,35 @@ abstract class PackageModel extends Model
 
     /**
      * Optional additional casts to use in child models
+     *
      * @var array
      */
     protected $additionalCasts = [];
 
     /**
      * Optional additional translatable attributes to use in child models
+     *
      * @var array
      */
     protected $additionalTranslatable = [];
 
     /**
      * Package specific validations
+     *
      * @var array
      */
     protected $validations = [];
 
     /**
      * Referenced purchase
+     *
      * @var
      */
     public $purchase;
 
     /**
      * Get the route key for the model.
+     *
      * @return string
      */
     public function getRouteKeyName()
@@ -119,6 +130,7 @@ abstract class PackageModel extends Model
 
     /**
      * Get the casts array.
+     *
      * @return array
      */
     public function getCasts() : array
@@ -131,6 +143,7 @@ abstract class PackageModel extends Model
 
     /**
      * Get package descriptor for purchase to show on transaction statement
+     *
      * @return mixed
      */
     public function getDescriptorAttribute()
@@ -140,6 +153,7 @@ abstract class PackageModel extends Model
 
     /**
      * Get validations
+     *
      * @return array
      */
     public function getValidationsAttribute()
@@ -180,6 +194,7 @@ abstract class PackageModel extends Model
 
     /**
      * All plans relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\MorphMany
      */
     public function allPlans()
@@ -190,6 +205,7 @@ abstract class PackageModel extends Model
 
     /**
      * Plans relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\MorphMany
      */
     public function plans()
@@ -233,6 +249,7 @@ abstract class PackageModel extends Model
      * Calculate and set current attribute on plans. Needs to call purchases
      * and subscriptions relations on this package for desired host
      * to have correct results here
+     *
      * @return $this
      */
     public function setCurrentPlan()
@@ -262,6 +279,7 @@ abstract class PackageModel extends Model
 
     /**
      * Has permissions attribute getter
+     *
      * @return bool
      */
     public function getHasPermissionsAttribute()
@@ -271,6 +289,7 @@ abstract class PackageModel extends Model
 
     /**
      * Type attribute getter - getting package snake_cased type from class
+     *
      * @return \Illuminate\Contracts\Translation\Translator|mixed|string
      */
     public function getTypeAttribute()
@@ -280,6 +299,7 @@ abstract class PackageModel extends Model
 
     /**
      * Type name attribute getter - getting type name translated
+     *
      * @return \Illuminate\Contracts\Translation\Translator|mixed|string
      */
     public function getTypeNameAttribute()
@@ -322,6 +342,7 @@ abstract class PackageModel extends Model
 
     /**
      * Purchases relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\MorphMany
      */
     public function purchases()
@@ -331,6 +352,7 @@ abstract class PackageModel extends Model
 
     /**
      * Subscriptions relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough
      */
     public function subscriptions()
@@ -565,6 +587,7 @@ abstract class PackageModel extends Model
 
     /**
      * Has many confirmations
+     *
      * @return \Illuminate\Database\Eloquent\Relations\MorphMany
      */
     public function confirmations()
@@ -643,6 +666,18 @@ abstract class PackageModel extends Model
     }
 
     /**
+     * Get pending confirmation for package
+     *
+     * @param \Ptuchik\Billing\Models\Transaction $transaction
+     *
+     * @return \Ptuchik\Billing\AbstractClassess\PackageModel
+     */
+    public function getPendingConfirmation(Transaction $transaction)
+    {
+        return $this->getConfirmation($transaction, Factory::getClass(ConfirmationType::class)::PENDING);
+    }
+
+    /**
      * Get variables key => value pair array for confirmation to be replaced before rendering
      *
      * @param \Ptuchik\Billing\Models\Transaction $transaction
@@ -677,6 +712,7 @@ abstract class PackageModel extends Model
 
     /**
      * Delete package
+     *
      * @return bool|null
      */
     public function delete()
@@ -694,6 +730,7 @@ abstract class PackageModel extends Model
 
     /**
      * Package Features relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\morphToMany
      */
     public function features()

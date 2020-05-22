@@ -6,6 +6,7 @@ use Ptuchik\CoreUtilities\AbstractClasses\AbstractTypes;
 
 /**
  * Class ConfirmationType
+ *
  * @package Ptuchik\Billing\Constants
  */
 class ConfirmationType extends AbstractTypes
@@ -13,4 +14,5 @@ class ConfirmationType extends AbstractTypes
     const PAID = 1;
     const TRIAL = 2;
     const FREE = 3;
+    const PENDING = 4;
 }

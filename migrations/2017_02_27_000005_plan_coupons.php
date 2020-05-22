@@ -7,6 +7,7 @@ class PlanCoupons extends Migration
 {
     /**
      * Run the migrations.
+     *
      * @return void
      */
     public function up()
@@ -23,6 +24,7 @@ class PlanCoupons extends Migration
 
     /**
      * Reverse the migrations.
+     *
      * @return void
      */
     public function down()

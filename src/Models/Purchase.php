@@ -10,36 +10,27 @@ use Ptuchik\CoreUtilities\Models\Model;
 
 /**
  * Class Purchase
+ *
  * @package App
  */
 class Purchase extends Model
 {
     /**
      * Make purchase name translatable
+     *
      * @var array
      */
     public $translatable = ['name'];
 
     /**
      * Cast following attributes
+     *
      * @var array
      */
     protected $casts = [
-        'id'           => 'integer',
-        'host_id'      => 'integer',
-        'package_id'   => 'integer',
-        'reference_id' => 'integer',
-        'active'       => 'boolean',
-        'data'         => 'array'
-    ];
-
-    /**
-     * TODO added because of Eloquent's latest issue with nullable polymorphic relations
-     * @var array
-     */
-    protected $with = [
-        'reference',
-        'host'
+        'id'     => 'integer',
+        'active' => 'boolean',
+        'data'   => 'array'
     ];
 
     /**
@@ -62,6 +53,7 @@ class Purchase extends Model
 
     /**
      * Identifier attribute getter
+     *
      * @return mixed
      */
     public function getIdentifierAttribute()
@@ -71,6 +63,7 @@ class Purchase extends Model
 
     /**
      * Package relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\MorphTo
      */
     public function package()
@@ -80,6 +73,7 @@ class Purchase extends Model
 
     /**
      * Reference relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\MorphTo
      */
     public function reference()
@@ -89,6 +83,7 @@ class Purchase extends Model
 
     /**
      * Host relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\MorphTo
      */
     public function host()
@@ -98,6 +93,7 @@ class Purchase extends Model
 
     /**
      * Transations relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function transactions()
@@ -107,6 +103,7 @@ class Purchase extends Model
 
     /**
      * Subscriptions relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function subscriptions()
@@ -116,6 +113,7 @@ class Purchase extends Model
 
     /**
      * Subscription relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
     public function subscription()
@@ -194,6 +192,7 @@ class Purchase extends Model
 
     /**
      * Unsubscribe
+     *
      * @return bool
      */
     public function unsubscribe()

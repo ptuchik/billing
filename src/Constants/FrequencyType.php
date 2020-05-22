@@ -6,6 +6,7 @@ use Ptuchik\CoreUtilities\AbstractClasses\AbstractTypes;
 
 /**
  * Class FrequencyType
+ *
  * @package Ptuchik\Billing\Constants
  */
 class FrequencyType extends AbstractTypes
