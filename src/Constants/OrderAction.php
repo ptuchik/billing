@@ -6,6 +6,7 @@ use Ptuchik\CoreUtilities\AbstractClasses\AbstractTypes;
 
 /**
  * Class OrderAction
+ *
  * @package Ptuchik\Billing\Constants
  */
 class OrderAction extends AbstractTypes

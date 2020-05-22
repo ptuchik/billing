@@ -10,12 +10,14 @@ use Ptuchik\Billing\Contracts\Hostable as HostableContract;
 
 /**
  * Trait HasCoupons
+ *
  * @package Ptuchik\Billing\src\Traits
  */
 trait HasCoupons
 {
     /**
      * Get user coupons
+     *
      * @return array
      */
     public function getCoupons()

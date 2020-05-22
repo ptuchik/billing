@@ -8,6 +8,7 @@ use Ptuchik\CoreUtilities\Traits\HasParams;
 
 /**
  * Class Features
+ *
  * @package Ptuchik\Billing\Models
  */
 class Feature extends Model
@@ -23,6 +24,7 @@ class Feature extends Model
 
     /**
      * Cast following attributes
+     *
      * @var array
      */
     protected $casts = [
@@ -32,6 +34,7 @@ class Feature extends Model
 
     /**
      * Get group with features
+     *
      * @var array
      */
     protected $with = [
@@ -40,6 +43,7 @@ class Feature extends Model
 
     /**
      * Make following attributes translatable
+     *
      * @var array
      */
     public $translatable = [
@@ -49,6 +53,7 @@ class Feature extends Model
 
     /**
      * Hide dates
+     *
      * @var array
      */
     protected $hidden = [
@@ -58,6 +63,7 @@ class Feature extends Model
 
     /**
      * Plans relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
     public function plans()
@@ -67,6 +73,7 @@ class Feature extends Model
 
     /**
      * Group relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function group()

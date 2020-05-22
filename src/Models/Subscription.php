@@ -19,6 +19,7 @@ use Throwable;
 
 /**
  * Class Subscription
+ *
  * @package Ptuchik\Billing\Models
  */
 class Subscription extends Model
@@ -30,18 +31,21 @@ class Subscription extends Model
 
     /**
      * Make params unsanitized
+     *
      * @var array
      */
     protected $unsanitized = ['params'];
 
     /**
      * Make subscription name translatable
+     *
      * @var array
      */
     public $translatable = ['name'];
 
     /**
      * Cast following attributes
+     *
      * @var array
      */
     protected $casts = [
@@ -56,6 +60,7 @@ class Subscription extends Model
 
     /**
      * Append following attributes
+     *
      * @var array
      */
     protected $appends = [
@@ -76,6 +81,7 @@ class Subscription extends Model
 
     /**
      * Hide sensitive data
+     *
      * @var array
      */
     protected $hidden = [
@@ -85,30 +91,35 @@ class Subscription extends Model
 
     /**
      * Eager load last transaction to check whether subscription had payment issue
+     *
      * @var array
      */
     protected $with = ['lastTransaction'];
 
     /**
      * Current plan of subscription
+     *
      * @var
      */
     public $currentPlan;
 
     /**
      * Renew attempt count
+     *
      * @var int
      */
     public $attempt = 1;
 
     /**
      * Last attempt indicator
+     *
      * @var bool
      */
     public $lastAttempt = false;
 
     /**
      * Adds autorenew attribute getter
+     *
      * @return bool
      */
     public function getAutoRenewAttribute()
@@ -118,6 +129,7 @@ class Subscription extends Model
 
     /**
      * Check if subscription has active user
+     *
      * @return bool
      */
     public function hasActiveUser()
@@ -127,6 +139,7 @@ class Subscription extends Model
 
     /**
      * Discounts attribute getter
+     *
      * @return static
      */
     public function getDiscountsAttribute()
@@ -142,6 +155,7 @@ class Subscription extends Model
 
     /**
      * Addon coupons attribute getter
+     *
      * @return static
      */
     public function getAddonCouponsAttribute()
@@ -157,6 +171,7 @@ class Subscription extends Model
 
     /**
      * Discount attribute getter
+     *
      * @return int
      */
     public function getDiscountAttribute()
@@ -177,6 +192,7 @@ class Subscription extends Model
 
     /**
      * Summary attribute getter
+     *
      * @return mixed
      */
     public function getSummaryAttribute()
@@ -191,6 +207,7 @@ class Subscription extends Model
 
     /**
      * Remove non prorate coupons
+     *
      * @return $this
      */
     public function removeNonProrateCoupons()
@@ -206,6 +223,7 @@ class Subscription extends Model
 
     /**
      * Has payment issue attribute getter, checks if subscription had payment issue on last attempt
+     *
      * @return bool
      */
     public function getHasPaymentIssueAttribute()
@@ -226,6 +244,7 @@ class Subscription extends Model
 
     /**
      * Adds expiration date formatted attribute to subscription
+     *
      * @return null|string
      */
     public function getExpirationDateFormattedAttribute()
@@ -239,6 +258,7 @@ class Subscription extends Model
 
     /**
      * Purchase relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function purchase()
@@ -248,6 +268,7 @@ class Subscription extends Model
 
     /**
      * User relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function user()
@@ -257,6 +278,7 @@ class Subscription extends Model
 
     /**
      * Host attribute getter
+     *
      * @return mixed
      */
     public function getHostAttribute()
@@ -266,6 +288,7 @@ class Subscription extends Model
 
     /**
      * Reference attribute getter
+     *
      * @return mixed
      */
     public function getReferenceAttribute()
@@ -309,6 +332,7 @@ class Subscription extends Model
 
     /**
      * Currency symbol attribute getter
+     *
      * @return \Illuminate\Config\Repository|mixed
      */
     public function getCurrencySymbolAttribute()
@@ -318,6 +342,7 @@ class Subscription extends Model
 
     /**
      * Transactions relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function transactions()
@@ -327,6 +352,7 @@ class Subscription extends Model
 
     /**
      * Last transaction relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
     public function lastTransaction()
@@ -336,6 +362,7 @@ class Subscription extends Model
 
     /**
      * Determine if the subscription is within its trial period
+     *
      * @return bool
      */
     public function onTrial()
@@ -346,6 +373,7 @@ class Subscription extends Model
 
     /**
      * Determine if the subscription is within its grace period after cancellation
+     *
      * @return bool
      */
     public function onGracePeriod()
@@ -357,6 +385,7 @@ class Subscription extends Model
 
     /**
      * Mark subscription as active
+     *
      * @return bool
      */
     public function markAsActive()
@@ -370,6 +399,7 @@ class Subscription extends Model
 
     /**
      * Mark the subscription as expired
+     *
      * @return bool
      */
     public function markAsExpired()
@@ -383,6 +413,7 @@ class Subscription extends Model
 
     /**
      * Expire subscription
+     *
      * @return bool
      */
     public function expireNow()
@@ -394,6 +425,7 @@ class Subscription extends Model
 
     /**
      * Cancel subscription
+     *
      * @return bool
      */
     public function cancelNow()
@@ -447,6 +479,7 @@ class Subscription extends Model
 
     /**
      * Determine if the subscription is active
+     *
      * @return bool
      */
     public function isActive()
@@ -456,6 +489,7 @@ class Subscription extends Model
 
     /**
      * Status attribute getter
+     *
      * @return mixed
      */
     public function getStatusAttribute()
@@ -483,6 +517,7 @@ class Subscription extends Model
 
     /**
      * Features attribute getter
+     *
      * @return string
      */
     public function getFeaturesAttribute()
@@ -492,6 +527,7 @@ class Subscription extends Model
 
     /**
      * Agreement text attribute getter
+     *
      * @return string
      */
     public function getAgreementTextAttribute()
@@ -507,6 +543,7 @@ class Subscription extends Model
 
     /**
      * Days left attribute getter
+     *
      * @return float|int
      */
     public function getDaysLeftAttribute()
@@ -518,6 +555,7 @@ class Subscription extends Model
 
     /**
      * Price per day attribute getter
+     *
      * @return float|int
      */
     public function getPricePerDayAttribute()
@@ -528,6 +566,7 @@ class Subscription extends Model
 
     /**
      * Balance left attribute getter
+     *
      * @return float|int
      */
     public function getBalanceLeftAttribute()
@@ -555,6 +594,7 @@ class Subscription extends Model
 
     /**
      * Get subscription's payment method
+     *
      * @return mixed
      */
     public function getPaymentMethod()
@@ -582,6 +622,7 @@ class Subscription extends Model
 
     /**
      * Package attribute getter
+     *
      * @return mixed
      */
     public function getPackageAttribute()
@@ -611,6 +652,7 @@ class Subscription extends Model
 
     /**
      * Original plan relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function originalPlan()
@@ -620,6 +662,7 @@ class Subscription extends Model
 
     /**
      * Plan attribute getter
+     *
      * @return mixed|\Ptuchik\Billing\Models\Plan
      */
     public function getPlanAttribute()
@@ -756,6 +799,7 @@ class Subscription extends Model
 
     /**
      * Deactivate subscription
+     *
      * @return mixed
      */
     public function deactivate()

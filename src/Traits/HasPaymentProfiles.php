@@ -6,6 +6,7 @@ use Illuminate\Support\Arr;
 
 /**
  * Trait HasPaymentProfiles
+ *
  * @package Ptuchik\Billing\src\Traits
  */
 trait HasPaymentProfiles
@@ -41,6 +42,7 @@ trait HasPaymentProfiles
 
     /**
      * Payment profile attribute getter
+     *
      * @return mixed
      */
     public function getPaymentProfileAttribute()
@@ -67,6 +69,7 @@ trait HasPaymentProfiles
 
     /**
      * Create payment profile
+     *
      * @return mixed
      */
     protected function createPaymentProfile()
@@ -82,6 +85,7 @@ trait HasPaymentProfiles
 
     /**
      * Remove customer's payment profile
+     *
      * @return mixed
      */
     public function removePaymentProfile()

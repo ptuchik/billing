@@ -9,6 +9,7 @@ use Request;
 
 /**
  * Trait HasPaymentGateway
+ *
  * @package Ptuchik\Billing\src\Traits
  */
 trait HasPaymentGateway
@@ -17,12 +18,14 @@ trait HasPaymentGateway
 
     /**
      * Payment gateway
+     *
      * @var \Ptuchik\Billing\Contracts\PaymentGateway
      */
     protected $gateway;
 
     /**
      * Payment gateway name
+     *
      * @var string
      */
     protected $gatewayName;

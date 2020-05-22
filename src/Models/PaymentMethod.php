@@ -8,6 +8,7 @@ use Ptuchik\Billing\Factory;
 
 /**
  * Class PaymentMethod
+ *
  * @package Ptuchik\Billing\Models
  */
 class PaymentMethod
@@ -76,6 +77,7 @@ class PaymentMethod
 
     /**
      * Convert instance to array
+     *
      * @return array
      */
     public function toArray()
@@ -96,6 +98,7 @@ class PaymentMethod
 
     /**
      * Convert instance to JSON
+     *
      * @return false|string
      */
     public function toJson()

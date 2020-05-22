@@ -21,6 +21,7 @@ use Throwable;
 
 /**
  * Trait PurchaseLogic - to add purchase logic to plan model
+ *
  * @package Ptuchik\Billing\Traits
  */
 trait PurchaseLogic
@@ -105,6 +106,7 @@ trait PurchaseLogic
 
     /**
      * Calculate trial for given host
+     *
      * @return bool
      */
     public function calculateTrial()
@@ -297,6 +299,7 @@ trait PurchaseLogic
 
     /**
      * Process purchase
+     *
      * @return mixed|\Ptuchik\Billing\Models\Invoice
      * @throws \Exception
      */
@@ -337,6 +340,7 @@ trait PurchaseLogic
 
     /**
      * Process subscription if needed
+     *
      * @return mixed|null
      */
     protected function processSubscription()
@@ -365,6 +369,7 @@ trait PurchaseLogic
 
     /**
      * Create subscription
+     *
      * @return mixed
      */
     protected function subscribe()
@@ -375,6 +380,7 @@ trait PurchaseLogic
 
     /**
      * Unsubscribe
+     *
      * @return mixed
      */
     protected function unsubscribe()
@@ -385,6 +391,7 @@ trait PurchaseLogic
 
     /**
      * If there is a payment, refund the user
+     *
      * @return mixed
      */
     protected function refund()
@@ -471,7 +478,7 @@ trait PurchaseLogic
         $transaction->save();
 
         // Finally if payment was not successful throw an exception with error message
-        if (!$this->payment->isSuccessful()) {
+        if ($transaction->status == $transactionStatus::FAILED) {
 
             // If payment failed, fire a failed purchase event
             Event::purchaseFailed($this, $transaction);
@@ -484,6 +491,7 @@ trait PurchaseLogic
 
     /**
      * Activate existing purchase and return last invoice
+     *
      * @return mixed|\Ptuchik\Billing\Models\Invoice
      */
     protected function useExistingPurchase()

@@ -17,7 +17,8 @@ class PlanFeatures extends Migration
                 $table->unsignedInteger('feature_id');
                 $table->unsignedInteger('plan_id');
                 $table->text('limit')->nullable();
-                $table->foreign('feature_id')->references('id')->on('features')->onUpdate('cascade')->onDelete('cascade');
+                $table->foreign('feature_id')->references('id')->on('features')->onUpdate('cascade')
+                    ->onDelete('cascade');
                 $table->foreign('plan_id')->references('id')->on('plans')->onUpdate('cascade')->onDelete('cascade');
             });
         }

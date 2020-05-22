@@ -18,6 +18,7 @@ use Request;
 
 /**
  * Class Plan
+ *
  * @package Ptuchik\Billing\Models
  */
 class Plan extends Model
@@ -29,6 +30,7 @@ class Plan extends Model
 
     /**
      * Indicates if the plan is upgradable or not
+     *
      * @var bool
      */
     protected $isUpgradable = true;
@@ -42,6 +44,7 @@ class Plan extends Model
 
     /**
      * Exclude following attributes from sanitizing
+     *
      * @var array
      */
     protected $unsanitized = [
@@ -53,6 +56,7 @@ class Plan extends Model
 
     /**
      * Make following attributes translatable
+     *
      * @var array
      */
     public $translatable = [
@@ -65,6 +69,7 @@ class Plan extends Model
 
     /**
      * Cast following attributes
+     *
      * @var array
      */
     protected $casts = [
@@ -73,13 +78,13 @@ class Plan extends Model
         'ordering'          => 'integer',
         'trial_days'        => 'integer',
         'billing_frequency' => 'integer',
-        'package_id'        => 'integer',
         'features'          => 'array',
         'params'            => 'array'
     ];
 
     /**
      * Append following attributes
+     *
      * @var array
      */
     protected $appends = [
@@ -107,18 +112,21 @@ class Plan extends Model
 
     /**
      * Current error container
+     *
      * @var
      */
     protected $currentError;
 
     /**
      * Eager load coupons
+     *
      * @var array
      */
     protected $with = ['coupons'];
 
     /**
      * Hide coupons
+     *
      * @var array
      */
     protected $hidden = [
@@ -127,60 +135,70 @@ class Plan extends Model
 
     /**
      * Discounts collection, which still needs to be calculated
+     *
      * @var
      */
     protected $currentDiscounts;
 
     /**
      * Calculated discount, which will be applied on checkout
+     *
      * @var
      */
     protected $calculatedDiscount;
 
     /**
      * Addons collection
+     *
      * @var
      */
     protected $currentAddons;
 
     /**
      * The fallback subscription, who's owner will get the price difference on his balance
+     *
      * @var
      */
     protected $previousSubscription = false;
 
     /**
      * Current user, who is going to purchase this plan
+     *
      * @var
      */
     public $user;
 
     /**
      * Optional billing admin, who will be set to subscriptions' bill to
+     *
      * @var
      */
     public $billingAdmin;
 
     /**
      * Current host, for which this plan is being purchased
+     *
      * @var
      */
     public $host;
 
     /**
      * Subscription, associated with this plan
+     *
      * @var
      */
     public $subscription;
 
     /**
      * Payment made for this plan
+     *
      * @var
      */
     public $payment;
 
     /**
      * Order of purchase
+     *
      * @var
      */
     public $order;
@@ -200,6 +218,7 @@ class Plan extends Model
 
     /**
      * Get the route key for the model.
+     *
      * @return string
      */
     public function getRouteKeyName()
@@ -209,6 +228,7 @@ class Plan extends Model
 
     /**
      * Package relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\MorphTo
      */
     public function package()
@@ -218,6 +238,7 @@ class Plan extends Model
 
     /**
      * Coupons relation, which will be calculated and applied on checkout
+     *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
     public function coupons()
@@ -227,6 +248,7 @@ class Plan extends Model
 
     /**
      * Addons relation, which will be gifted to to user after successful checkout
+     *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
     public function addons()
@@ -247,6 +269,7 @@ class Plan extends Model
 
     /**
      * Error attribute getter
+     *
      * @return mixed
      */
     public function getErrorAttribute()
@@ -266,6 +289,7 @@ class Plan extends Model
 
     /**
      * Card required attribute getter
+     *
      * @return bool
      */
     public function getCardRequiredAttribute()
@@ -285,6 +309,7 @@ class Plan extends Model
 
     /**
      * Coming soon attribute getter
+     *
      * @return bool
      */
     public function getComingSoonAttribute()
@@ -304,6 +329,7 @@ class Plan extends Model
 
     /**
      * Upgradable attribute getter
+     *
      * @return bool
      */
     public function getUpgradableAttribute()
@@ -323,6 +349,7 @@ class Plan extends Model
 
     /**
      * Recommended attribute getter
+     *
      * @return bool
      */
     public function getRecommendedAttribute()
@@ -342,6 +369,7 @@ class Plan extends Model
 
     /**
      * Popular attribute getter
+     *
      * @return bool
      */
     public function getPopularAttribute()
@@ -361,6 +389,7 @@ class Plan extends Model
 
     /**
      * Moneyback attribute setter
+     *
      * @return bool
      */
     public function getMoneybackAttribute()
@@ -370,6 +399,7 @@ class Plan extends Model
 
     /**
      * Active features relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
     public function activeFeatures()
@@ -379,6 +409,7 @@ class Plan extends Model
 
     /**
      * All features relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function allFeatures()
@@ -427,6 +458,7 @@ class Plan extends Model
 
     /**
      * Currency attribute getter
+     *
      * @return mixed
      */
     public function getCurrencyAttribute()
@@ -436,6 +468,7 @@ class Plan extends Model
 
     /**
      * Currency symbol attribute getter
+     *
      * @return mixed
      */
     public function getCurrencySymbolAttribute()
@@ -446,6 +479,7 @@ class Plan extends Model
     /**
      * Additional plans relation, which will be automatically purchased
      * with purchase of this plan
+     *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
     public function additionalPlans()
@@ -455,6 +489,7 @@ class Plan extends Model
 
     /**
      * Has coupons attribute getter - checks if plan has manual coupons
+     *
      * @return bool
      */
     public function getHasCouponsAttribute()
@@ -490,6 +525,7 @@ class Plan extends Model
 
     /**
      * Agreement text attribute getter
+     *
      * @return mixed
      */
     public function getAgreementTextAttribute()
@@ -509,6 +545,7 @@ class Plan extends Model
     /**
      * Discount attribute getter, collecting all possible discounts,
      * calculating and setting as current discount
+     *
      * @return \Illuminate\Support\Collection
      * @throws \Exception
      */
@@ -548,6 +585,7 @@ class Plan extends Model
 
     /**
      * Addon coupons attribute getter
+     *
      * @return Collection
      * @throws Exception
      */
@@ -573,6 +611,7 @@ class Plan extends Model
 
     /**
      * Get previous discount for host
+     *
      * @return mixed
      * @throws \Exception
      */
@@ -615,6 +654,7 @@ class Plan extends Model
     /**
      * Subscription balance discount attribute getter, trying to get
      * existing subscription's left balance if any, to add as discount
+     *
      * @return int|mixed
      */
     public function getSubscriptionBalanceDiscountAttribute()
@@ -637,6 +677,7 @@ class Plan extends Model
     /**
      * User balance discount attribute getter
      * Getting current user's balance to add to discounts
+     *
      * @return int|mixed
      */
     public function getUserBalanceDiscountAttribute()
@@ -647,6 +688,7 @@ class Plan extends Model
     /**
      * Deducted from balance attribute getter
      * Calculates how much deducted from user's balance
+     *
      * @return mixed
      */
     public function getDeductedFromBalanceAttribute()
@@ -657,6 +699,7 @@ class Plan extends Model
     /**
      * Coupon discount attribute getter
      * Getting discount from coupons
+     *
      * @return float|int
      */
     public function getCouponDiscountAttribute()
@@ -677,6 +720,7 @@ class Plan extends Model
 
     /**
      * Discount attribute getter, getting calculated discount, based on all discounts
+     *
      * @return int
      */
     public function getDiscountAttribute()
@@ -702,6 +746,7 @@ class Plan extends Model
 
     /**
      * Summary attribute getter
+     *
      * @return mixed
      */
     public function getSummaryAttribute()
@@ -716,6 +761,7 @@ class Plan extends Model
 
     /**
      * Is recurring attribute getter
+     *
      * @return bool
      */
     public function getIsRecurringAttribute()
@@ -725,6 +771,7 @@ class Plan extends Model
 
     /**
      * In renew mode attribute getter
+     *
      * @return bool
      */
     public function getInRenewModeAttribute()
@@ -734,6 +781,7 @@ class Plan extends Model
 
     /**
      * Is free attribute getter
+     *
      * @return string
      */
     public function getIsFreeAttribute()
@@ -743,6 +791,7 @@ class Plan extends Model
 
     /**
      * Public attribute getter
+     *
      * @return string
      */
     public function getPublicAttribute()
@@ -752,6 +801,7 @@ class Plan extends Model
 
     /**
      * Has trial attribute getter
+     *
      * @return bool
      */
     public function getHasTrialAttribute()

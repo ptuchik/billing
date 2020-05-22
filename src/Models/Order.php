@@ -8,6 +8,7 @@ use Ptuchik\CoreUtilities\Traits\HasParams;
 
 /**
  * Class Order
+ *
  * @package Ptuchik\Billing\Models
  */
 class Order extends Model
@@ -16,27 +17,18 @@ class Order extends Model
 
     /**
      * Cast following attributes
+     *
      * @var array
      */
     protected $casts = [
-        'id'           => 'integer',
-        'params'       => 'array',
-        'user_id'      => 'integer',
-        'host_id'      => 'integer',
-        'reference_id' => 'integer',
-    ];
-
-    /**
-     * TODO added because of Eloquent's latest issue with nullable polymorphic relations
-     * @var array
-     */
-    protected $with = [
-        'reference',
-        'host'
+        'id'      => 'integer',
+        'params'  => 'array',
+        'user_id' => 'integer',
     ];
 
     /**
      * Unsanitize params
+     *
      * @var array
      */
     protected $unsanitized = [
@@ -45,6 +37,7 @@ class Order extends Model
 
     /**
      * Reference relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\MorphTo
      */
     public function reference()
@@ -54,6 +47,7 @@ class Order extends Model
 
     /**
      * User relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function user()
@@ -63,6 +57,7 @@ class Order extends Model
 
     /**
      * Host relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\MorphTo
      */
     public function host()
@@ -72,6 +67,7 @@ class Order extends Model
 
     /**
      * Get plan from reference
+     *
      * @return \Ptuchik\Billing\Models\Plan|null
      */
     public function getPlan()

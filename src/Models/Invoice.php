@@ -2,10 +2,13 @@
 
 namespace Ptuchik\Billing\Models;
 
+use Ptuchik\Billing\Constants\TransactionStatus;
 use Ptuchik\Billing\Event;
+use Ptuchik\Billing\Factory;
 
 /**
  * Class Invoice
+ *
  * @package App
  */
 class Invoice
@@ -63,7 +66,9 @@ class Invoice
 
         if ($plan) {
             $this->old = !empty($plan->old);
-            if ($this->summary > 0) {
+            if ($transaction->status == Factory::getClass(TransactionStatus::class)::PENDING) {
+                $this->confirmation = $plan->package->getPendingConfirmation($transaction);
+            } elseif ($this->summary > 0) {
                 $this->confirmation = $plan->package->getPaidConfirmation($transaction);
             } elseif ($plan->hasTrial) {
                 $this->confirmation = $plan->package->getTrialConfirmation($transaction, $plan->trialDays);

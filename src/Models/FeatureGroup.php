@@ -7,12 +7,14 @@ use Ptuchik\CoreUtilities\Models\Model;
 
 /**
  * Class FeatureGroup
+ *
  * @package Ptuchik\Billing\Models
  */
 class FeatureGroup extends Model
 {
     /**
      * Make following attributes translatable
+     *
      * @var array
      */
     public $translatable = [
@@ -21,6 +23,7 @@ class FeatureGroup extends Model
 
     /**
      * Hide dates
+     *
      * @var array
      */
     protected $hidden = [
@@ -30,6 +33,7 @@ class FeatureGroup extends Model
 
     /**
      * Features relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function features()

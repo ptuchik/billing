@@ -6,6 +6,7 @@ class Currencies extends Migration
 {
     /**
      * Currencies table name
+     *
      * @var string
      */
     protected $table_name;
@@ -20,6 +21,7 @@ class Currencies extends Migration
 
     /**
      * Run the migrations.
+     *
      * @return void
      */
     public function up()
@@ -40,6 +42,7 @@ class Currencies extends Migration
 
     /**
      * Reverse the migrations.
+     *
      * @return void
      */
     public function down()

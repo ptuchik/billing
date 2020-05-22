@@ -11,6 +11,7 @@ use Ptuchik\CoreUtilities\Traits\HasParams;
 
 /**
  * Class Coupon
+ *
  * @package App
  */
 class Coupon extends Model
@@ -50,6 +51,7 @@ class Coupon extends Model
 
     /**
      * Get the route key for the model.
+     *
      * @return string
      */
     public function getRouteKeyName()
@@ -59,6 +61,7 @@ class Coupon extends Model
 
     /**
      * Connected to referral system attribute getter
+     *
      * @return bool
      */
     public function getConnectedToReferralSystemAttribute()
@@ -78,6 +81,7 @@ class Coupon extends Model
 
     /**
      * Number Of Coupons attribute getter
+     *
      * @return null|int
      */
     public function getNumberOfCouponsAttribute()
@@ -97,6 +101,7 @@ class Coupon extends Model
 
     /**
      * Used Coupons attribute getter
+     *
      * @return int
      */
     public function getUsedCouponsAttribute()
@@ -115,6 +120,7 @@ class Coupon extends Model
 
     /**
      * Plan relations
+     *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      * @throws \Exception
      */
@@ -125,6 +131,7 @@ class Coupon extends Model
 
     /**
      * Used coupons relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function usedCoupons()
@@ -136,6 +143,7 @@ class Coupon extends Model
 
     /**
      * Gifted coupons relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function giftedCoupons()

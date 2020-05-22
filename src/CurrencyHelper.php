@@ -10,24 +10,28 @@ use Throwable;
 
 /**
  * Class CurrencyHelper
+ *
  * @package Ptuchik\Billing
  */
 class CurrencyHelper
 {
     /**
      * Currency instance
+     *
      * @var \Torann\Currency\Currency
      */
     protected $currency;
 
     /**
      * Currency storage instance
+     *
      * @var \Torann\Currency\Contracts\DriverInterface
      */
     protected $storage;
 
     /**
      * All installable currencies.
+     *
      * @var array
      */
     protected $currencies;

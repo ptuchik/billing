@@ -9,6 +9,7 @@ use Ptuchik\Billing\CurrencyHelper;
 
 /**
  * Class BillingServiceProvider
+ *
  * @package Ptuchik\Billing\Providers
  */
 class BillingServiceProvider extends ServiceProvider

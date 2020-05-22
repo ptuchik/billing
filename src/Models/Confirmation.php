@@ -7,6 +7,7 @@ use Ptuchik\CoreUtilities\Traits\HasIcon;
 
 /**
  * Class Confirmation
+ *
  * @package Ptuchik\Billing\Models
  */
 class Confirmation extends Model
@@ -18,12 +19,14 @@ class Confirmation extends Model
 
     /**
      * Make body unsamitized
+     *
      * @var array
      */
     protected $unsanitized = ['body'];
 
     /**
      * Cast following attributes
+     *
      * @var array
      */
     protected $casts = [
@@ -34,6 +37,7 @@ class Confirmation extends Model
 
     /**
      * Make following attributes translatable
+     *
      * @var array
      */
     public $translatable = [
@@ -45,6 +49,7 @@ class Confirmation extends Model
 
     /**
      * Hide dates
+     *
      * @var array
      */
     protected $hidden = [

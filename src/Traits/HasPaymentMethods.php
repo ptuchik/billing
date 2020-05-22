@@ -12,12 +12,14 @@ use Throwable;
 
 /**
  * Trait HasPaymentMethods
+ *
  * @package Ptuchik\Billing\src\Traits
  */
 trait HasPaymentMethods
 {
     /**
      * Has payment method attribute getter
+     *
      * @return bool
      */
     public function getHasPaymentMethodAttribute()
@@ -27,6 +29,7 @@ trait HasPaymentMethods
 
     /**
      * Default payment method token attribute setter
+     *
      * @return mixed
      */
     public function setDefaultTokenAttribute($value)
@@ -38,6 +41,7 @@ trait HasPaymentMethods
 
     /**
      * Default payment method token attribute getter
+     *
      * @return mixed
      */
     public function getDefaultTokenAttribute()
@@ -59,6 +63,7 @@ trait HasPaymentMethods
 
     /**
      * Payment methods attribute getter
+     *
      * @return mixed
      */
     public function getPaymentMethodsAttribute()
@@ -76,6 +81,7 @@ trait HasPaymentMethods
 
     /**
      * Get payment methods
+     *
      * @return array
      */
     public function getPaymentMethods()
@@ -269,6 +275,7 @@ trait HasPaymentMethods
 
     /**
      * Check if user can add payment method
+     *
      * @return bool
      * @throws \Exception
      */

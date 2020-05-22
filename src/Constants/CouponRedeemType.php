@@ -6,6 +6,7 @@ use Ptuchik\CoreUtilities\AbstractClasses\AbstractTypes;
 
 /**
  * Class CouponRedeemType
+ *
  * @package Ptuchik\Billing\Constants\
  */
 class CouponRedeemType extends AbstractTypes

@@ -8,12 +8,14 @@ use Ptuchik\Billing\Models\Purchase;
 
 /**
  * Trait Hostable
+ *
  * @package Ptuchik\Billing\Traits
  */
 trait Hostable
 {
     /**
      * Purchases relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\MorphMany
      */
     public function purchases() : MorphMany

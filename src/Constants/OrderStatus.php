@@ -6,6 +6,7 @@ use Ptuchik\CoreUtilities\AbstractClasses\AbstractTypes;
 
 /**
  * Class OrderStatus
+ *
  * @package Ptuchik\Billing\Constants
  */
 class OrderStatus extends AbstractTypes

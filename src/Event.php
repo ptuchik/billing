@@ -10,6 +10,7 @@ use Throwable;
 
 /**
  * Class Event
+ *
  * @package Ptuchik\Billing
  */
 class Event

@@ -7,6 +7,7 @@ use Ptuchik\CoreUtilities\Models\Model;
 
 /**
  * Class UsedCoupon
+ *
  * @package Ptuchik\Billing\Models
  */
 class UsedCoupon extends Model
@@ -21,6 +22,7 @@ class UsedCoupon extends Model
 
     /**
      * Coupon relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function coupon()
@@ -32,6 +34,7 @@ class UsedCoupon extends Model
 
     /**
      * Plan relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function plan()
@@ -41,6 +44,7 @@ class UsedCoupon extends Model
 
     /**
      * Host relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\MorphTo
      */
     public function host()

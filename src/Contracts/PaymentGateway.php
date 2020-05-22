@@ -7,6 +7,7 @@ use Ptuchik\Billing\Models\Order;
 
 /**
  * Interface PaymentGateway
+ *
  * @package Ptuchik\Billing\Contracts
  */
 interface PaymentGateway
@@ -21,12 +22,14 @@ interface PaymentGateway
 
     /**
      * Create payment profile
+     *
      * @return mixed
      */
     public function createPaymentProfile();
 
     /**
      * Find customer by profile
+     *
      * @return mixed
      */
     public function findCustomer();
@@ -43,6 +46,7 @@ interface PaymentGateway
 
     /**
      * Get payment methods
+     *
      * @return array
      */
     public function getPaymentMethods() : array;
@@ -76,6 +80,7 @@ interface PaymentGateway
 
     /**
      * Get payment token
+     *
      * @return mixed
      */
     public function getPaymentToken();

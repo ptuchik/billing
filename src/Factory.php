@@ -8,6 +8,7 @@ use ReflectionClass;
 
 /**
  * Class Factory - provides the overridable instance or class name of entities.
+ *
  * @package Ptuchik\Billing
  */
 class Factory
@@ -16,6 +17,7 @@ class Factory
 
     /**
      * Container for already created instances
+     *
      * @var array
      */
     protected static $instanceContainer = [];
