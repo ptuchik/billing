@@ -15,4 +15,5 @@ class ConfirmationType extends AbstractTypes
     const TRIAL = 2;
     const FREE = 3;
     const PENDING = 4;
+    const REFUND = 5;
 }
