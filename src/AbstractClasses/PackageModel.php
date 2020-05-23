@@ -678,6 +678,18 @@ abstract class PackageModel extends Model
     }
 
     /**
+     * Get refund confirmation for package
+     *
+     * @param \Ptuchik\Billing\Models\Transaction $transaction
+     *
+     * @return \Ptuchik\Billing\AbstractClassess\PackageModel
+     */
+    public function getRefundConfirmation(Transaction $transaction)
+    {
+        return $this->getConfirmation($transaction, Factory::getClass(ConfirmationType::class)::REFUND);
+    }
+
+    /**
      * Get variables key => value pair array for confirmation to be replaced before rendering
      *
      * @param \Ptuchik\Billing\Models\Transaction $transaction

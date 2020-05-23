@@ -68,6 +68,8 @@ class Invoice
             $this->old = !empty($plan->old);
             if ($transaction->status == Factory::getClass(TransactionStatus::class)::PENDING) {
                 $this->confirmation = $plan->package->getPendingConfirmation($transaction);
+            } elseif ($transaction->status == Factory::getClass(TransactionStatus::class)::REFUNDED) {
+                $this->confirmation = $plan->package->getRefundConfirmation($transaction);
             } elseif ($this->summary > 0) {
                 $this->confirmation = $plan->package->getPaidConfirmation($transaction);
             } elseif ($plan->hasTrial) {

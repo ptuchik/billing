@@ -402,7 +402,10 @@ trait PurchaseLogic
             } catch (Throwable $exception) {
                 $this->user->refund($this->payment->getTransactionReference());
             }
-            $this->createTransaction(true);
+
+            if (($purchase = $this->package->purchase) && $purchase->exists) {
+                $this->createTransaction(true);
+            }
         }
     }
 
