@@ -175,10 +175,10 @@ class Purchase extends Model
             $subscription->nextBillingDate = $date->addMonths($subscription->billingFrequency);
         }
 
-        $subscription->active = true;
+        $subscription->active = !$plan->payment->isPending();
         $subscription->endsAt = null;
 
-        if (!$plan->isFree && !$plan->hasTrial && (!$plan->payment || $plan->payment->isSuccessful())) {
+        if (!$plan->isFree && !$plan->hasTrial && (!$plan->payment || ($plan->payment->isSuccessful() && !$plan->payment->isPending()))) {
             $subscription->addons = [];
         } else {
             $subscription->addons = $plan->addonCoupons;

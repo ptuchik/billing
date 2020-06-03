@@ -479,16 +479,19 @@ abstract class PackageModel extends Model
      * Activate purchase
      *
      * @param \Ptuchik\Billing\Contracts\Hostable $host
+     * @param \Ptuchik\Billing\Contracts\Plan $plan
      *
      * @return mixed
      */
-    protected function activatePurchase(Hostable $host)
+    protected function activatePurchase(Hostable $host, Plan $plan)
     {
+
         // Set purchase
         $this->setPurchase($host);
 
         // Activate it and return
-        $this->purchase->active = true;
+        $this->purchase->active = !$plan->payment->isPending();
+
         $this->purchase->save();
 
         return $this->purchase;
@@ -529,7 +532,8 @@ abstract class PackageModel extends Model
     public function activate(Hostable $host, Plan $plan)
     {
         // Generic activation method for creating purchase
-        return $this->activatePurchase($host);
+        return $this->activatePurchase($host, $plan);
+
     }
 
     /**
