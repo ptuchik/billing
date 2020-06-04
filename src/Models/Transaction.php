@@ -42,9 +42,6 @@ class Transaction extends Model
      * @var array
      */
     protected $casts = [
-        'id'      => 'integer',
-        'user_id' => 'integer',
-        'status'  => 'integer',
         'coupons' => 'array',
         'params'  => 'array',
     ];

@@ -25,17 +25,6 @@ class Confirmation extends Model
     protected $unsanitized = ['body'];
 
     /**
-     * Cast following attributes
-     *
-     * @var array
-     */
-    protected $casts = [
-        'id'     => 'integer',
-        'type'   => 'integer',
-        'device' => 'integer'
-    ];
-
-    /**
      * Make following attributes translatable
      *
      * @var array

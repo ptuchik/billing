@@ -49,13 +49,10 @@ class Subscription extends Model
      * @var array
      */
     protected $casts = [
-        'id'                => 'integer',
-        'params'            => 'array',
-        'user_id'           => 'integer',
-        'coupons'           => 'array',
-        'addons'            => 'array',
-        'billing_frequency' => 'integer',
-        'active'            => 'boolean'
+        'params'  => 'array',
+        'coupons' => 'array',
+        'addons'  => 'array',
+        'active'  => 'boolean'
     ];
 
     /**
