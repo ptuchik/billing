@@ -19,9 +19,7 @@ class Coupon extends Model
     use HasParams;
 
     protected $casts = [
-        'id'      => 'integer',
         'percent' => 'boolean',
-        'redeem'  => 'integer',
         'prorate' => 'boolean',
         'params'  => 'array'
     ];

@@ -73,13 +73,8 @@ class Plan extends Model
      * @var array
      */
     protected $casts = [
-        'id'                => 'integer',
-        'visibility'        => 'integer',
-        'ordering'          => 'integer',
-        'trial_days'        => 'integer',
-        'billing_frequency' => 'integer',
-        'features'          => 'array',
-        'params'            => 'array'
+        'features' => 'array',
+        'params'   => 'array'
     ];
 
     /**

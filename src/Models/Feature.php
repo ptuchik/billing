@@ -28,7 +28,6 @@ class Feature extends Model
      * @var array
      */
     protected $casts = [
-        'id'     => 'integer',
         'params' => 'array'
     ];
 

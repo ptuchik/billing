@@ -62,7 +62,6 @@ abstract class PackageModel extends Model
      * @var array
      */
     protected $casts = [
-        'id'       => 'integer',
         'public'   => 'boolean',
         'features' => 'array',
         'params'   => 'array'

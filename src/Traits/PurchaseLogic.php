@@ -403,9 +403,7 @@ trait PurchaseLogic
                 $this->user->refund($this->payment->getTransactionReference());
             }
 
-            if (($purchase = $this->package->purchase) && $purchase->exists) {
-                $this->createTransaction(true);
-            }
+            $this->createTransaction(true);
         }
     }
 

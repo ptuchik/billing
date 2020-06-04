@@ -28,7 +28,6 @@ class Purchase extends Model
      * @var array
      */
     protected $casts = [
-        'id'     => 'integer',
         'active' => 'boolean',
         'data'   => 'array'
     ];

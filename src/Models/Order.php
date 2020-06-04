@@ -21,9 +21,7 @@ class Order extends Model
      * @var array
      */
     protected $casts = [
-        'id'      => 'integer',
-        'params'  => 'array',
-        'user_id' => 'integer',
+        'params' => 'array',
     ];
 
     /**
