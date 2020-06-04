@@ -624,7 +624,9 @@ abstract class PackageModel extends Model
         }
 
         // Parse and return
-        return $confirmation->parse($this->getConfirmationReplacements($transaction, $trialDays));
+        if ($confirmation) {
+            return $confirmation->parse($this->getConfirmationReplacements($transaction, $trialDays));
+        }
     }
 
     /**
