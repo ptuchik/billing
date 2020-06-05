@@ -318,7 +318,6 @@ trait PurchaseLogic
                 $this->refund();
                 throw $exception;
             }
-
             // Remove user's coupons if needed
             $this->user->removeCoupons($this->discounts);
 
@@ -465,6 +464,7 @@ trait PurchaseLogic
 
         $transaction->data = serialize($this->payment->getData()->transaction ?? $this->payment->getData());
         $transaction->reference = $this->payment->getTransactionReference();
+
         if ($refund) {
             $transaction->status = $transactionStatus::REFUNDED;
         } elseif ($this->payment->isPending()) {

@@ -66,6 +66,7 @@ class Invoice
 
         if ($plan) {
             $this->old = !empty($plan->old);
+
             if ($transaction->status == Factory::getClass(TransactionStatus::class)::PENDING) {
                 $this->confirmation = $plan->package->getPendingConfirmation($transaction);
             } elseif ($transaction->status == Factory::getClass(TransactionStatus::class)::REFUNDED) {
