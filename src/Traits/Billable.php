@@ -275,8 +275,6 @@ trait Billable
             $transaction->status = $transactionStatus::PENDING;
         } elseif ($purchase->isSuccessful()) {
             $transaction->status = $transactionStatus::SUCCESS;
-            $this->balance = $this->balance + $transaction->summary;
-            $this->save();
         } else {
             $transaction->status = $transactionStatus::FAILED;
         }
