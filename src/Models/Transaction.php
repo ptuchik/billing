@@ -92,7 +92,6 @@ class Transaction extends Model
      * Purchase relation
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     * @throws \Exception
      */
     public function purchase()
     {
@@ -185,7 +184,6 @@ class Transaction extends Model
      * @param Subscription $subscription
      *
      * @return $this
-     * @throws \Exception
      */
     public function fillFromSubscription(Subscription $subscription)
     {

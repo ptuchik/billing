@@ -120,7 +120,6 @@ class Coupon extends Model
      * Plan relations
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
-     * @throws \Exception
      */
     public function plans()
     {

@@ -3,8 +3,8 @@
 namespace Ptuchik\Billing\src\Traits;
 
 use Currency;
-use Exception;
 use Illuminate\Support\Arr;
+use Ptuchik\Billing\Exceptions\BillingException;
 use Request;
 
 /**
@@ -67,7 +67,7 @@ trait HasPaymentGateway
      * @param bool $checkAvailability
      *
      * @return \Ptuchik\Billing\Contracts\PaymentGateway
-     * @throws \Exception
+     * @throws \Ptuchik\Billing\Exceptions\BillingException
      */
     public function getPaymentGateway($gateway = null, $checkAvailability = true)
     {
@@ -93,7 +93,7 @@ trait HasPaymentGateway
                 $this->paymentGateway = $paymentGateway;
 
             } else {
-                throw new Exception(trans(config('ptuchik-billing.translation_prefixes.general').'.invalid_gateway'));
+                throw new BillingException(trans(config('ptuchik-billing.translation_prefixes.general').'.invalid_gateway'));
             }
         }
 

@@ -4,8 +4,8 @@ namespace Ptuchik\Billing;
 
 use Carbon\Carbon;
 use Currency;
-use Exception;
 use Illuminate\Support\Arr;
+use Ptuchik\Billing\Exceptions\BillingException;
 use Throwable;
 
 /**
@@ -52,7 +52,7 @@ class CurrencyHelper
      * @param $currency
      *
      * @return bool
-     * @throws \Exception
+     * @throws \Ptuchik\Billing\Exceptions\BillingException
      */
     public function add($currency)
     {
@@ -61,7 +61,7 @@ class CurrencyHelper
         }
 
         if (($data = $this->getCurrency($currency)) === null) {
-            throw new Exception(trans(config('ptuchik-billing.translation_prefixes.general').'.currency_not_found'));
+            throw new BillingException(trans(config('ptuchik-billing.translation_prefixes.general').'.currency_not_found'));
         }
 
         $data['code'] = $currency;
@@ -71,7 +71,7 @@ class CurrencyHelper
         $result = $this->storage->create($data);
 
         if (is_string($result) && $result != 'exists') {
-            throw new Exception(trans(config('ptuchik-billing.translation_prefixes.general').'.could_not_add_currency'));
+            throw new BillingException(trans(config('ptuchik-billing.translation_prefixes.general').'.could_not_add_currency'));
         } else {
 
             try {
@@ -91,12 +91,12 @@ class CurrencyHelper
      * @param array $data
      *
      * @return bool
-     * @throws \Exception
+     * @throws \Ptuchik\Billing\Exceptions\BillingException
      */
     public function update($currency, array $data)
     {
         if (is_string($result = $this->storage->update($currency, $data))) {
-            throw new Exception(trans(config('ptuchik-billing.translation_prefixes.general').'.could_not_update_currency'));
+            throw new BillingException(trans(config('ptuchik-billing.translation_prefixes.general').'.could_not_update_currency'));
         } else {
             return $this->clearCache();
         }
@@ -108,7 +108,7 @@ class CurrencyHelper
      * @param null $currency
      *
      * @return bool
-     * @throws \Exception
+     * @throws \Ptuchik\Billing\Exceptions\BillingException
      */
     public function updateRates($currency = null)
     {
@@ -146,7 +146,7 @@ class CurrencyHelper
 
             return $this->clearCache();
         } catch (Throwable $exception) {
-            throw new Exception(trans(config('ptuchik-billing.translation_prefixes.general').'.could_not_update_currencies'));
+            throw new BillingException(trans(config('ptuchik-billing.translation_prefixes.general').'.could_not_update_currencies'));
         }
     }
 
@@ -156,12 +156,12 @@ class CurrencyHelper
      * @param $currency
      *
      * @return bool
-     * @throws \Exception
+     * @throws \Ptuchik\Billing\Exceptions\BillingException
      */
     public function delete($currency)
     {
         if (is_string($result = $this->storage->delete($currency))) {
-            throw new Exception(trans(config('ptuchik-billing.translation_prefixes.general').'.could_not_delete_currency'));
+            throw new BillingException(trans(config('ptuchik-billing.translation_prefixes.general').'.could_not_delete_currency'));
         } else {
             return $this->clearCache();
         }
