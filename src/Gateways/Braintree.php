@@ -8,13 +8,13 @@ use Braintree\PayPalAccount;
 use Braintree\Transaction\CreditCardDetails;
 use Braintree\Transaction\PayPalDetails;
 use Currency;
-use Exception;
 use Illuminate\Support\Arr;
 use Omnipay\Common\Message\ResponseInterface;
 use Omnipay\Omnipay;
 use Ptuchik\Billing\Constants\PaymentMethods;
 use Ptuchik\Billing\Contracts\Billable;
 use Ptuchik\Billing\Contracts\PaymentGateway;
+use Ptuchik\Billing\Exceptions\BillingException;
 use Ptuchik\Billing\Factory;
 use Ptuchik\Billing\Models\Order;
 use Ptuchik\Billing\Models\PaymentMethod;
@@ -118,7 +118,7 @@ class Braintree implements PaymentGateway
      * @param \Ptuchik\Billing\Models\Order|null $order
      *
      * @return mixed
-     * @throws \Exception
+     * @throws \Ptuchik\Billing\Exceptions\BillingException
      */
     public function createPaymentMethod(string $nonce, Order $order = null)
     {
@@ -133,7 +133,7 @@ class Braintree implements PaymentGateway
             ->send();
 
         if (!$paymentMethod->isSuccessful()) {
-            throw new Exception($paymentMethod->getMessage());
+            throw new BillingException($paymentMethod->getMessage());
         }
 
         // Parse the result and return the payment method instance
@@ -163,14 +163,14 @@ class Braintree implements PaymentGateway
      * @param string $token
      *
      * @return mixed
-     * @throws \Exception
+     * @throws \Ptuchik\Billing\Exceptions\BillingException
      */
     public function setDefaultPaymentMethod(string $token)
     {
         $setDefault = $this->gateway->updatePaymentMethod()->setToken($token)->setMakeDefault(true)->send();
 
         if (!$setDefault->isSuccessful()) {
-            throw new Exception($setDefault->getMessage());
+            throw new BillingException($setDefault->getMessage());
         }
 
         // Parse the result and return the payment method instance
@@ -270,14 +270,14 @@ class Braintree implements PaymentGateway
      * @param string $reference
      *
      * @return mixed|string
-     * @throws \Exception
+     * @throws \Ptuchik\Billing\Exceptions\BillingException
      */
     public function void(string $reference)
     {
         $void = $this->gateway->void()->setTransactionReference($reference)->send();
 
         if (!$void->isSuccessful()) {
-            throw new Exception($void->getMessage());
+            throw new BillingException($void->getMessage());
         }
 
         return $reference;
@@ -289,14 +289,14 @@ class Braintree implements PaymentGateway
      * @param string $reference
      *
      * @return mixed|string
-     * @throws \Exception
+     * @throws \Ptuchik\Billing\Exceptions\BillingException
      */
     public function refund(string $reference)
     {
         $refund = $this->gateway->refund()->setTransactionReference($reference)->send();
 
         if (!$refund->isSuccessful()) {
-            throw new Exception($refund->getMessage());
+            throw new BillingException($refund->getMessage());
         }
 
         return $reference;
@@ -491,7 +491,6 @@ class Braintree implements PaymentGateway
      * @param $type
      *
      * @return mixed
-     * @throws \Exception
      */
     protected function parseType($type)
     {

@@ -4,13 +4,13 @@ namespace Ptuchik\Billing\Traits;
 
 use Auth;
 use Currency;
-use Exception;
 use Omnipay\Common\Message\ResponseInterface;
 use Ptuchik\Billing\Constants\CouponRedeemType;
 use Ptuchik\Billing\Constants\OrderAction;
 use Ptuchik\Billing\Constants\TransactionStatus;
 use Ptuchik\Billing\Contracts\Hostable;
 use Ptuchik\Billing\Event;
+use Ptuchik\Billing\Exceptions\BillingException;
 use Ptuchik\Billing\Factory;
 use Ptuchik\Billing\Models\Coupon;
 use Ptuchik\Billing\Models\Invoice;
@@ -32,7 +32,6 @@ trait PurchaseLogic
      * @param \Ptuchik\Billing\Models\Coupon $coupon
      *
      * @return \Ptuchik\Billing\Models\Coupon|void
-     * @throws \Exception
      */
     protected function analizeCoupon(Coupon $coupon)
     {
@@ -177,7 +176,7 @@ trait PurchaseLogic
      * @param \Ptuchik\Billing\Models\Order|null             $order
      *
      * @return bool|mixed|\Ptuchik\Billing\Models\Invoice
-     * @throws \Exception
+     * @throws \Ptuchik\Billing\Exceptions\BillingException
      */
     public function purchase(Hostable $host, ResponseInterface $payment = null, Order $order = null)
     {
@@ -213,7 +212,7 @@ trait PurchaseLogic
                 // If current plan is not recurring and there is an active subscription,
                 // but switching from recurring to lifetime is not allowed, interrupt the process
             } elseif (!config('ptuchik-billing.switch_recurring_to_lifetime_allowed')) {
-                throw new Exception(trans(config('ptuchik-billing.translation_prefixes.plan').'.no_switch_to_lifetime'));
+                throw new BillingException(trans(config('ptuchik-billing.translation_prefixes.plan').'.no_switch_to_lifetime'));
             }
 
             // If there is no active subscription but purchase is active, use the existing one
@@ -301,7 +300,7 @@ trait PurchaseLogic
      * Process purchase
      *
      * @return mixed|\Ptuchik\Billing\Models\Invoice
-     * @throws \Exception
+     * @throws \Throwable
      */
     protected function processPurchase()
     {
@@ -314,7 +313,7 @@ trait PurchaseLogic
             // Activate package
             try {
                 $this->package->activate($this->host, $this);
-            } catch (Exception $exception) {
+            } catch (Throwable $exception) {
                 $this->refund();
                 throw $exception;
             }
@@ -439,7 +438,7 @@ trait PurchaseLogic
      * @param bool $refund
      *
      * @return mixed|\Ptuchik\Billing\Models\Invoice
-     * @throws \Exception
+     * @throws \Ptuchik\Billing\Exceptions\BillingException
      */
     protected function createTransaction($refund = false)
     {
@@ -484,7 +483,7 @@ trait PurchaseLogic
             // If payment failed, fire a failed purchase event
             Event::purchaseFailed($this, $transaction);
 
-            throw new Exception(trans(config('ptuchik-billing.translation_prefixes.general').'.payment_processor').': '.$this->payment->getMessage());
+            throw new BillingException(trans(config('ptuchik-billing.translation_prefixes.general').'.payment_processor').': '.$this->payment->getMessage());
         }
 
         return Factory::get(Invoice::class, true, $this, $transaction);

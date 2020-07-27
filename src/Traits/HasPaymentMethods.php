@@ -2,10 +2,10 @@
 
 namespace Ptuchik\Billing\src\Traits;
 
-use Exception;
 use File;
 use Illuminate\Support\Arr;
 use Ptuchik\Billing\Constants\PaymentMethods;
+use Ptuchik\Billing\Exceptions\BillingException;
 use Ptuchik\Billing\Factory;
 use Ptuchik\Billing\Models\PaymentMethod;
 use Throwable;
@@ -277,7 +277,7 @@ trait HasPaymentMethods
      * Check if user can add payment method
      *
      * @return bool
-     * @throws \Exception
+     * @throws \Ptuchik\Billing\Exceptions\BillingException
      */
     public function canAddPaymentMethod()
     {
@@ -288,7 +288,7 @@ trait HasPaymentMethods
             $this->setParam('retries', [date('Ymd') => $retries + 1]);
 
             if ($retries >= $limit) {
-                throw new Exception(trans(config('ptuchik-billing.translation_prefixes.general').'.payment_methods_limit'));
+                throw new BillingException(trans(config('ptuchik-billing.translation_prefixes.general').'.payment_methods_limit'));
             }
 
             $this->save();

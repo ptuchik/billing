@@ -4,10 +4,10 @@ namespace Ptuchik\Billing\Models;
 
 use Auth;
 use Currency;
-use Exception;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Ptuchik\Billing\Constants\CouponRedeemType;
+use Ptuchik\Billing\Exceptions\BillingException;
 use Ptuchik\Billing\Factory;
 use Ptuchik\Billing\Traits\HasFrequency;
 use Ptuchik\Billing\Traits\PurchaseLogic;
@@ -542,7 +542,6 @@ class Plan extends Model
      * calculating and setting as current discount
      *
      * @return \Illuminate\Support\Collection
-     * @throws \Exception
      */
     public function getDiscountsAttribute()
     {
@@ -582,7 +581,6 @@ class Plan extends Model
      * Addon coupons attribute getter
      *
      * @return Collection
-     * @throws Exception
      */
     public function getAddonCouponsAttribute()
     {
@@ -608,7 +606,7 @@ class Plan extends Model
      * Get previous discount for host
      *
      * @return mixed
-     * @throws \Exception
+     * @throws \Ptuchik\Billing\Exceptions\BillingException
      */
     public function getPreviousSubscription()
     {
@@ -628,14 +626,14 @@ class Plan extends Model
                     // If current price is lower than previous price, that means it is going to be
                     // downgraded, so we have to check if it is allowed or not
                     if ($currentPrice < $previousPrice && !config('ptuchik-billing.downgrade_allowed')) {
-                        throw new Exception(trans(config('ptuchik-billing.translation_prefixes.plan').'.no_downgrade',
+                        throw new BillingException(trans(config('ptuchik-billing.translation_prefixes.plan').'.no_downgrade',
                             ['newpackage' => $this->package->name, 'oldpackage' => $previousPlan->package->name]));
                     }
 
                     // If current plan is not recurring and there is a previous subscription,
                     // but switching from recurring to lifetime is not allowed, interrupt the process
                 } elseif (!config('ptuchik-billing.switch_recurring_to_lifetime_allowed')) {
-                    throw new Exception(trans(config('ptuchik-billing.translation_prefixes.plan').'.no_switch_to_lifetime'));
+                    throw new BillingException(trans(config('ptuchik-billing.translation_prefixes.plan').'.no_switch_to_lifetime'));
                 }
 
             } elseif (!$this->isRecurring) {

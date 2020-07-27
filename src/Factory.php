@@ -2,8 +2,8 @@
 
 namespace Ptuchik\Billing;
 
-use Exception;
 use Illuminate\Support\Arr;
+use Ptuchik\Billing\Exceptions\BillingException;
 use ReflectionClass;
 
 /**
@@ -31,7 +31,6 @@ class Factory
      * @param mixed  $params           Parameters to be loaded in class object
      *
      * @return mixed
-     * @throws Exception
      */
     public static function get(string $className, bool $forceNewInstance = false, ...$params)
     {
@@ -53,7 +52,7 @@ class Factory
      * @param string $className
      *
      * @return string
-     * @throws Exception
+     * @throws \Ptuchik\Billing\Exceptions\BillingException
      */
     public static function getClass(string $className) : string
     {
@@ -70,7 +69,7 @@ class Factory
         } elseif (class_exists($className)) {
             return static::$solvedClasses[$className] = $className;
         } else {
-            throw new Exception('Invalid Class Name: '.$className);
+            throw new BillingException('Invalid Class Name: '.$className);
         }
     }
 }
