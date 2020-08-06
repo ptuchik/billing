@@ -73,7 +73,8 @@ class Subscription extends Model
         'expirationDateFormatted',
         'hasPaymentIssue',
         'features',
-        'agreementText'
+        'agreementText',
+        'cancelReason'
     ];
 
     /**
@@ -251,6 +252,24 @@ class Subscription extends Model
         } else {
             return Carbon::createFromFormat('Y-m-d H:i:s', $this->endsAt ?? $this->nextBillingDate)->format('M d Y');
         }
+    }
+
+    /**
+     * Subscription autorenew cancel reason attribute
+     */
+    public function getCancelReasonAttribute()
+    {
+        return $this->getParam('cancelReason', []);
+    }
+
+    /**
+     * Subscription autorenew cancel reason attribute setter
+     *
+     * @param $value
+     */
+    public function setCancelReasonAttribute($value = [])
+    {
+        $this->setParam('cancelReason', $value);
     }
 
     /**
