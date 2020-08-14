@@ -487,8 +487,7 @@ abstract class PackageModel extends Model
         $this->setPurchase($host);
 
         // Activate it and return
-        $this->purchase->active = true;
-        $this->purchase->save();
+        $this->purchase->activate();
 
         return $this->purchase;
     }
@@ -506,13 +505,7 @@ abstract class PackageModel extends Model
         $this->setPurchase($host);
 
         // Deactivate it and return
-        $this->purchase->active = false;
-        $this->purchase->save();
-
-        // Get latest subscription of the purchase and complete it's billings
-        if ($subscription = $this->purchase->subscription) {
-            $subscription->deactivate();
-        }
+        $this->purchase->deactivate();
 
         return $this->purchase;
     }
