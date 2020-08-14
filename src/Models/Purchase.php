@@ -203,4 +203,29 @@ class Purchase extends Model
 
         return true;
     }
+
+    /**
+     * Activate
+     *
+     * @return bool
+     */
+    public function activate()
+    {
+        $this->active = true;
+
+        return $this->save();
+    }
+
+    /**
+     * Deactivate
+     *
+     * @return bool
+     */
+    public function deactivate()
+    {
+        $this->active = false;
+        $this->save();
+
+        return $this->unsubscribe();
+    }
 }
