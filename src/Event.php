@@ -84,4 +84,15 @@ class Event
     {
         static::trigger('subscription_expiration_reminder', $subscription);
     }
+
+    /**
+     * Trigger wl package, plan or user data updating event
+     *
+     * @param int   $event
+     * @param array $data
+     */
+    public static function wlUpdatePlanPackageData(int $event, array $data)
+    {
+        static::trigger('wl_plan_package_updated', $event, $data);
+    }
 }

@@ -8,6 +8,7 @@ use Ptuchik\Billing\Constants\ConfirmationType;
 use Ptuchik\Billing\Constants\PlanVisibility;
 use Ptuchik\Billing\Contracts\Billable;
 use Ptuchik\Billing\Contracts\Hostable;
+use Ptuchik\Billing\Event;
 use Ptuchik\Billing\Factory;
 use Ptuchik\Billing\Models\Confirmation;
 use Ptuchik\Billing\Models\Feature;
@@ -116,6 +117,22 @@ abstract class PackageModel extends Model
      * @var
      */
     public $purchase;
+
+    /**
+     * Save the model to the database.
+     *
+     * @param array $options
+     *
+     * @return bool
+     */
+    public function save(array $options = [])
+    {
+        if (($saved = parent::save($options)) && env('WL_MODE', false)) {
+            Event::wlUpdatePlanPackageData(0, $this->toArray());
+        }
+
+        return $saved;
+    }
 
     /**
      * Get the route key for the model.

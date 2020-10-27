@@ -7,6 +7,7 @@ use Currency;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Ptuchik\Billing\Constants\CouponRedeemType;
+use Ptuchik\Billing\Event;
 use Ptuchik\Billing\Exceptions\BillingException;
 use Ptuchik\Billing\Factory;
 use Ptuchik\Billing\Traits\HasFrequency;
@@ -209,6 +210,22 @@ class Plan extends Model
 
         // Set default current user and default host
         $this->host = $this->user = Auth::user();
+    }
+
+    /**
+     * Save the model to the database.
+     *
+     * @param array $options
+     *
+     * @return bool
+     */
+    public function save(array $options = [])
+    {
+        if (($saved = parent::save($options)) && env('WL_MODE', false)) {
+            Event::wlUpdatePlanPackageData(1, Arr::except($this->toArray(), ['package', 'params']));
+        }
+
+        return $saved;
     }
 
     /**
