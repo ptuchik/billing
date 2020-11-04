@@ -2,6 +2,7 @@
 
 namespace Ptuchik\Billing;
 
+use Ptuchik\Billing\AbstractClassess\PackageModel;
 use Ptuchik\Billing\Models\Plan;
 use Ptuchik\Billing\Models\Subscription;
 use Ptuchik\Billing\Models\Transaction;
@@ -86,13 +87,22 @@ class Event
     }
 
     /**
+     * Trigger package saved data event
+     *
+     * @param \Ptuchik\Billing\AbstractClassess\PackageModel $package
+     */
+    public static function packageUpdated(PackageModel $package)
+    {
+        static::trigger('package_updated', $package);
+    }
+
+    /**
      * Trigger wl package, plan or user data updating event
      *
-     * @param int   $event
-     * @param array $data
+     * @param \Ptuchik\Billing\Models\Plan $plan
      */
-    public static function wlUpdatePlanPackageData(int $event, array $data)
+    public static function planUpdated(Plan $plan)
     {
-        static::trigger('wl_plan_package_updated', $event, $data);
+        static::trigger('plan_updated', $plan);
     }
 }

@@ -221,8 +221,8 @@ class Plan extends Model
      */
     public function save(array $options = [])
     {
-        if (($saved = parent::save($options)) && env('WL_MODE', false)) {
-            Event::wlUpdatePlanPackageData(1, Arr::except($this->toArray(), ['package', 'params']));
+        if (($saved = parent::save($options))) {
+            Event::planUpdated($this);
         }
 
         return $saved;

@@ -127,8 +127,8 @@ abstract class PackageModel extends Model
      */
     public function save(array $options = [])
     {
-        if (($saved = parent::save($options)) && env('WL_MODE', false)) {
-            Event::wlUpdatePlanPackageData(0, $this->toArray());
+        if (($saved = parent::save($options))) {
+            Event::packageUpdated($this);
         }
 
         return $saved;
