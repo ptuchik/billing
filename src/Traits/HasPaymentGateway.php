@@ -111,6 +111,7 @@ trait HasPaymentGateway
      */
     public function setPaymentGateway(?PaymentGateway $gateway)
     {
+        $this->gatewayName = $gateway ? $gateway->name : null;
         return $this->gateway = $gateway;
     }
 
