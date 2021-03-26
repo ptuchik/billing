@@ -858,6 +858,9 @@ class Subscription extends Model
                 // Set currency
                 Currency::setUserCurrency($subscription->currency);
 
+                // Unset payment gateway
+                $subscription->user->setPaymentGateway(null);
+
                 // Set subscription's attempt and last attempt indicators
                 $subscription->attempt = $attempt;
                 $subscription->lastAttempt = $lastAttempt;

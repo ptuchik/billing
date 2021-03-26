@@ -4,6 +4,7 @@ namespace Ptuchik\Billing\src\Traits;
 
 use Currency;
 use Illuminate\Support\Arr;
+use Ptuchik\Billing\Contracts\PaymentGateway;
 use Ptuchik\Billing\Exceptions\BillingException;
 use Request;
 
@@ -99,6 +100,18 @@ trait HasPaymentGateway
 
         // Return gateway instance
         return $this->gateway;
+    }
+
+    /**
+     * Set payment gateway
+     *
+     * @param \Ptuchik\Billing\Contracts\PaymentGateway|null $gateway
+     *
+     * @return \Ptuchik\Billing\Contracts\PaymentGateway|null
+     */
+    public function setPaymentGateway(?PaymentGateway $gateway)
+    {
+        return $this->gateway = $gateway;
     }
 
     /**

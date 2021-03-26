@@ -1,6 +1,6 @@
 <?php
 
-namespace Ptuchik\Billing\AbstractClassess;
+namespace Ptuchik\Billing\AbstractClasses;
 
 use Agent;
 use Illuminate\Support\Str;
@@ -628,7 +628,7 @@ abstract class PackageModel extends Model
      * @param \Ptuchik\Billing\Models\Transaction $transaction
      * @param                                     $trialDays
      *
-     * @return \Ptuchik\Billing\AbstractClassess\PackageModel
+     * @return \Ptuchik\Billing\AbstractClasses\PackageModel
      */
     public function getTrialConfirmation(Transaction $transaction, $trialDays)
     {
@@ -640,7 +640,7 @@ abstract class PackageModel extends Model
      *
      * @param \Ptuchik\Billing\Models\Transaction $transaction
      *
-     * @return \Ptuchik\Billing\AbstractClassess\PackageModel
+     * @return \Ptuchik\Billing\AbstractClasses\PackageModel
      */
     public function getFreeConfirmation(Transaction $transaction)
     {
@@ -652,7 +652,7 @@ abstract class PackageModel extends Model
      *
      * @param \Ptuchik\Billing\Models\Transaction $transaction
      *
-     * @return \Ptuchik\Billing\AbstractClassess\PackageModel
+     * @return \Ptuchik\Billing\AbstractClasses\PackageModel
      */
     public function getPaidConfirmation(Transaction $transaction)
     {
@@ -664,7 +664,7 @@ abstract class PackageModel extends Model
      *
      * @param \Ptuchik\Billing\Models\Transaction $transaction
      *
-     * @return \Ptuchik\Billing\AbstractClassess\PackageModel
+     * @return \Ptuchik\Billing\AbstractClasses\PackageModel
      */
     public function getPendingConfirmation(Transaction $transaction)
     {
@@ -676,7 +676,7 @@ abstract class PackageModel extends Model
      *
      * @param \Ptuchik\Billing\Models\Transaction $transaction
      *
-     * @return \Ptuchik\Billing\AbstractClassess\PackageModel
+     * @return \Ptuchik\Billing\AbstractClasses\PackageModel
      */
     public function getRefundConfirmation(Transaction $transaction)
     {
