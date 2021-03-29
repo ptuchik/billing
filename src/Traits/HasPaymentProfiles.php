@@ -1,13 +1,13 @@
 <?php
 
-namespace Ptuchik\Billing\src\Traits;
+namespace Ptuchik\Billing\Traits;
 
 use Illuminate\Support\Arr;
 
 /**
  * Trait HasPaymentProfiles
  *
- * @package Ptuchik\Billing\src\Traits
+ * @package Ptuchik\Billing\Traits
  */
 trait HasPaymentProfiles
 {

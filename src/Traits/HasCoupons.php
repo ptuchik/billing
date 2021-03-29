@@ -1,6 +1,6 @@
 <?php
 
-namespace Ptuchik\Billing\src\Traits;
+namespace Ptuchik\Billing\Traits;
 
 use Illuminate\Support\Collection;
 use Ptuchik\Billing\Constants\CouponRedeemType;
@@ -11,7 +11,7 @@ use Ptuchik\Billing\Contracts\Hostable as HostableContract;
 /**
  * Trait HasCoupons
  *
- * @package Ptuchik\Billing\src\Traits
+ * @package Ptuchik\Billing\Traits
  */
 trait HasCoupons
 {

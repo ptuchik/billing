@@ -12,8 +12,6 @@ use Ptuchik\Billing\Models\Invoice;
 use Ptuchik\Billing\Models\Order;
 use Ptuchik\Billing\Models\Subscription;
 use Ptuchik\Billing\Models\Transaction;
-use Ptuchik\Billing\src\Traits\HasCoupons;
-use Ptuchik\Billing\src\Traits\HasPaymentGateway;
 use Ptuchik\CoreUtilities\Traits\HasParams;
 use Request;
 use Response;
