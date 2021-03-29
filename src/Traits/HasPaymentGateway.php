@@ -1,6 +1,6 @@
 <?php
 
-namespace Ptuchik\Billing\src\Traits;
+namespace Ptuchik\Billing\Traits;
 
 use Currency;
 use Illuminate\Support\Arr;
@@ -11,7 +11,7 @@ use Request;
 /**
  * Trait HasPaymentGateway
  *
- * @package Ptuchik\Billing\src\Traits
+ * @package Ptuchik\Billing\Traits
  */
 trait HasPaymentGateway
 {

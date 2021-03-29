@@ -1,6 +1,6 @@
 <?php
 
-namespace Ptuchik\Billing\src\Traits;
+namespace Ptuchik\Billing\Traits;
 
 use File;
 use Illuminate\Support\Arr;
@@ -13,7 +13,7 @@ use Throwable;
 /**
  * Trait HasPaymentMethods
  *
- * @package Ptuchik\Billing\src\Traits
+ * @package Ptuchik\Billing\Traits
  */
 trait HasPaymentMethods
 {
