@@ -16,6 +16,7 @@ class PackageFeatures extends Migration
             Schema::create('package_features', function (Blueprint $table) {
                 $table->unsignedInteger('feature_id');
                 $table->morphs('package');
+                $table->text('limit')->nullable();
                 $table->foreign('feature_id')->references('id')->on('features')->onUpdate('cascade')
                     ->onDelete('cascade');
             });

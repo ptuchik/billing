@@ -2,7 +2,7 @@
 
 namespace Ptuchik\Billing\Models;
 
-use App\Factory;
+use Ptuchik\Billing\Factory;
 use Ptuchik\CoreUtilities\Models\Model;
 use Ptuchik\CoreUtilities\Traits\HasParams;
 
