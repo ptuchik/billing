@@ -77,11 +77,11 @@ class PaymentMethod
         }
 
         if (!is_null($expMonth = Arr::get($data, 'expMonth'))) {
-            $this->expMonth = Arr::wrap($expMonth);
+            $this->expMonth = $expMonth;
         }
 
         if (!is_null($expYear = Arr::get($data, 'expYear'))) {
-            $this->expYear = Arr::wrap($expYear);
+            $this->expYear = $expYear;
         }
     }
 
