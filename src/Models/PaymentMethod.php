@@ -24,6 +24,8 @@ class PaymentMethod
     public $country;
     public $zip;
     public $additional = [];
+    public $expMonth;
+    public $expYear;
 
     /**
      * PaymentMethod constructor.
@@ -73,6 +75,14 @@ class PaymentMethod
         if (!is_null($additional = Arr::get($data, 'additional'))) {
             $this->additional = Arr::wrap($additional);
         }
+
+        if (!is_null($expMonth = Arr::get($data, 'expMonth'))) {
+            $this->expMonth = Arr::wrap($expMonth);
+        }
+
+        if (!is_null($expYear = Arr::get($data, 'expYear'))) {
+            $this->expYear = Arr::wrap($expYear);
+        }
     }
 
     /**
@@ -92,7 +102,9 @@ class PaymentMethod
             'holder'      => $this->holder,
             'country'     => $this->country,
             'zip'         => $this->zip,
-            'additional'  => $this->additional
+            'additional'  => $this->additional,
+            'expMonth'    => $this->expMonth,
+            'expYear'     => $this->expYear,
         ];
     }
 
