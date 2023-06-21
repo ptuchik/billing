@@ -130,7 +130,7 @@ class Purchase extends Model
     public function subscribe(Plan $plan)
     {
         // If plan has no subscription, get the subscription for current package
-        $subscription = $plan->subscription ?: $this->subscription;
+        $subscription = $plan->subscription ? : $this->subscription;
 
         // If there was no active subscription start a new one
         if (!$subscription) {
@@ -150,6 +150,11 @@ class Purchase extends Model
         } else {
             $date = $subscription->isActive() ? Carbon::createFromFormat('Y-m-d H:i:s', $subscription->nextBillingDate)
                 : Carbon::today()->endOfDay();
+        }
+
+        if ($subscription->isExtended) {
+            $date = $subscription->extendedDate;
+            $subscription->extendedDate = null;
         }
 
         $subscription->setRawAttribute('name', $plan->package->getRawAttribute('name'));

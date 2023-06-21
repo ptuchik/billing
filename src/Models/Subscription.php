@@ -17,6 +17,11 @@ use Ptuchik\CoreUtilities\Models\Model;
 use Ptuchik\CoreUtilities\Traits\HasParams;
 use Throwable;
 
+use function config;
+use function get_class;
+use function in_array;
+use function is_null;
+
 /**
  * Class Subscription
  *
@@ -97,9 +102,14 @@ class Subscription extends Model
     /**
      * Current plan of subscription
      *
-     * @var
+     * @var \Ptuchik\Billing\Models\Plan
      */
     public $currentPlan;
+
+    /**
+     * @var \Ptuchik\Billing\AbstractClasses\PackageModel
+     */
+    protected $currentPackage;
 
     /**
      * Renew attempt count
@@ -123,6 +133,74 @@ class Subscription extends Model
     public function getAutoRenewAttribute()
     {
         return is_null($this->endsAt);
+    }
+
+    /**
+     * @param \Carbon\Carbon|null $value
+     *
+     * @return \Ptuchik\Billing\Models\Subscription
+     */
+    public function setExtendedDateAttribute(?Carbon $value)
+    {
+        return $this->setParam('extendedDate', $value ? $value->format('Y-m-d H:i:s') : null);
+    }
+
+    /**
+     * @return \Carbon\Carbon|false|null
+     */
+    public function getExtendedDateAttribute()
+    {
+        try {
+            return Carbon::createFromFormat('Y-m-d H:i:s', $this->getParam('extendedDate'));
+        } catch (Throwable $exception) {
+            return null;
+        }
+    }
+
+    /**
+     * @return bool
+     */
+    public function getIsExtendedAttribute()
+    {
+        return !empty($this->extendedDate);
+    }
+
+    /**
+     * @return bool
+     */
+    public function getIsExtendableAttribute()
+    {
+        return $this->getExtendableDays() && !$this->purchase->active && !$this->isExtended && !$this->isActive() &&
+            in_array(get_class($this->package), config('ptuchik-billing.extendable_package_types'));
+    }
+
+    /**
+     * @return int
+     */
+    public function getExtendableDays()
+    {
+        return (int)config('ptuchik-billing.subscription_extendable_days');
+    }
+
+    /**
+     * Reactivate and extend subscription
+     *
+     * @return $this|false
+     */
+    public function extend()
+    {
+        if (!$this->isExtendable) {
+            return false;
+        }
+
+        $this->extendedDate = Carbon::today()->endOfDay();
+        $this->nextBillingDate = $this->extendedDate->addDays($this->getExtendableDays());
+        $this->trialEndsAt = null;
+        $this->markAsActive();
+
+        $this->package->activate($this->host, $this->plan);
+
+        return $this;
     }
 
     /**
@@ -343,7 +421,7 @@ class Subscription extends Model
      */
     public function getCurrencyAttribute($value)
     {
-        return $value ?: config('currency.default');
+        return $value ? : config('currency.default');
     }
 
     /**
@@ -421,7 +499,7 @@ class Subscription extends Model
     public function markAsExpired()
     {
         // Set subscription to end on next billing date
-        $this->trialEndsAt = $this->trialEndsAt ?: $this->nextBillingDate;
+        $this->trialEndsAt = $this->trialEndsAt ? : $this->nextBillingDate;
         $this->endsAt = $this->nextBillingDate;
 
         return $this->save();
@@ -447,7 +525,7 @@ class Subscription extends Model
     public function cancelNow()
     {
         // Set subscription's ending today
-        $this->trialEndsAt = $this->trialEndsAt ?: Carbon::today();
+        $this->trialEndsAt = $this->trialEndsAt ? : Carbon::today();
         $this->endsAt = Carbon::today();
 
         return $this->save();
@@ -465,7 +543,6 @@ class Subscription extends Model
     {
         // If there is a user on subscription
         if ($user = $this->user) {
-
             // Get left amount after coupon and subscription discount
             $subscriptionDiscount = $this->onTrial() ? 0 : $this->balanceLeft;
             $leftAmount = $subscriptionDiscount - $price;
@@ -518,12 +595,10 @@ class Subscription extends Model
                 return Factory::getClass(SubscriptionStatus::class)::ACTIVE;
             }
         } else {
-
             // If ending date is before next billing date, mark as cancelled
             if (Carbon::createFromFormat('Y-m-d H:i:s', $this->endsAt ?? $this->nextBillingDate)
                 ->lt(Carbon::createFromFormat('Y-m-d H:i:s', $this->nextBillingDate))) {
                 return Factory::getClass(SubscriptionStatus::class)::CANCELLED;
-
                 // Otherwise it is expired
             } else {
                 return Factory::getClass(SubscriptionStatus::class)::EXPIRED;
@@ -538,7 +613,9 @@ class Subscription extends Model
      */
     public function getFeaturesAttribute()
     {
-        return !empty($this->params['features']) ? $this->getTranslationValue(json_encode($this->params['features'])) : [];
+        return !empty($this->params['features']) ? $this->getTranslationValue(
+            json_encode($this->params['features'])
+        ) : [];
     }
 
     /**
@@ -554,7 +631,7 @@ class Subscription extends Model
             $agreementOverride = false;
         }
 
-        return $agreementOverride ?: trans(config('ptuchik-billing.translation_prefixes.plan').'.agreement_recurring');
+        return $agreementOverride ? : trans(config('ptuchik-billing.translation_prefixes.plan').'.agreement_recurring');
     }
 
     /**
@@ -600,8 +677,10 @@ class Subscription extends Model
      */
     public function getTransactionsPaginated($perPage)
     {
-        return collect($this->transactions()->with('purchase.package', 'purchase.host', 'purchase.reference')
-            ->paginate($perPage)->items())->each(function ($transaction) {
+        return collect(
+            $this->transactions()->with('purchase.package', 'purchase.host', 'purchase.reference')
+                ->paginate($perPage)->items()
+        )->each(function ($transaction) {
             if ($transaction->purchase) {
                 $transaction->purchase->append('identifier');
             }
@@ -639,31 +718,35 @@ class Subscription extends Model
     /**
      * Package attribute getter
      *
-     * @return mixed
+     * @return \Ptuchik\Billing\AbstractClasses\PackageModel
      */
     public function getPackageAttribute()
     {
-        // Get purchase
-        $purchase = $this->purchase;
+        if (!$this->currentPackage) {
+            // Get purchase
+            $purchase = $this->purchase;
 
-        // Get current package
-        $package = $purchase->package;
+            // Get current package
+            $package = $purchase->package;
 
-        // If the package does not exist, generate a new one based on purchase data
-        if (!$package) {
-            $packageData = $purchase->data;
-            $package = $purchase->package()->getModel();
-            $package->id = $purchase->packageId;
-            $package->setRawAttribute('name', $package->getRawAttribute('name'));
-            $package->setRawAttribute('agreement', $package->getRawAttribute('agreement'));
-            $package->alias = $packageData['alias'].'-removed-'.time();
-            $package->save();
+            // If the package does not exist, generate a new one based on purchase data
+            if (!$package) {
+                $packageData = $purchase->data;
+                $package = $purchase->package()->getModel();
+                $package->id = $purchase->packageId;
+                $package->setRawAttribute('name', $package->getRawAttribute('name'));
+                $package->setRawAttribute('agreement', $package->getRawAttribute('agreement'));
+                $package->alias = $packageData['alias'].'-removed-'.time();
+                $package->save();
+            }
+
+            // Set purchase to package
+            $package->purchase = $purchase;
+
+            $this->currentPackage = $package;
         }
 
-        // Set purchase to package
-        $package->purchase = $purchase;
-
-        return $package;
+        return $this->currentPackage;
     }
 
     /**
@@ -685,7 +768,6 @@ class Subscription extends Model
     {
         // If there is no current plan, set it
         if (!$this->currentPlan) {
-
             // Generate a plan from subscription
             $plan = Factory::get(Plan::class, true);
 
@@ -736,7 +818,6 @@ class Subscription extends Model
     public function renew(ResponseInterface $payment = null, Order $order = null)
     {
         if (!$order) {
-
             // Create an order to pass to purchase process
             $order = Factory::get(Order::class, true);
             $order->user()->associate(Auth::user() ?? $this->user);
@@ -785,7 +866,7 @@ class Subscription extends Model
         $subscription = new static();
         $subscription->setRawAttribute('name', $this->getRawAttribute('name'));
         $subscription->purchase()->associate($this->purchase);
-        $subscription->user()->associate($this->user ?: Auth::user());
+        $subscription->user()->associate($this->user ? : Auth::user());
         $subscription->setParamsFromPlan($plan);
         $subscription->active = $this->active;
         $subscription->alias = $plan->alias;
@@ -809,8 +890,12 @@ class Subscription extends Model
         // Set plan as old, because we are not going to charge customer
         $plan->old = true;
 
-        return Factory::get(Invoice::class, true, $plan,
-            Factory::get(Transaction::class, true)->fillFromSubscription($this));
+        return Factory::get(
+            Invoice::class,
+            true,
+            $plan,
+            Factory::get(Transaction::class, true)->fillFromSubscription($this)
+        );
     }
 
     /**
@@ -846,9 +931,7 @@ class Subscription extends Model
 
         // Loop through each active subscription and try to renew
         foreach ($query->get() as $subscription) {
-
             try {
-
                 // If subscription has no active user or it is not in use just deactivate package and continue
                 if (!$subscription->hasActiveUser() || !$subscription->package->isInUse($subscription->host)) {
                     $subscription->package->deactivate($subscription->host);
@@ -865,7 +948,6 @@ class Subscription extends Model
                 $subscription->attempt = $attempt;
                 $subscription->lastAttempt = $lastAttempt;
                 $subscription->renew();
-
             } catch (Throwable $exception) {
                 continue;
             }
@@ -880,10 +962,11 @@ class Subscription extends Model
     public static function expireSubscriptions($date)
     {
         // Loop through each subscription and deactivate it
-        foreach (static::with(['user', 'purchase.package', 'purchase.host'])->where('active', 1)
-                     ->whereNotNull('ends_at')->whereDate('ends_at', '<=', $date)->get() as $subscription) {
+        foreach (
+            static::with(['user', 'purchase.package', 'purchase.host'])->where('active', 1)
+                ->whereNotNull('ends_at')->whereDate('ends_at', '<=', $date)->get() as $subscription
+        ) {
             try {
-
                 // If subscription has no active user or it is not in use, just deactivate package and continue
                 if (!$subscription->hasActiveUser() || !$subscription->package->isInUse($subscription->host)) {
                     $subscription->package->deactivate($subscription->host);
@@ -897,9 +980,10 @@ class Subscription extends Model
                 $subscription->lastAttempt = true;
 
                 // Create fake transaction from subscription and trigger event
-                Event::purchaseFailed($subscription->plan,
-                    Factory::get(Transaction::class)->fillFromSubscription($subscription));
-
+                Event::purchaseFailed(
+                    $subscription->plan,
+                    Factory::get(Transaction::class)->fillFromSubscription($subscription)
+                );
             } catch (Throwable $exception) {
                 continue;
             }
@@ -909,13 +993,14 @@ class Subscription extends Model
     public static function autorenewReminder($date)
     {
         // Loop through each subscription and remind about autorenew
-        foreach (static::with(['user', 'purchase.package', 'purchase.host'])->where('active', 1)
-                     ->whereNull('ends_at')->whereDate('next_billing_date', $date)->get() as $subscription) {
+        foreach (
+            static::with(['user', 'purchase.package', 'purchase.host'])->where('active', 1)
+                ->whereNull('ends_at')->whereDate('next_billing_date', $date)->get() as $subscription
+        ) {
             try {
-
                 // If subscription has no active user or it is free or it is not in use, ignore it
                 if (!$subscription->hasActiveUser() ||
-                    empty((float) $subscription->summary) ||
+                    empty((float)$subscription->summary) ||
                     !$subscription->package->isInUse($subscription->host)) {
                     continue;
                 }
@@ -925,7 +1010,6 @@ class Subscription extends Model
 
                 // Trigger reminder event
                 Event::subscriptionAutorenewReminder($subscription);
-
             } catch (Throwable $exception) {
                 continue;
             }
@@ -941,15 +1025,16 @@ class Subscription extends Model
     public static function expirationReminder($fromDate, $toDate)
     {
         // Loop through each trial subscription and send email it users
-        foreach (static::with(['user', 'purchase.package', 'purchase.host'])->where('active', 1)
-                     ->whereDate('next_billing_date', '>', $fromDate)
-                     ->whereDate('next_billing_date', '<=', $toDate)
-                     ->get() as $subscription) {
+        foreach (
+            static::with(['user', 'purchase.package', 'purchase.host'])->where('active', 1)
+                ->whereDate('next_billing_date', '>', $fromDate)
+                ->whereDate('next_billing_date', '<=', $toDate)
+                ->get() as $subscription
+        ) {
             try {
-
                 // If subscription has no active user or it is free or it is not in use, ignore it
                 if (!$subscription->hasActiveUser() ||
-                    empty((float) $subscription->summary) ||
+                    empty((float)$subscription->summary) ||
                     !$subscription->package->isInUse($subscription->host)) {
                     continue;
                 }
@@ -959,7 +1044,6 @@ class Subscription extends Model
 
                 // Trigger reminder event
                 Event::subscriptionExpirationReminder($subscription);
-
             } catch (Throwable $exception) {
                 continue;
             }
