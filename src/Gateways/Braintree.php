@@ -18,8 +18,10 @@ use Ptuchik\Billing\Exceptions\BillingException;
 use Ptuchik\Billing\Factory;
 use Ptuchik\Billing\Models\Order;
 use Ptuchik\Billing\Models\PaymentMethod;
-use Request;
+use Ptuchik\CoreUtilities\Helpers\DataStorage;
 use Throwable;
+
+use function app;
 
 /**
  * Class Braintree
@@ -58,7 +60,7 @@ class Braintree implements PaymentGateway
         $this->config = $config;
         $this->user = $user;
         $this->gateway = Omnipay::create(Arr::get($this->config, 'driver'));
-        $this->setCredentials($user->isTester() ?: !empty(Arr::get($this->config, 'testMode')));
+        $this->setCredentials($user->isTester() ? : !empty(Arr::get($this->config, 'testMode')));
     }
 
     /**
@@ -145,13 +147,13 @@ class Braintree implements PaymentGateway
      *
      * @return array
      */
-    public function getPaymentMethods() : array
+    public function getPaymentMethods(): array
     {
         $paymentMethods = [];
 
         // Get user's all payment methods from gateway and parse the needed data to return
         foreach ($this->findCustomer()->paymentMethods as $gatewayPaymentMethod) {
-            $paymentMethods[] = $this->parsePaymentMethod((object) ['paymentMethod' => $gatewayPaymentMethod]);
+            $paymentMethods[] = $this->parsePaymentMethod((object)['paymentMethod' => $gatewayPaymentMethod]);
         }
 
         return $paymentMethods;
@@ -200,7 +202,6 @@ class Braintree implements PaymentGateway
         // Get and return payment token for user's payment profile
         try {
             return $this->gateway->clientToken()->setCustomerId($this->user->paymentProfile)->send()->getToken();
-
             // In case the customer ID is not valid anymore, regenerate a new one
         } catch (Throwable $exception) {
             return $this->gateway->clientToken()
@@ -217,12 +218,15 @@ class Braintree implements PaymentGateway
      *
      * @return \Omnipay\Common\Message\ResponseInterface
      */
-    public function purchase($amount, string $descriptor = null, Order $order = null) : ResponseInterface
+    public function purchase($amount, string $descriptor = null, Order $order = null): ResponseInterface
     {
+        /** @var DataStorage $dataStorage */
+        $dataStorage = app(DataStorage::class);
+
         // If nonce is provided, create payment method and unset nonce
-        if (Request::filled('nonce')) {
-            $this->user->createPaymentMethod(Request::input('nonce'));
-            Request::offsetUnset('nonce');
+        if ($nonce = $dataStorage->get('nonce')) {
+            $this->user->createPaymentMethod($nonce);
+            $dataStorage->unset('nonce');
         }
 
         // Update customer profile
@@ -233,8 +237,8 @@ class Braintree implements PaymentGateway
 
         // If existing payment method's token is provided, add paymentMethodToken attribute
         // to request
-        if (Request::filled('token')) {
-            $purchaseData->setPaymentMethodToken(Request::input('token'));
+        if ($token = $dataStorage->get('token')) {
+            $purchaseData->setPaymentMethodToken($token);
         }
 
         // Set purchase descriptor
@@ -312,8 +316,13 @@ class Braintree implements PaymentGateway
     protected function generateDescriptor($descriptor)
     {
         return [
-            'name'  => env('TRANSACTION_DESCRIPTOR_PREFIX').'*'.strtoupper(substr($descriptor, 0,
-                    21 - strlen(env('TRANSACTION_DESCRIPTOR_PREFIX')))),
+            'name'  => env('TRANSACTION_DESCRIPTOR_PREFIX').'*'.strtoupper(
+                    substr(
+                        $descriptor,
+                        0,
+                        21 - strlen(env('TRANSACTION_DESCRIPTOR_PREFIX'))
+                    )
+                ),
             'phone' => env('TRANSACTION_DESCRIPTOR_PHONE'),
             'url'   => env('TRANSACTION_DESCRIPTOR_URL')
         ];
@@ -441,7 +450,6 @@ class Braintree implements PaymentGateway
         $billingDetails = $this->user->billingDetails;
 
         if ($addAddress) {
-
             $customer = $this->findCustomer();
             if (empty($customer->addresses)) {
                 $this->createAddress($billingDetails);
