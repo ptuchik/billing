@@ -4,6 +4,7 @@ namespace Ptuchik\Billing\Traits;
 
 use Auth;
 use Currency;
+use Ptuchik\CoreUtilities\Helpers\DataStorage;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Omnipay\Common\Message\ResponseInterface;
 use Ptuchik\Billing\Constants\TransactionStatus;
@@ -15,6 +16,8 @@ use Ptuchik\Billing\Models\Transaction;
 use Ptuchik\CoreUtilities\Traits\HasParams;
 use Request;
 use Response;
+
+use function app;
 
 /**
  * Trait Billable - Adds billing related methods
@@ -97,25 +100,27 @@ trait Billable
      */
     public function purchase($amount, $description = null, Order $order = null, $gateway = null)
     {
+        /** @var DataStorage $dataStorage */
+        $dataStorage = app(DataStorage::class);
+
         $paymentGateway = $this->getPaymentGateway($gateway);
 
         // Update purchase amount in order
         if ($order) {
             $order->setParam('amount', $amount);
             $order->setParam('currency', Currency::getUserCurrency());
-            $order->setParam('gateway', $paymentGateway->name ?? $gateway ?? Request::input('gateway'));
-            $order->setParam('request', Request::except(['nonce', 'token']));
+            $order->setParam('gateway', $paymentGateway->name ?? $gateway ?? $dataStorage->get('gateway'));
+            $order->setParam('request', $dataStorage->except(['nonce', 'token']));
             $order->save();
         }
 
         // If amount is empty, interrupt payment
         if ($amount > 0) {
-
             $purchase = $paymentGateway->purchase(number_format($amount, 2, '.', ''), $description, $order);
 
             return $this->handleRedirect($purchase, $order);
-        } elseif (Request::filled('nonce')) {
-            $this->createPaymentMethod(Request::input('nonce'), $gateway);
+        } elseif ($nonce = $dataStorage->get('nonce')) {
+            $this->createPaymentMethod($nonce, $gateway);
         }
 
         return null;
@@ -211,8 +216,10 @@ trait Billable
      */
     public function getSubscriptionsPaginated($perPage)
     {
-        return collect($this->subscriptions()->with('user', 'host', 'purchase.package', 'purchase.reference')
-            ->paginate($perPage)->items())->each(function ($subscription) {
+        return collect(
+            $this->subscriptions()->with('user', 'host', 'purchase.package', 'purchase.reference')
+                ->paginate($perPage)->items()
+        )->each(function ($subscription) {
             $subscription->purchase->append('identifier');
         });
     }
@@ -236,8 +243,10 @@ trait Billable
      */
     public function getTransactionsPaginated($perPage)
     {
-        return collect($this->transactions()->with('purchase.package', 'purchase.host', 'purchase.reference')
-            ->paginate($perPage)->items())->each(function ($transaction) {
+        return collect(
+            $this->transactions()->with('purchase.package', 'purchase.host', 'purchase.reference')
+                ->paginate($perPage)->items()
+        )->each(function ($transaction) {
             if ($transaction->purchase) {
                 $transaction->purchase->append('identifier');
             }
@@ -256,8 +265,10 @@ trait Billable
     {
         // Create a new transaction with collected data
         $transaction = Factory::get(Transaction::class, true);
-        $transaction->setRawAttribute('name',
-            trans(config('ptuchik-billing.translation_prefixes.general').'.'.$order->action));
+        $transaction->setRawAttribute(
+            'name',
+            trans(config('ptuchik-billing.translation_prefixes.general').'.'.$order->action)
+        );
         $transaction->user()->associate($this);
         $transaction->gateway = $order->getParam('gateway');
         $transaction->discount = $order->getParam('discount', 0);

@@ -16,11 +16,13 @@ use Ptuchik\Billing\Models\Purchase;
 use Ptuchik\Billing\Models\Subscription;
 use Ptuchik\Billing\Models\Transaction;
 use Ptuchik\CoreUtilities\Constants\DeviceType;
+use Ptuchik\CoreUtilities\Helpers\DataStorage;
 use Ptuchik\CoreUtilities\Models\Model;
 use Ptuchik\CoreUtilities\Traits\HasIcon;
 use Ptuchik\CoreUtilities\Traits\HasParams;
-use Request;
 use Validator;
+
+use function app;
 
 /**
  * Class PackageModel - all package models have to extend this model
@@ -132,7 +134,7 @@ abstract class PackageModel extends Model
      *
      * @return array
      */
-    public function getCasts() : array
+    public function getCasts(): array
     {
         $this->translatable = array_merge($this->translatable, $this->additionalTranslatable);
         $this->casts = array_merge($this->casts, $this->additionalCasts);
@@ -172,7 +174,7 @@ abstract class PackageModel extends Model
     public function validate(Hostable $host, Billable $user = null, $forPurchase = false)
     {
         if ($forPurchase && $this->validations) {
-            Validator::validate(request()->all(), $this->validations);
+            Validator::validate(app(DataStorage::class)->all(), $this->validations);
         }
 
         return $host;
@@ -209,22 +211,25 @@ abstract class PackageModel extends Model
      */
     public function plans()
     {
+        /** @var DataStorage $dataStorage */
+        $dataStorage = app(DataStorage::class);
+
         // Get all visible plans for package
-        $query = $this->allPlans()->where(function ($query) {
+        $query = $this->allPlans()->where(function ($query) use ($dataStorage) {
             $query->where('plans.visibility', Factory::getClass(PlanVisibility::class)::VISIBLE);
 
             // If additional plans are requested, include them also
-            if (Request::filled('additional')) {
-                $query->orWhere(function ($query) {
-                    $query->whereIn('plans.alias', explode(',', Request::input('additional')));
+            if ($additional = $dataStorage->get('additional')) {
+                $query->orWhere(function ($query) use ($additional) {
+                    $query->whereIn('plans.alias', explode(',', $additional));
                     $query->where('plans.visibility', Factory::getClass(PlanVisibility::class)::HIDDEN);
                 });
             }
         });
 
         // If frequncy is requested, get only plans with matching frequencies
-        if (Request::filled('frequency')) {
-            $query->where('plans.billing_frequency', Request::input('frequency'));
+        if ($dataStorage->has('frequency')) {
+            $query->where('plans.billing_frequency', $dataStorage->get('frequency'));
         }
 
         // Order by ordering and return result query
@@ -255,16 +260,13 @@ abstract class PackageModel extends Model
     {
         // Loop through each plan and check if there is a current one
         $this->plans->each(function ($plan) {
-
             // Set current to false
             $current = false;
 
             // If there is an active subscription for current package and it is activated with current plan,
             // set it as current
             if (($purchase = $this->purchases->first()) && $subscription = $purchase->subscription) {
-
                 if ($subscription->alias == $plan->alias) {
-
                     // If current plan's subscription is in trial, set left trial days,
                     // otherwise just set true
                     $current = $subscription->onTrial() ? $subscription->daysLeft : true;
@@ -317,7 +319,6 @@ abstract class PackageModel extends Model
     {
         // Check if trial consumed on given host
         if ($this->trialConsumed($host)) {
-
             // Loop through all related plans and set their trial days to 0
             $this->plans->each(function ($plan) {
                 $plan->trialDays = 0;
@@ -356,8 +357,11 @@ abstract class PackageModel extends Model
      */
     public function subscriptions()
     {
-        return $this->hasManyThrough(Factory::getClass(Subscription::class), Factory::getClass(Purchase::class),
-            'package_id')->where('package_type', $this->getMorphClass())->where('subscriptions.active', 1)
+        return $this->hasManyThrough(
+            Factory::getClass(Subscription::class),
+            Factory::getClass(Purchase::class),
+            'package_id'
+        )->where('package_type', $this->getMorphClass())->where('subscriptions.active', 1)
             ->orderBy('id', 'desc');
     }
 
@@ -439,7 +443,6 @@ abstract class PackageModel extends Model
         // and if not found create one
         if (!$host || !$purchase = $host->purchases()->where('package_id', $this->id)
                 ->where('package_type', $this->getMorphClass())->first()) {
-
             $purchase = Factory::get(Purchase::class, true);
             $purchase->setRawAttribute('name', $this->getRawAttribute('name'));
             $purchase->data = $this;
@@ -531,7 +534,6 @@ abstract class PackageModel extends Model
      */
     protected function activateInUsePackage(Hostable $host)
     {
-
     }
 
     /**
@@ -541,7 +543,6 @@ abstract class PackageModel extends Model
      */
     protected function activateNotInUsePackage(Hostable $host)
     {
-
     }
 
     /**
@@ -564,7 +565,6 @@ abstract class PackageModel extends Model
      */
     protected function deactivateInUsePackage(Hostable $host)
     {
-
     }
 
     /**
@@ -574,7 +574,6 @@ abstract class PackageModel extends Model
      */
     protected function deactivateNotInUsePackage(Hostable $host)
     {
-
     }
 
     /**
@@ -610,7 +609,6 @@ abstract class PackageModel extends Model
         if ($confirmations->isEmpty()) {
             $confirmation = Factory::getClass(Confirmation::class)::whereNull('package_type')->whereNull('package_id')
                 ->where('type', $type)->first();
-
             // Otherwise try to get override for specific device or fallback to override for all devices
         } elseif (!$confirmation = $confirmations->where('device', $device)->first()) {
             $confirmation = $confirmations->where('device', DeviceType::ALL)->first();

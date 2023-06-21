@@ -16,8 +16,10 @@ use Ptuchik\Billing\Models\Coupon;
 use Ptuchik\Billing\Models\Invoice;
 use Ptuchik\Billing\Models\Order;
 use Ptuchik\Billing\Models\Transaction;
-use Request;
+use Ptuchik\CoreUtilities\Helpers\DataStorage;
 use Throwable;
+
+use function app;
 
 /**
  * Trait PurchaseLogic - to add purchase logic to plan model
@@ -56,16 +58,15 @@ trait PurchaseLogic
                 }
 
                 // If redeem type is manual, check if coupon code provided by user, return it
-                if ($coupon->code == Request::input('coupon')) {
-
+                if ($coupon->code == app(DataStorage::class)->get('coupon')) {
                     // Check if it is already used on same host for same plan
                     if ($coupon->isUsed($this, $this->host)) {
                         $this->error = trans(config('ptuchik-billing.translation_prefixes.general').'.coupon_used');
-
                         // Check if coupon has limit and limit reached
                     } elseif (!empty($coupon->numberOfCoupons) && $coupon->numberOfCoupons <= $coupon->usedCoupons) {
-                        $this->error = trans(config('ptuchik-billing.translation_prefixes.general').'.coupon_limit_reached');
-
+                        $this->error = trans(
+                            config('ptuchik-billing.translation_prefixes.general').'.coupon_limit_reached'
+                        );
                         // Otherwise return coupon
                     } else {
                         return $coupon;
@@ -91,7 +92,6 @@ trait PurchaseLogic
 
         // Loop through each discount and calculate usage
         foreach ($this->discounts as $discount) {
-
             // If plan is not in renew mode, coupon redeem type is manual and it has limit, increment usage
             if (!$this->inRenewMode && $discount->redeem == $redeemTypes::MANUAL && $discount->numberOfCoupons) {
                 $discount->usedCoupons = $discount->usedCoupons + 1;
@@ -187,16 +187,12 @@ trait PurchaseLogic
 
         // If there is an active subscription
         if ($subscription = $this->prepare($host, true)) {
-
             // If the current plan is recurring
             if ($this->isRecurring) {
-
                 // If package is in use
                 if ($this->package->isInUse($this->host)) {
-
                     // If subscription's billing frequency is the same as plan's billing frequnecy
                     if ($subscription->billingFrequency == $this->billingFrequency) {
-
                         // Call subscription's renew
                         return $subscription->renew($payment, $order);
                     } else {
@@ -204,7 +200,6 @@ trait PurchaseLogic
                         return $subscription->switchFrequency($this);
                     }
                 } elseif (!$subscription->onTrial()) {
-
                     // If package is not in use and is not in trial, switch to it
                     return $this->useExistingPurchase();
                 }
@@ -212,9 +207,10 @@ trait PurchaseLogic
                 // If current plan is not recurring and there is an active subscription,
                 // but switching from recurring to lifetime is not allowed, interrupt the process
             } elseif (!config('ptuchik-billing.switch_recurring_to_lifetime_allowed')) {
-                throw new BillingException(trans(config('ptuchik-billing.translation_prefixes.plan').'.no_switch_to_lifetime'));
+                throw new BillingException(
+                    trans(config('ptuchik-billing.translation_prefixes.plan').'.no_switch_to_lifetime')
+                );
             }
-
             // If there is no active subscription but purchase is active, use the existing one
         } elseif ($this->package->purchase->active) {
             return $this->useExistingPurchase();
@@ -264,7 +260,6 @@ trait PurchaseLogic
 
         // If no payment provided, charge user
         if (!$payment) {
-
             // If there is no current user, just return
             if (!$this->user) {
                 return false;
@@ -293,7 +288,6 @@ trait PurchaseLogic
         $this->order = $order;
 
         return $this->processPurchase();
-
     }
 
     /**
@@ -306,7 +300,6 @@ trait PurchaseLogic
     {
         // If there is no payment needed or the payment is successful activate the package
         if (!$this->payment || $this->payment->isSuccessful()) {
-
             // Refund left amount to previous user's balance if needed
             $this->refundToUserBalance();
 
@@ -345,12 +338,10 @@ trait PurchaseLogic
     protected function processSubscription()
     {
         if (!$this->payment || $this->payment->isSuccessful()) {
-
             // If the plan is recurring, start a subscription or prolong the existing
             if ($this->isRecurring) {
                 $this->subscription = $this->subscribe();
             } else {
-
                 // If the plan is not recurring, complete any active subscriptions for current host
                 // and current package
                 $this->unsubscribe();
@@ -479,11 +470,14 @@ trait PurchaseLogic
 
         // Finally if payment was not successful throw an exception with error message
         if ($transaction->status == $transactionStatus::FAILED) {
-
             // If payment failed, fire a failed purchase event
             Event::purchaseFailed($this, $transaction);
 
-            throw new BillingException(trans(config('ptuchik-billing.translation_prefixes.general').'.payment_processor').': '.$this->payment->getMessage());
+            throw new BillingException(
+                trans(
+                    config('ptuchik-billing.translation_prefixes.general').'.payment_processor'
+                ).': '.$this->payment->getMessage()
+            );
         }
 
         return Factory::get(Invoice::class, true, $this, $transaction);
@@ -510,8 +504,8 @@ trait PurchaseLogic
         // Try to get the last successful transaction for current purchase
         // or create a blank transaction to attach to invoice
         $transaction = $this->package->purchase->transactions()
-                ->where('status', Factory::getClass(TransactionStatus::class)::SUCCESS)
-                ->orderBy('id', 'desc')->first() ?? Factory::get(Transaction::class);
+            ->where('status', Factory::getClass(TransactionStatus::class)::SUCCESS)
+            ->orderBy('id', 'desc')->first() ?? Factory::get(Transaction::class);
 
         return Factory::get(Invoice::class, true, $this, $transaction);
     }

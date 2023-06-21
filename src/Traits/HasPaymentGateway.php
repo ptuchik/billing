@@ -6,7 +6,9 @@ use Currency;
 use Illuminate\Support\Arr;
 use Ptuchik\Billing\Contracts\PaymentGateway;
 use Ptuchik\Billing\Exceptions\BillingException;
-use Request;
+use Ptuchik\CoreUtilities\Helpers\DataStorage;
+
+use function app;
 
 /**
  * Trait HasPaymentGateway
@@ -76,7 +78,7 @@ trait HasPaymentGateway
         if (is_null($this->gateway)) {
 
             // If gateway is not provided, get user's payment gateway
-            if ($gateway || $gateway = Request::input('gateway')) {
+            if ($gateway || $gateway = app(DataStorage::class)->get('gateway')) {
                 $paymentGateway = $checkAvailability ? $this->checkGatewayAvailability($gateway) : $gateway;
             } else {
                 $paymentGateway = $this->paymentGateway;

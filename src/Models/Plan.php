@@ -11,10 +11,12 @@ use Ptuchik\Billing\Exceptions\BillingException;
 use Ptuchik\Billing\Factory;
 use Ptuchik\Billing\Traits\HasFrequency;
 use Ptuchik\Billing\Traits\PurchaseLogic;
+use Ptuchik\CoreUtilities\Helpers\DataStorage;
 use Ptuchik\CoreUtilities\Models\Model;
 use Ptuchik\CoreUtilities\Traits\HasIcon;
 use Ptuchik\CoreUtilities\Traits\HasParams;
-use Request;
+
+use function app;
 
 /**
  * Class Plan
@@ -545,11 +547,14 @@ class Plan extends Model
      */
     public function getDiscountsAttribute()
     {
+        /** @var DataStorage $dataStorage */
+        $dataStorage = app(DataStorage::class);
+
         // If discounts already collected, just return
         if ($this->currentDiscounts) {
 
             // If there is no additional coupon input, return current discounts
-            if (!Request::input('coupon')) {
+            if (!$dataStorage->get('coupon')) {
                 return $this->currentDiscounts;
             }
 
@@ -559,7 +564,7 @@ class Plan extends Model
         }
 
         // Check if the coupon exists in the plan coupons
-        if (($code = Request::input('coupon')) && !$this->coupons
+        if (($code = $dataStorage->get('coupon')) && !$this->coupons
                 ->where('redeem', Factory::getClass(CouponRedeemType::class)::MANUAL)
                 ->contains('code', $code)) {
 
