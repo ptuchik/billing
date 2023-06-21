@@ -18,6 +18,7 @@ use Request;
 use Response;
 
 use function app;
+use function request;
 
 /**
  * Trait Billable - Adds billing related methods
@@ -110,7 +111,7 @@ trait Billable
             $order->setParam('amount', $amount);
             $order->setParam('currency', Currency::getUserCurrency());
             $order->setParam('gateway', $paymentGateway->name ?? $gateway ?? $dataStorage->get('gateway'));
-            $order->setParam('request', $dataStorage->except(['nonce', 'token']));
+            $order->setParam('request', request()->except(['nonce', 'token']));
             $order->save();
         }
 
