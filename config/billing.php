@@ -25,6 +25,18 @@ return [
     'payment_methods_limit'                 => null,
 
     /**
+     * Subscriptions can be extended by X days. Set 0 to disable
+     */
+    'subscription_extendable_days'          => env('SUBSCRIPTION_EXTENDABLE_DAYS', 0),
+
+    /**
+     * Extendable Packages
+     */
+    'extendable_package_types'              => [
+        //
+    ],
+
+    /**
      * Check gifted coupons
      */
     'check_gifted_coupons'                  => [
@@ -48,8 +60,10 @@ return [
      * Location of payment method images
      */
     'payment_method_images_location'        => env('PAYMENT_METHOD_IMAGES_LOCATION', 'assets/img/payment-methods'),
-    'default_payment_method_image_location' => env('DEFAULT_PAYMENT_METHOD_IMAGE_LOCATION',
-        'assets/img/payment-methods/credit_card.png'),
+    'default_payment_method_image_location' => env(
+        'DEFAULT_PAYMENT_METHOD_IMAGE_LOCATION',
+        'assets/img/payment-methods/credit_card.png'
+    ),
 
     /**
      * Allow plan downgrade or not
