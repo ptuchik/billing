@@ -28,7 +28,6 @@ class Event
             try {
                 event((new ReflectionClass($eventClass))->newInstanceArgs($params));
             } catch (Throwable $exception) {
-
             }
         }
     }
@@ -83,5 +82,26 @@ class Event
     public static function subscriptionExpirationReminder(Subscription $subscription)
     {
         static::trigger('subscription_expiration_reminder', $subscription);
+    }
+
+    /**
+     * Trigger package activated event
+     *
+     * @param \Ptuchik\Billing\Models\Plan $plan
+     */
+    public static function packageActivated(Plan $plan)
+    {
+        static::trigger('package_activated', $plan);
+    }
+
+    /**
+     * Trigger package activation failed event
+     *
+     * @param \Ptuchik\Billing\Models\Plan $plan
+     * @param \Throwable|null              $exception
+     */
+    public static function packageActivationFailed(Plan $plan, Throwable $exception = null)
+    {
+        static::trigger('package_activation_failed', $plan, $exception);
     }
 }
