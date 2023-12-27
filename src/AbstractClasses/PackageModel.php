@@ -741,4 +741,13 @@ abstract class PackageModel extends Model
     {
         return $this->morphToMany(Factory::getClass(Feature::class), 'package', 'package_features');
     }
+
+    /**
+     * Handle activation failure
+     *
+     * @return void
+     */
+    public function handleActivationFailure()
+    {
+    }
 }
