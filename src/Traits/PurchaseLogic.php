@@ -306,8 +306,10 @@ trait PurchaseLogic
             // Activate package
             try {
                 $this->package->activate($this->host, $this);
+                Event::packageActivated($this);
             } catch (Throwable $exception) {
                 $this->refund();
+                Event::packageActivationFailed($this, $exception);
                 throw $exception;
             }
 

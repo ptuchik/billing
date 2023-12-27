@@ -143,6 +143,12 @@ return [
 
         // Will receive Subscription instance
         'subscription_expiration_reminder' => null,
+
+        // Will receive Plan instance
+        'package_activated'                => null,
+
+        // Will receive Plan and Exception instances
+        'package_activation_failed'        => null,
     ],
 
     // Default gateway if user's gateway is empty or invalid
