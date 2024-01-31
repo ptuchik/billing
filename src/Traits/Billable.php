@@ -142,11 +142,13 @@ trait Billable
                 if (($response = $payment->getRedirectResponse()) instanceof RedirectResponse) {
                     Response::json([
                         'order_id'     => $order->id ?? 0,
+                        'user_id'      => $order->userId ?? null,
                         'redirect_url' => $payment->getRedirectUrl()
                     ])->send();
                 } else {
                     Response::json([
                         'order_id' => $order->id ?? 0,
+                        'user_id'  => $order->userId ?? null,
                         'form'     => $response->getContent()
                     ])->send();
                 }
