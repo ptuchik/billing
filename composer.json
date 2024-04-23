@@ -19,7 +19,8 @@
         "ptuchik/core-utilities": "^1.0",
         "league/omnipay": "^3.0",
         "ptuchik/braintree": "1.1.6",
-        "torann/currency": "^1.0"
+        "torann/currency": "^1.0",
+        "ucraft-com/detection": "^1.2"
     },
     "autoload": {
         "psr-4": {

@@ -2,7 +2,6 @@
 
 namespace Ptuchik\Billing\AbstractClasses;
 
-use Agent;
 use Illuminate\Support\Str;
 use Ptuchik\Billing\Constants\ConfirmationType;
 use Ptuchik\Billing\Constants\PlanVisibility;
@@ -20,6 +19,7 @@ use Ptuchik\CoreUtilities\Helpers\DataStorage;
 use Ptuchik\CoreUtilities\Models\Model;
 use Ptuchik\CoreUtilities\Traits\HasIcon;
 use Ptuchik\CoreUtilities\Traits\HasParams;
+use Uc\Detection\BrowserDetection\Detector;
 use Validator;
 
 use function app;
@@ -597,7 +597,10 @@ abstract class PackageModel extends Model
      */
     protected function getConfirmation(Transaction $transaction, $type, $trialDays = false)
     {
-        $device = Agent::isMobile() ? DeviceType::MOBILE : DeviceType::DESKTOP;
+        /** @var Detector $detector */
+        $detector = app(Detector::class);
+
+        $device = $detector->isMobile() ? DeviceType::MOBILE : DeviceType::DESKTOP;
 
         // Try to get confirmation override
         $confirmations = $this->confirmations()->where('type', $type)->where(function ($query) use ($device) {
