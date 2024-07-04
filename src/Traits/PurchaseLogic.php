@@ -20,6 +20,7 @@ use Ptuchik\CoreUtilities\Helpers\DataStorage;
 use Throwable;
 
 use function app;
+use function strtolower;
 
 /**
  * Trait PurchaseLogic - to add purchase logic to plan model
@@ -58,7 +59,7 @@ trait PurchaseLogic
                 }
 
                 // If redeem type is manual, check if coupon code provided by user, return it
-                if ($coupon->code == app(DataStorage::class)->get('coupon')) {
+                if (strtolower($coupon->code) == strtolower(app(DataStorage::class)->get('coupon'))) {
                     // Check if it is already used on same host for same plan
                     if ($coupon->isUsed($this, $this->host)) {
                         $this->error = trans(config('ptuchik-billing.translation_prefixes.general').'.coupon_used');
