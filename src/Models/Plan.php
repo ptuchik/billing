@@ -428,8 +428,8 @@ class Plan extends Model
 
         // If user currency has no value, try to get default currency value, convert and return,
         // if it also does not exist, return 0
-        return $price[Currency::getUserCurrency()] ?? currency($price[config('currency.default')] ?? 0, null, null,
-                false);
+        return $price[Currency::getUserCurrency()] ??
+            currency($price[config('currency.default')] ?? 0, null, null, false);
     }
 
     /**
@@ -528,7 +528,7 @@ class Plan extends Model
     public function getAgreementTextAttribute()
     {
         // Get the plan's and package's agreement text
-        $overrideText = $this->agreement ?: $this->package->agreement;
+        $overrideText = $this->agreement ? : $this->package->agreement;
 
         // Get the default text from translations
         $defaultText = $this->isRecurring ?
@@ -536,7 +536,7 @@ class Plan extends Model
             trans(config('ptuchik-billing.translation_prefixes.plan').'.agreement_onetime');
 
         // If there is no override, return default text
-        return $overrideText ?: $defaultText;
+        return $overrideText ? : $defaultText;
     }
 
     /**
@@ -552,12 +552,10 @@ class Plan extends Model
 
         // If discounts already collected, just return
         if ($this->currentDiscounts) {
-
             // If there is no additional coupon input, return current discounts
             if (!$dataStorage->get('coupon')) {
                 return $this->currentDiscounts;
             }
-
             // Create an empty discounts collection
         } else {
             $this->currentDiscounts = collect([]);
@@ -566,13 +564,13 @@ class Plan extends Model
         // Check if the coupon exists in the plan coupons
         if (($code = $dataStorage->get('coupon')) && !$this->coupons
                 ->where('redeem', Factory::getClass(CouponRedeemType::class)::MANUAL)
-                ->contains('code', $code)) {
-
+                ->contains(function ($value, $key) use ($code) {
+                    return strtolower($value->code) == strtolower($code);
+                })) {
             $this->error = trans(config('ptuchik-billing.translation_prefixes.general').'.coupon_is_invalid');
         }
 
         foreach ($this->coupons as $coupon) {
-
             // If coupon is not added to discounts collection yet and is applicate, add to collection
             if (!$this->currentDiscounts->contains('id', $coupon->id) && $coupon = $this->analizeCoupon($coupon)) {
                 $this->currentDiscounts->push($coupon);
@@ -597,7 +595,6 @@ class Plan extends Model
         // Create an empty addons collection, loop throught available addons and add to them
         $this->currentAddons = collect([]);
         foreach ($this->addons as $addon) {
-
             // If addon is not added yet, add it
             if (!$this->currentAddons->contains('id', $addon->id)) {
                 $this->currentAddons->push($addon);
@@ -616,12 +613,10 @@ class Plan extends Model
     public function getPreviousSubscription()
     {
         if ($this->previousSubscription === false) {
-
             // If there is a previous subscription and the current plan is recurring,
             // calculate the monthly price difference and determine
             // if it is going to be upgraded or downgraded
             if ($this->previousSubscription = $this->package->getPreviousSubscription($this->host)) {
-
                 // If current plan is recurring
                 if ($this->isRecurring) {
                     $previousPlan = $this->previousSubscription->plan;
@@ -631,16 +626,21 @@ class Plan extends Model
                     // If current price is lower than previous price, that means it is going to be
                     // downgraded, so we have to check if it is allowed or not
                     if ($currentPrice < $previousPrice && !config('ptuchik-billing.downgrade_allowed')) {
-                        throw new BillingException(trans(config('ptuchik-billing.translation_prefixes.plan').'.no_downgrade',
-                            ['newpackage' => $this->package->name, 'oldpackage' => $previousPlan->package->name]));
+                        throw new BillingException(
+                            trans(
+                                config('ptuchik-billing.translation_prefixes.plan').'.no_downgrade',
+                                ['newpackage' => $this->package->name, 'oldpackage' => $previousPlan->package->name]
+                            )
+                        );
                     }
 
                     // If current plan is not recurring and there is a previous subscription,
                     // but switching from recurring to lifetime is not allowed, interrupt the process
                 } elseif (!config('ptuchik-billing.switch_recurring_to_lifetime_allowed')) {
-                    throw new BillingException(trans(config('ptuchik-billing.translation_prefixes.plan').'.no_switch_to_lifetime'));
+                    throw new BillingException(
+                        trans(config('ptuchik-billing.translation_prefixes.plan').'.no_switch_to_lifetime')
+                    );
                 }
-
             } elseif (!$this->isRecurring) {
                 $this->previousSubscription = $this->package->setPurchase($this->host)->subscription;
             }
@@ -660,7 +660,6 @@ class Plan extends Model
         // If there is actual previous subscription and it is not in trial,
         // set to current plan and return it's balance
         if ($this->host) {
-
             $previousSubscription = $this->getPreviousSubscription();
 
             // If there is a previous subscription and it is not in trial, get left balance
@@ -724,7 +723,6 @@ class Plan extends Model
     public function getDiscountAttribute()
     {
         if (is_null($this->calculatedDiscount)) {
-
             // Get previous subscription balance as discount
             $this->calculatedDiscount = $this->subscriptionBalanceDiscount;
 
