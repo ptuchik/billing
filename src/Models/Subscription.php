@@ -421,7 +421,7 @@ class Subscription extends Model
      */
     public function getCurrencyAttribute($value)
     {
-        return $value ? : config('currency.default');
+        return $value ?: config('currency.default');
     }
 
     /**
@@ -499,7 +499,7 @@ class Subscription extends Model
     public function markAsExpired()
     {
         // Set subscription to end on next billing date
-        $this->trialEndsAt = $this->trialEndsAt ? : $this->nextBillingDate;
+        $this->trialEndsAt = $this->trialEndsAt ?: $this->nextBillingDate;
         $this->endsAt = $this->nextBillingDate;
 
         return $this->save();
@@ -525,7 +525,7 @@ class Subscription extends Model
     public function cancelNow()
     {
         // Set subscription's ending today
-        $this->trialEndsAt = $this->trialEndsAt ? : Carbon::today();
+        $this->trialEndsAt = $this->trialEndsAt ?: Carbon::today();
         $this->endsAt = Carbon::today();
 
         return $this->save();
@@ -631,7 +631,7 @@ class Subscription extends Model
             $agreementOverride = false;
         }
 
-        return $agreementOverride ? : trans(config('ptuchik-billing.translation_prefixes.plan').'.agreement_recurring');
+        return $agreementOverride ?: trans(config('ptuchik-billing.translation_prefixes.plan').'.agreement_recurring');
     }
 
     /**
@@ -866,7 +866,7 @@ class Subscription extends Model
         $subscription = new static();
         $subscription->setRawAttribute('name', $this->getRawAttribute('name'));
         $subscription->purchase()->associate($this->purchase);
-        $subscription->user()->associate($this->user ? : Auth::user());
+        $subscription->user()->associate($this->user ?: Auth::user());
         $subscription->setParamsFromPlan($plan);
         $subscription->active = $this->active;
         $subscription->alias = $plan->alias;
@@ -943,6 +943,11 @@ class Subscription extends Model
 
                 // Unset payment gateway
                 $subscription->user->setPaymentGateway(null);
+
+                if (!$subscription->user->hasPaymentMethod) {
+                    $subscription->package->deactivate($subscription->host);
+                    continue;
+                }
 
                 // Set subscription's attempt and last attempt indicators
                 $subscription->attempt = $attempt;
