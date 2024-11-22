@@ -944,7 +944,7 @@ class Subscription extends Model
                 // Unset payment gateway
                 $subscription->user->setPaymentGateway(null);
 
-                if (!$subscription->user->hasPaymentMethod) {
+                if (empty($subscription->user->balance) && !$subscription->user->hasPaymentMethod) {
                     $subscription->package->deactivate($subscription->host);
                     continue;
                 }
